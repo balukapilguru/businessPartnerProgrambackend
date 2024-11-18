@@ -19,4 +19,10 @@ module.exports = {
     mailUser: process.env.SMTP_USER || '',
     mailPass: process.env.SMTP_PASS || '',
   },
+
+   config: {
+    frontendUrl: 'http://localhost:5173',  
+    // other configuration settings
+},
+
 }

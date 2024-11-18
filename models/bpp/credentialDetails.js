@@ -53,9 +53,5 @@ credentialDetails.associate = (models) => {
    
 };
 
-
-
-
-
 module.exports =  credentialDetails
    

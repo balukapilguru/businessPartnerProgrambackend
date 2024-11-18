@@ -6,6 +6,10 @@ const sequelize = require('./config/db');
 // const signuprouter = require('./routes/signuprouter');
 const referStudentroute = require('./routes/referStudentroute');
 const referBusinessroute = require('./routes/referBusinessroute');
+const userSignup = require('./routes/bpp/users');
+
+const role = require('./routes/rolesAndPermissions/Role')
+
 require('./models/bpp/credentialDetails'); 
 require('./models/bpp/bankdetails'); 
 require('./models/referbusinessPartnerModel');
@@ -24,8 +28,8 @@ const PORT = process.env.PORT || 3030;
 app.use(bodyParser.json());
 
 
-// app.use('/api/auth', signuprouter )
-
+app.use('/api/auth', userSignup )
+app.use('/api/role', role )
 app.use('/api/student', referStudentroute);
 app.use('/api/business', referBusinessroute);
 app.use('/api/business-partner', referBusinessroute);
