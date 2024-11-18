@@ -7,7 +7,7 @@ const router = express.Router(); // Ensure that this line initializes the router
 
 router.post('/signup', usersControllers.sendOtp);
 router.post('/verify-otp', usersControllers.verifyOtpAndRegisterUser);
-router.post('/change-password',authenticate, changePassword);
+router.post('/change/password',authenticate, changePassword);
 router.post('/login', usersControllers.login);
 router.post('/forgot-password', usersControllers.sendlinkforForgotPassword);
 router.post('/resetforgot_password', usersControllers.forgotPasswordrecet);
