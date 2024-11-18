@@ -11,7 +11,7 @@ module.exports = {
     dbPass: process.env.DB_PASS,
   },
   jwtConfig: {
-    jwtSecret: process.env.JWT_SECRET || '',
+    jwtSecret: process.env.JWT_SECRET || 'secret',
   },
   mailConfig: {
     mailHost: process.env.SMTP_HOST || '',

@@ -38,7 +38,7 @@ const config = require('../config');
 
 const authenticate = (req, res, next) => {
     try {
-        const authHeader = req.headers['authorization'];
+        const authHeader = req.headers.authorization;;
         if (!authHeader) {
             return res.status(401).json({ message: 'Authorization token is missing' });
         }

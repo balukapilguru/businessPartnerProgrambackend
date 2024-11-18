@@ -6,11 +6,15 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 
 const credentialDetails = require('../models/bpp/credentialDetails');
+const Personaldetails = require('../models/bpp/personaldetails')
+const bankDetails= require('../models/bpp/bankdetails');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 const jwt = require('jsonwebtoken');
+const upload = require('../middlewares/uploadMiddleware');
+const s3 = require('../utiles/awsConfig');
 const { JWT_SECRET } = require('../utiles/jwtconfig');
 require('dotenv').config();
 
@@ -254,7 +258,7 @@ const generateBusinessPartnerID = async () => {
 
 const generateToken = (user) => {
     const payload = { id: user.id, email: user.email };
-    const secret = process.env.JWT_SECRET;
+    const secret = process.env.JWT_SECRET || 'secret';
     const options = { expiresIn: '2h' };  
 
   
@@ -768,6 +772,87 @@ const sendPasswordResetToken = async (userEmail) => {
 // };
 
 
+
+const personaldetails = async (req, res) => {
+    
+    upload.single('image')(req, res, async (err) => {
+        if (err) {
+            console.error('Error during file upload:', err);
+            return res.status(400).json({ error: 'Error during file upload', details: err.message });
+        }
+
+        try {
+            
+            const {
+                address,
+                panCardNO,
+                contactNo,
+                whatapp_no,
+                aadharNo,
+                businessName,
+                cin_no,
+                gst_no,
+                bankName,
+                holder_name ,
+                account_no ,
+                ifsc_code,
+                branch 
+            } = req.body;
+
+            
+            if (!address || !contactNo || !whatapp_no || !gst_no) {
+                return res.status(400).json({ error: 'Required fields are missing' });
+            }
+
+            
+            const { id } = req.user;
+
+            
+            const imageUrl = req.file
+                ? req.uploadedFileKey
+                : null;
+
+            const newDetails = await Personaldetails.create({
+                address,
+                panCardNO,
+                contactNo,
+                whatapp_no,
+                aadharNo,
+                businessName:businessName||null,
+                cin_no:cin_no || null,
+                gst_no: gst_no||null,
+                profileId: id, 
+                image: imageUrl,
+            });
+
+            let newBankDetails = null;
+            if (bankName || holder_name || account_no || ifsc_code || branch) {
+                newBankDetails = await bankDetails.create({
+                    bankName,
+                    holder_name,
+                    account_no,
+                    ifsc_code,
+                    branch,
+                    userId: id,
+                });
+            }
+
+            return res.status(201).json({
+                message: 'Personal details and bank details saved successfully',
+                personalDetails: newDetails,
+                bankDetails: newBankDetails,
+            });
+        } catch (error) {
+            console.error('Error while saving personal details:', error);
+            return res.status(500).json({
+                error: 'An error occurred while saving personal details',
+                details: error.message,
+            });
+        }
+    });
+};
+
+
 module.exports = {
     login,
     sendOtp,
@@ -775,7 +860,8 @@ module.exports = {
     changePassword,
     sendlinkforForgotPassword,
     forgotPasswordrecet,
-    sendPasswordResetToken
+    sendPasswordResetToken,
+    personaldetails
 
 
 };

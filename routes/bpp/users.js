@@ -11,5 +11,6 @@ router.post('/change-password',authenticate, changePassword);
 router.post('/login', usersControllers.login);
 router.post('/forgot-password', usersControllers.sendlinkforForgotPassword);
 router.post('/resetforgot_password', usersControllers.forgotPasswordrecet);
+router.post('/personalDetails', authenticate,usersControllers. personaldetails)
 
 module.exports = router;
