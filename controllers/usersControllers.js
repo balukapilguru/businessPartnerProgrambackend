@@ -31,18 +31,46 @@ const transporter = nodemailer.createTransport({
 });
 
 
+// const sendOtp = async (req, res) => {
+//     const { email, fullName, phonenumber } = req.body;
+
+//     try {
+//         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+//         tempOtpStorage.push({
+//             email,
+//             otp: emailGeneratedOtp,
+//             expiresAt: Date.now() + 2 * 60 * 1000
+//         });
+
+//         await transporter.sendMail({
+//             from: config.mailConfig.mailUser,
+//             to: email,
+//             subject: 'Email Verification OTP',
+//             text: `Your OTP for email verification is: ${emailGeneratedOtp}`
+//         });
+
+//         return res.status(200).json({ message: 'OTP sent to your email for verification' });
+//     } catch (error) {
+//         console.error('Error details:', error);
+//         return res.status(500).json({ message: 'Error during OTP generation or email sending', error });
+//     }
+// };
+
 const sendOtp = async (req, res) => {
     const { email, fullName, phonenumber } = req.body;
 
     try {
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
+        // Storing OTP temporarily with expiration time
         tempOtpStorage.push({
             email,
             otp: emailGeneratedOtp,
-            expiresAt: Date.now() + 2 * 60 * 1000
+            expiresAt: Date.now() + 2 * 60 * 1000 // OTP expires in 2 minutes
         });
 
+        // Sending OTP to the user's email
         await transporter.sendMail({
             from: config.mailConfig.mailUser,
             to: email,
@@ -50,95 +78,19 @@ const sendOtp = async (req, res) => {
             text: `Your OTP for email verification is: ${emailGeneratedOtp}`
         });
 
-        return res.status(200).json({ message: 'OTP sent to your email for verification' });
+        // Return response with fullName
+        return res.status(200).json({
+            message: 'OTP sent to your email for verification',
+            user: {
+                fullName,  // Include fullName in the response
+                email      // Optionally include email as well
+            }
+        });
     } catch (error) {
         console.error('Error details:', error);
         return res.status(500).json({ message: 'Error during OTP generation or email sending', error });
     }
 };
-
-// const verifyOtpAndRegisterUser = async (req, res) => {
-//     const { email, emailOtp, fullName, phonenumber } = req.body;
-
-//     try {
-
-//         const storedOtpData = tempOtpStorage.find(otpData => otpData.email === email);
-
-//         if (storedOtpData) {
-
-//             if (storedOtpData.otp === emailOtp && Date.now() < storedOtpData.expiresAt) {
-
-//                 tempOtpStorage = tempOtpStorage.filter(otpData => otpData.email !== email);
-
-
-//                 const generatePassword = () => {
-                  
-//                     return crypto.randomBytes(8).toString('hex'); // 8 bytes = 16 characters
-//                 };
-                
-//                 const hashPassword = async (password) => {
-//                     return await bcrypt.hash(password, 10);
-//                 };
-                
-//                 const defaultPassword = generatePassword();
-
-
-//                 // const defaultPassword = uuidv4();
-//                 // const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-
-//                 const businessPartnerID = await generateBusinessPartnerID();
-
-
-//                 const user = await bppUsers.create({
-//                     fullName,
-//                     email,
-//                     phonenumber,
-//                     roleId: 1
-//                 }).catch(error => {
-//                     console.error('Error while saving user to the bppUsers table:', error);
-//                     throw new Error('Error while saving user to the bppUsers table');
-//                 });
-
-
-//                 await credentialDetails.create({
-//                     password: hashPassword,
-//                     businessPartnerID,
-//                     userId: user.id,
-//                     createdBy: user.id,
-//                     noOfLogins: 0,
-//                     noOfLogouts: 0,
-//                     referralLink: '',
-//                 }).catch(error => {
-//                     console.error('Error while saving business partner ID to credentialDetails:', error);
-//                     throw new Error('Error while saving business partner ID to credentialDetails');
-//                 });
-
-
-//                 await transporter.sendMail({
-//                     from: config.mailConfig.mailUser,
-//                     to: email,
-//                     subject: 'Verification Successful',
-//                     text: `Congratulations, your email has been successfully verified! Your default password is: ${defaultPassword}`
-//                 });
-
-
-//                 return res.status(200).json({
-//                     message: 'User registered and verified successfully. Check your email for the default password.',
-//                     user: { email },
-//                     redirectUrl: '/login'
-//                 });
-//             } else {
-//                 return res.status(400).json({ message: 'Invalid or expired OTP' });
-//             }
-//         } else {
-//             return res.status(400).json({ message: 'OTP not found or has expired' });
-//         }
-//     } catch (error) {
-//         console.error('Error during OTP verification or user registration:', error);
-//         return res.status(500).json({ message: 'Error during OTP verification or user registration', error });
-//     }
-// };
 
 const verifyOtpAndRegisterUser = async (req, res) => {
     const { email, emailOtp, fullName, phonenumber } = req.body;
@@ -153,7 +105,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
             
                 const generatePassword = () => {
-                    return crypto.randomBytes(8).toString('hex'); // 8 bytes = 16 characters
+                    return crypto.randomBytes(8).toString('hex'); 
                 };
 
                 const hashPassword = async (password) => {
@@ -182,7 +134,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     password: hashedPassword,
                     businessPartnerID,
                     userId: user.id,
-                    createdBy: user.id,
+                    createdBy: null,
                     noOfLogins: 0,
                     noOfLogouts: 0,
                     referralLink: '',
@@ -201,7 +153,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
                 return res.status(200).json({
                     message: 'User registered and verified successfully. Check your email for the default password.',
-                    user: { email },
+                    user: { email, fullName, businessPartnerID },
                     redirectUrl: '/login'
                 });
             } else {
@@ -313,7 +265,9 @@ const login = async (req, res) => {
         return res.status(200).json({
             message: 'Login successful',
             user: {
-                fullName,
+                id: user.id,
+                fullName: user.fullName,
+                businessPartnerID: credential.businessPartnerID,
                 email,
                 password
             },
@@ -417,6 +371,120 @@ const login = async (req, res) => {
 //         return res.status(500).json({ message: 'Error during reset password', error });
 //     }
 // };
+
+
+
+// const login = async (req, res) => {
+//     const { email, password } = req.body;
+
+//     try {
+//         console.log("Received email:", email);
+//         console.log("Received password:", password);
+
+//         const user = await bppUsers.findOne({ where: { email } });
+
+//         if (!user) {
+//             console.error("User not found for email:", email);
+//             return res.status(400).json({ message: 'User not found' });
+//         }
+        
+//         // Fetch user credentials
+//         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
+
+//         if (!credential || !credential.password) {
+//             console.error("No credentials or password found for user ID:", user.id);
+//             return res.status(400).json({ message: 'No credentials found or password missing' });
+//         }
+
+//         console.log("Stored Password Hash (type):", typeof credential.password);
+//         console.log("Stored Password Hash (value):", credential.password);
+
+//         if (typeof credential.password !== 'string') {
+//             console.error("Stored password is not a string:", credential.password);
+//             return res.status(500).json({ message: 'Internal error: stored password is not a valid string' });
+//         }
+
+//         if (typeof password !== 'string') {
+//             console.error("Received password is not a string:", password);
+//             return res.status(400).json({ message: 'Password must be a string' });
+//         }
+
+//         const isPasswordValid = await bcrypt.compare(password, credential.password);
+
+//         if (!isPasswordValid) {
+//             console.error("Invalid password for email:", email);
+//             return res.status(400).json({ message: 'Invalid password' });
+//         }
+
+//         const token = generateToken(user);
+
+//         return res.status(200).json({
+//             message: 'Login successful',
+//             user: {
+//                 fullName: user.fullName, // Send the fullName from the user object
+//                 email: user.email,
+//                 password: user.password // Send the email from the user object
+//             },
+//             token
+//         });
+//     } catch (error) {
+//         console.error("Error during login:", error.message);
+//         console.error("Error stack:", error.stack);
+//         return res.status(500).json({ message: 'Error during login', error: error.message });
+//     }
+// };
+
+
+
+
+
+
+
+
+
+
+// const login = async (req, res) => {
+//     const { email, password } = req.body;
+
+//     try {
+//         const user = await bppUsers.findOne({ where: { email } });
+
+//         if (!user) {
+//             return res.status(400).json({ message: 'User not found' });
+//         }
+
+//         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
+
+//         if (!credential || !credential.businessPartnerId) {
+//             console.error("businessPartnerId is missing for userId:", user.id);
+//             return res.status(400).json({ message: 'businessPartnerId is missing' });
+//         }
+
+//         const isPasswordValid = await bcrypt.compare(password, credential.password);
+
+//         if (!isPasswordValid) {
+//             return res.status(400).json({ message: 'Invalid password' });
+//         }
+
+//         const token = generateToken(user);
+
+//         return res.status(200).json({
+//             message: 'Login successful',
+//             user: {
+//                 id: user.id,
+//                 fullName: user.fullName,
+//                 email: user.email
+//             },
+//             businessPartnerId: credential.businessPartnerId,
+//             token
+//         });
+//     } catch (error) {
+//         console.error("Error during login:", error);
+//         return res.status(500).json({ message: 'Error during login', error: error.message });
+//     }
+// };
+
+
 
 const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
@@ -734,44 +802,6 @@ const sendPasswordResetToken = async (userEmail) => {
 
 
 
-// const forgotPasswordrecet = async (req, res) => {
-//     const { token, newPassword, confirmPassword } = req.body;
-
-//     try {
-//         // Check if the token exists and is valid (not expired) in the credentialsDetails model
-//         const user = await credentialDetails.findOne({ 
-//             where: { 
-//                 passwordResetToken: token, 
-//                 passwordResetExpires: { [Op.gt]: Date.now() } 
-//             }
-//         });
-
-//         if (!user) {
-//             return res.status(400).json({ message: 'Invalid or expired reset token' });
-//         }
-
-//         // Check if newPassword and confirmPassword match
-//         if (newPassword !== confirmPassword) {
-//             return res.status(400).json({ message: 'Passwords do not match' });
-//         }
-
-//         // Hash the new password before saving it
-//         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-//         // Update the user's password in the credentialsDetails model
-//         await credentialDetails.update(
-//             { password: hashedPassword, passwordResetToken: null, passwordResetExpires: null },
-//             { where: { email: user.email } }
-//         );
-
-//         return res.status(200).json({ message: 'Password successfully updated' });
-//     } catch (error) {
-//         console.error('Error in resetting password:', error);
-//         return res.status(500).json({ message: 'Error processing your request' });
-//     }
-// };
-
-
 
 const personaldetails = async (req, res) => {
     
@@ -800,7 +830,7 @@ const personaldetails = async (req, res) => {
             } = req.body;
 
             
-            if (!address || !contactNo || !whatapp_no || !gst_no) {
+            if (!address || !contactNo || !whatapp_no ) {
                 return res.status(400).json({ error: 'Required fields are missing' });
             }
 
@@ -851,7 +881,96 @@ const personaldetails = async (req, res) => {
         }
     });
 };
-
+const updatePersonalAndBankDetails = async (req, res) => {
+    try {
+      // Using multer to handle file uploads if any (for example, for profile image)
+      upload.single('image')(req, res, async (err) => {
+        if (err) {
+          return res.status(400).json({ error: err.message });
+        }
+  
+        const { id } = req.params; // User ID from the route
+        const {
+          address,
+          panCardNO,
+          contactNo,
+          whatapp_no,
+          aadharNo,
+          businessName,
+          cin_no,
+          gst_no,
+          bankName,
+          holder_name,
+          account_no,
+          ifsc_code,
+          branch,
+        } = req.body;
+  
+        // Check if the user exists
+        const personalDet = await Personaldetails.findOne({
+          where: { profileId: id },
+        });
+  
+        if (!personalDet) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+  
+        // Update personal details with the provided data or keep existing if not provided
+        const personalDetailsUpdate = await Personaldetails.update(
+          {
+            address: address || personalDet.address,
+            panCardNO: panCardNO || personalDet.panCardNO,
+            contactNo: contactNo || personalDet.contactNo,
+            whatapp_no: whatapp_no || personalDet.whatapp_no,
+            aadharNo: aadharNo || personalDet.aadharNo,
+            businessName: businessName || personalDet.businessName,
+            cin_no: cin_no || personalDet.cin_no,
+            gst_no: gst_no || personalDet.gst_no,
+          },
+          {
+            where: { profileId: id },
+            returning: true,
+          }
+        );
+  
+        // Update bank details if provided
+        const bankDetailsUpdate = await bankDetails.update(
+          {
+            bankName: bankName || personalDet.bankName,
+            holder_name: holder_name || personalDet.holder_name,
+            account_no: account_no || personalDet.account_no,
+            ifsc_code: ifsc_code || personalDet.ifsc_code,
+            branch: branch || personalDet.branch,
+          },
+          {
+            where: { userId: id },
+            returning: true,
+          }
+        );
+  
+        // If a profile image is uploaded, update the profile image URL
+        if (req.file) {
+          const updatedProfileImage = await Personaldetails.update(
+            { profileImage: req.file.location },
+            { where: { profileId: id } }
+          );
+        }
+  
+        return res.status(200).json({
+          message: 'Personal and bank details updated successfully',
+          personalDetails: personalDetailsUpdate[1],
+          bankDetails: bankDetailsUpdate[1],
+        });
+      });
+    } catch (error) {
+      console.error('Error while updating details:', error);
+      return res.status(500).json({
+        error: 'An error occurred while updating the details',
+        details: error.message,
+      });
+    }
+  };
+  
 
 module.exports = {
     login,
@@ -861,7 +980,8 @@ module.exports = {
     sendlinkforForgotPassword,
     forgotPasswordrecet,
     sendPasswordResetToken,
-    personaldetails
+    personaldetails,
+    updatePersonalAndBankDetails
 
 
 };

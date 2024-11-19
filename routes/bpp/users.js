@@ -12,5 +12,6 @@ router.post('/login', usersControllers.login);
 router.post('/forgot-password', usersControllers.sendlinkforForgotPassword);
 router.post('/resetforgot_password', usersControllers.forgotPasswordrecet);
 router.post('/personalDetails', authenticate,usersControllers. personaldetails)
+router.put('/update/personaldetails/:id', authenticate,usersControllers. updatePersonalAndBankDetails)
 
 module.exports = router;

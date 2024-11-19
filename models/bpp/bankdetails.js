@@ -21,6 +21,7 @@ const bankDetails = sequelize.define("bankDetails",{
     },
     userId: {
         type: DataTypes.INTEGER,
+        primaryKey:true,
         references:{
             model: 'bppUsers',
             key: 'id',

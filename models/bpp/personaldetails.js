@@ -51,7 +51,7 @@ const Personaldetails = sequelize.define("personaldetails", {
 
     gst_no: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     profileId: {
         type: DataTypes.INTEGER,

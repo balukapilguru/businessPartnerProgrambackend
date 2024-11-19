@@ -28,6 +28,11 @@ const credentialDetails = sequelize.define(
                 key: 'id',
             },
         },
+        addedBy: {
+            type: DataTypes.STRING,
+            allowNull: true,
+          
+        },
         noOfLogins: {
             type: DataTypes.INTEGER,
         },

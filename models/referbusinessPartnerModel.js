@@ -25,7 +25,7 @@ const ReferbusinessPartnerModel = sequelize.define("referbusinessPartnerModel",{
         }
     },
    
-    businessPartnerId:{
+    parentbusinessPartnerId:{
         type: DataTypes.STRING,
         allowNull: false,
     },
