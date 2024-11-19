@@ -23,6 +23,8 @@ require('./models/rolesAndPermissions/PermissionModule');
 require('./models/rolesAndPermissions/Role');
 require('./models/rolesAndPermissions/RolePermission');
 const app = express();
+app.use(express.urlencoded({ extended: true })); 
+app.use(express.json());
 app.use(cors());
 const PORT = process.env.PORT || 3030;
 

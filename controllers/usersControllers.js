@@ -16,6 +16,7 @@ const jwt = require('jsonwebtoken');
 const upload = require('../middlewares/uploadMiddleware');
 const s3 = require('../utiles/awsConfig');
 const { JWT_SECRET } = require('../utiles/jwtconfig');
+const { encrypt,decrypt} = require('../utiles/encryptAndDecrypt')
 require('dotenv').config();
 
 let tempOtpStorage = [];
@@ -117,7 +118,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
               
                 const businessPartnerID = await generateBusinessPartnerID();
-
+                const generateRefferal = await generateReferralLink(businessPartnerID);
             
                 const user = await bppUsers.create({
                     fullName,
@@ -137,7 +138,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     createdBy: null,
                     noOfLogins: 0,
                     noOfLogouts: 0,
-                    referralLink: '',
+                    referralLink: generateRefferal,
                 }).catch(error => {
                     console.error('Error while saving business partner ID to credentialDetails:', error.message || error);
                     throw new Error('Error while saving business partner ID to credentialDetails');
@@ -198,7 +199,18 @@ const generateBusinessPartnerID = async () => {
     }
 };
 
+const generateReferralLink = async (businessPartnerID) => {
+    const baseURL = 'https://businessPartnerProgram.com';
+    const encrypted = encrypt(businessPartnerID); 
+    const res = encrypted?.encryptedData; 
+    const iv = encrypted?.iv;
+    const encodedKey = encrypted?.key; 
 
+    console.log('iv is ', iv);
+    console.log('key is', encodedKey);
+
+    return `${baseURL}/${iv}/${res}/${encodedKey}`; 
+};
 
 
 
@@ -521,6 +533,77 @@ const changePassword = async (req, res) => {
     } catch (error) {
         console.error('Error during change password', error);
         return res.status(500).json({ message: 'Error during change password', error });
+    }
+};
+
+
+const decryptfun = async (req, res) => {
+    try {
+        const { url } = req.body;
+        console.log('url is', url);
+
+        const parts = url.split('/');
+        const iv = parts[3];
+        const encryptedData = parts[4];
+        const encodedKey = parts[5];
+
+        console.log('iv is', iv);
+        console.log('encryptedData is', encryptedData);
+        console.log('encodedKey is', encodedKey);
+
+        const decryptionKey = Buffer.from(encodedKey, 'hex');
+
+        const decryptedData = decrypt({
+            iv,
+            encryptedData,
+            key: decryptionKey,
+        });
+        console.log('Decrypted Data:', decryptedData);
+
+        const formHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Create Referral</title>
+            </head>
+            <body>
+                <h1>Fill this Form..We will reach you shortly </h1>
+                <form action="http://localhost:3030/api/student/refer-student" method="POST">
+                    <label for="fullname">Full Name:</label>
+                    <input type="text" id="fullname" name="fullname" required><br><br>
+
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required><br><br>
+
+                    <label for="contactnumber">Contact Number:</label>
+                    <input type="text" id="contactnumber" name="contactnumber" required><br><br>
+
+                    <label for="city">City:</label>
+                    <input type="text" id="city" name="city" required><br><br>
+
+                    <label for="courseRequired">Course Required:</label>
+                    <input type="text" id="courseRequired" name="courseRequired" required><br><br>
+                    <!-- Hidden input fields 
+                    <label for="changedBy">Changed By:</label>
+                    <input type="text" id="changedBy" name="changedBy"><br><br>
+
+                    <label for="comment">Comment:</label>
+                    <textarea id="comment" name="comment"></textarea><br><br> -->
+
+                    <!-- Hidden input fields -->
+                    <input type="hidden" id="businessPartnerId" name="businessPartnerId" value="${decryptedData}">
+                    <input type="hidden" id="status" name="status" value="Initial status">
+
+                    <button type="submit">Submit Referral</button>
+                </form>
+            </body>
+            </html>
+        `;
+
+        res.send(formHTML); 
+    } catch (error) {
+        console.error('Error during decryption:', error.message);
+        return res.status(500).json({ error: 'Decryption failed' });
     }
 };
 
@@ -981,8 +1064,8 @@ module.exports = {
     forgotPasswordrecet,
     sendPasswordResetToken,
     personaldetails,
-    updatePersonalAndBankDetails
-
+    updatePersonalAndBankDetails,
+    decryptfun,
 
 };
 
