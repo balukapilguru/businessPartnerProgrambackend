@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Referral</title>
+</head>
+<body>
+    <h1>Fill this Form..We will reach you shortly </h1>
+    <form action="/api/student/refer-student" method="POST">
+        <label for="fullname">Full Name:</label>
+        <input type="text" id="fullname" name="fullname" required><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="contactnumber">Contact Number:</label>
+        <input type="text" id="contactnumber" name="contactnumber" required><br><br>
+
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required><br><br>
+
+        <label for="courseRequired">Course Required:</label>
+        <input type="text" id="courseRequired" name="courseRequired" required><br><br>
+
+        <input type="hidden" id="businessPartnerId" name="businessPartnerId" value="<%= decryptedData %>">
+        <input type="hidden" id="status" name="status" value="Initial status">
+
+        <button type="submit">Submit Referral</button>
+    </form>
+</body>
+</html>

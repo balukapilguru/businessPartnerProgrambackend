@@ -1,7 +1,8 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors')
+const cors = require('cors');
+const path = require('path');
 const sequelize = require('./config/db');
 // const signuprouter = require('./routes/signuprouter');
 const referStudentroute = require('./routes/referStudentroute');
@@ -23,6 +24,8 @@ require('./models/rolesAndPermissions/PermissionModule');
 require('./models/rolesAndPermissions/Role');
 require('./models/rolesAndPermissions/RolePermission');
 const app = express();
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
 app.use(cors());
