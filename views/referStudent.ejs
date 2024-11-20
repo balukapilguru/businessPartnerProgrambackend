@@ -2,29 +2,86 @@
 <html>
 <head>
     <title>Create Referral</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .form-container {
+            width: 400px;
+            margin: auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px #ccc;
+        }
+        .form-container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-    <h1>Fill this Form..We will reach you shortly </h1>
-    <form action="/api/student/refer-student" method="POST">
-        <label for="fullname">Full Name:</label>
-        <input type="text" id="fullname" name="fullname" required><br><br>
+    <div class="form-container">
+        <h1>Fill this Form</h1>
+        <p>We will reach you shortly</p>
+        <form action="/api/student/refer-student" method="POST">
+            <div class="form-group">
+                <label for="fullname">Full Name:</label>
+                <input type="text" id="fullname" name="fullname" required>
+            </div>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br><br>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
 
-        <label for="contactnumber">Contact Number:</label>
-        <input type="text" id="contactnumber" name="contactnumber" required><br><br>
+            <div class="form-group">
+                <label for="contactnumber">Contact Number:</label>
+                <input type="text" id="contactnumber" name="contactnumber" required>
+            </div>
 
-        <label for="city">City:</label>
-        <input type="text" id="city" name="city" required><br><br>
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" required>
+            </div>
 
-        <label for="courseRequired">Course Required:</label>
-        <input type="text" id="courseRequired" name="courseRequired" required><br><br>
+            <div class="form-group">
+                <label for="courseRequired">Course Required:</label>
+                <input type="text" id="courseRequired" name="courseRequired" required>
+            </div>
 
-        <input type="hidden" id="businessPartnerId" name="businessPartnerId" value="<%= decryptedData %>">
-        <input type="hidden" id="status" name="status" value="Initial status">
+            <input type="hidden" id="businessPartnerId" name="businessPartnerId" value="<%= decryptedData %>">
+            <input type="hidden" id="status" name="status" value="Initial status">
 
-        <button type="submit">Submit Referral</button>
-    </form>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
 </body>
 </html>
