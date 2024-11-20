@@ -7,7 +7,7 @@ const sequelize = require('./config/db');
 // const signuprouter = require('./routes/signuprouter');
 const referStudentroute = require('./routes/referStudentroute');
 const referBusinessroute = require('./routes/referBusinessroute');
-const referBusinessPartnerRouter = require('./routes/referBusinessPartnerRouter');
+
 const userSignup = require('./routes/bpp/users');
 
 const role = require('./routes/rolesAndPermissions/Role')
@@ -38,7 +38,7 @@ app.use('/api/auth', userSignup )
 app.use('/api/role', role )
 app.use('/api/student', referStudentroute);
 app.use('/api/business', referBusinessroute);
-app.use('/api/business-p', referBusinessPartnerRouter);
+app.use('/api/business-p', userSignup);
 
 
 sequelize.sync().then(() => {
