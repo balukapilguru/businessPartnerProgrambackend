@@ -32,46 +32,20 @@ const transporter = nodemailer.createTransport({
 });
 
 
-// const sendOtp = async (req, res) => {
-//     const { email, fullName, phonenumber } = req.body;
-
-//     try {
-//         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-//         tempOtpStorage.push({
-//             email,
-//             otp: emailGeneratedOtp,
-//             expiresAt: Date.now() + 2 * 60 * 1000
-//         });
-
-//         await transporter.sendMail({
-//             from: config.mailConfig.mailUser,
-//             to: email,
-//             subject: 'Email Verification OTP',
-//             text: `Your OTP for email verification is: ${emailGeneratedOtp}`
-//         });
-
-//         return res.status(200).json({ message: 'OTP sent to your email for verification' });
-//     } catch (error) {
-//         console.error('Error details:', error);
-//         return res.status(500).json({ message: 'Error during OTP generation or email sending', error });
-//     }
-// };
-
 const sendOtp = async (req, res) => {
     const { email, fullName, phonenumber } = req.body;
 
     try {
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Storing OTP temporarily with expiration time
+       
         tempOtpStorage.push({
             email,
             otp: emailGeneratedOtp,
-            expiresAt: Date.now() + 2 * 60 * 1000 // OTP expires in 2 minutes
+            expiresAt: Date.now() + 2 * 60 * 1000 
         });
 
-        // Sending OTP to the user's email
+ 
         await transporter.sendMail({
             from: config.mailConfig.mailUser,
             to: email,
@@ -79,12 +53,12 @@ const sendOtp = async (req, res) => {
             text: `Your OTP for email verification is: ${emailGeneratedOtp}`
         });
 
-        // Return response with fullName
+    
         return res.status(200).json({
             message: 'OTP sent to your email for verification',
             user: {
-                fullName,  // Include fullName in the response
-                email      // Optionally include email as well
+                fullName,  
+                email      
             }
         });
     } catch (error) {
@@ -243,7 +217,7 @@ const login = async (req, res) => {
             console.error("User not found for email:", email);
             return res.status(400).json({ message: 'User not found' });
         }
-        // const { fullName, email: userEmail, password: userPassword } = user;
+     
         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
 
         if (!credential || !credential.password) {
@@ -280,6 +254,7 @@ const login = async (req, res) => {
                 id: user.id,
                 fullName: user.fullName,
                 businessPartnerID: credential.businessPartnerID,
+                referralLink: credential.referralLink,
                 email,
                 password
             },
@@ -293,208 +268,6 @@ const login = async (req, res) => {
 };
 
 
-
-// const changePassword = async (req, res) => {
-//     const { currentPassword, newPassword } = req.body;
-
-//     try {
-
-//         const userId = req.user.id;
-
-
-//         const user = await bppUsers.findOne({ where: { id: userId } });
-
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-
-
-//         const credentials = await credentialDetails.findOne({ where: { userId: user.id } });
-
-//         if (!credentials) {
-//             return res.status(404).json({ message: 'Credentials not found' });
-//         }
-
-
-//         const isMatch = await bcrypt.compare(currentPassword, credentials.password);
-
-//         if (!isMatch) {
-//             return res.status(401).json({ message: 'Current password is incorrect' });
-//         }
-
-//         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-//         credentials.password = hashedPassword;
-//         await credentials.save();
-
-//         return res.status(200).json({ message: 'Password has been successfully updated' });
-//     } catch (error) {
-//         console.error('Error during change password', error);
-//         return res.status(500).json({ message: 'Error during change password', error });
-//     }
-// };
-
-
-
-
-// const resetPassword = async (req, res) => {
-//     const { token, newPassword } = req.body;
-
-//     try {
-
-//         if (!passwordResetTokens[token]) {
-//             return res.status(400).json({ message: 'Invalid or expired reset token' });
-//         }
-
-//         const { email, timestamp } = passwordResetTokens[token];
-
-
-//         if (Date.now() - timestamp > 3600000) {
-//             delete passwordResetTokens[token];  
-//             return res.status(400).json({ message: 'Reset token has expired' });
-//         }
-
-
-//         const user = await bppUsers.findOne({ where: { email } });
-
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-
-
-//         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-
-//         const credentials = await credentialDetails.findOne({ where: { userId: user.id } });
-
-//         if (!credentials) {
-//             return res.status(404).json({ message: 'Credentials not found' });
-//         }
-
-//         credentials.password = hashedPassword;
-//         await credentials.save();
-
-
-//         delete passwordResetTokens[token];
-
-//         return res.status(200).json({ message: 'Password has been successfully updated' });
-//     } catch (error) {
-//         console.error('Error during reset password', error);
-//         return res.status(500).json({ message: 'Error during reset password', error });
-//     }
-// };
-
-
-
-// const login = async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//         console.log("Received email:", email);
-//         console.log("Received password:", password);
-
-//         const user = await bppUsers.findOne({ where: { email } });
-
-//         if (!user) {
-//             console.error("User not found for email:", email);
-//             return res.status(400).json({ message: 'User not found' });
-//         }
-        
-//         // Fetch user credentials
-//         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
-
-//         if (!credential || !credential.password) {
-//             console.error("No credentials or password found for user ID:", user.id);
-//             return res.status(400).json({ message: 'No credentials found or password missing' });
-//         }
-
-//         console.log("Stored Password Hash (type):", typeof credential.password);
-//         console.log("Stored Password Hash (value):", credential.password);
-
-//         if (typeof credential.password !== 'string') {
-//             console.error("Stored password is not a string:", credential.password);
-//             return res.status(500).json({ message: 'Internal error: stored password is not a valid string' });
-//         }
-
-//         if (typeof password !== 'string') {
-//             console.error("Received password is not a string:", password);
-//             return res.status(400).json({ message: 'Password must be a string' });
-//         }
-
-//         const isPasswordValid = await bcrypt.compare(password, credential.password);
-
-//         if (!isPasswordValid) {
-//             console.error("Invalid password for email:", email);
-//             return res.status(400).json({ message: 'Invalid password' });
-//         }
-
-//         const token = generateToken(user);
-
-//         return res.status(200).json({
-//             message: 'Login successful',
-//             user: {
-//                 fullName: user.fullName, // Send the fullName from the user object
-//                 email: user.email,
-//                 password: user.password // Send the email from the user object
-//             },
-//             token
-//         });
-//     } catch (error) {
-//         console.error("Error during login:", error.message);
-//         console.error("Error stack:", error.stack);
-//         return res.status(500).json({ message: 'Error during login', error: error.message });
-//     }
-// };
-
-
-
-
-
-
-
-
-
-
-// const login = async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//         const user = await bppUsers.findOne({ where: { email } });
-
-//         if (!user) {
-//             return res.status(400).json({ message: 'User not found' });
-//         }
-
-//         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
-
-//         if (!credential || !credential.businessPartnerId) {
-//             console.error("businessPartnerId is missing for userId:", user.id);
-//             return res.status(400).json({ message: 'businessPartnerId is missing' });
-//         }
-
-//         const isPasswordValid = await bcrypt.compare(password, credential.password);
-
-//         if (!isPasswordValid) {
-//             return res.status(400).json({ message: 'Invalid password' });
-//         }
-
-//         const token = generateToken(user);
-
-//         return res.status(200).json({
-//             message: 'Login successful',
-//             user: {
-//                 id: user.id,
-//                 fullName: user.fullName,
-//                 email: user.email
-//             },
-//             businessPartnerId: credential.businessPartnerId,
-//             token
-//         });
-//     } catch (error) {
-//         console.error("Error during login:", error);
-//         return res.status(500).json({ message: 'Error during login', error: error.message });
-//     }
-// };
 
 
 
@@ -613,86 +386,41 @@ const decryptfun = async (req, res) => {
 
 
 const sendMail = require('../utiles/sendmailer'); 
-// const generatePasswordResetToken = () => {
-//     return crypto.randomBytes(8).toString('hex'); // 8 bytes = 16 characters
-// };
-// const sendlinkforForgotPassword = async (req, res) => {
-//     const { email } = req.body;
-
-//     try {
-     
-//         const user = await bppUsers.findOne({ where: { email } });
-
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found with this email.' });
-//         }
-
-       
-//         const resetToken = jwt.sign(
-//             { email: email }, // Payload - email of the user
-//             config.JWT_SECRET, // Secret key (you should have it in .env)
-//             { expiresIn: '1h' } // Token expiration time (1 hour)
-//         );
-
-      
-//         await bppUsers.update(
-//             { passwordResetToken: resetToken, passwordResetExpires: Date.now() + 3600000 }, 
-//             { where: { email: email } }
-//         );
-
-       
-//         const resetLink = `${config.frontendUrl}/auth/resetpassword?token=${resetToken}`;
-
-//         await sendMail({
-//             to: email,
-//             subject: 'Password Reset Request',
-//             html: `
-//                 <p>Click the link below to reset your password:</p>
-//                 <p><a href="${resetLink}">${resetLink}</a></p>
-//             `
-//         });
-
-//         return res.status(200).json({ message: 'Password reset link sent to your email.' });
-//     } catch (error) {
-//         console.error('Error in forgot password:', error);
-//         return res.status(500).json({ message: 'Error processing your request.' });
-//     }
-// };
 
 const sendlinkforForgotPassword = async (req, res) => {
     const { email } = req.body;
 
     try {
-        console.log('Received email:', email); // Log the incoming email
+        console.log('Received email:', email); 
 
-        // Check if the user exists in the database
+     
         const user = await bppUsers.findOne({ where: { email } });
-        console.log('User found:', user); // Log the user details if found
+        console.log('User found:', user); 
 
         if (!user) {
             return res.status(404).json({ message: 'User not found with this email.' });
         }
 
-        // Generate a JWT token for password reset
+       
         const resetToken = jwt.sign(
-            { email: user.email }, // Payload - email of the user
-            config.jwtConfig.jwtSecret, // Secret key (you should have it in .env)
-            { expiresIn: '1h' } // Token expiration time (1 hour)
+            { email: user.email }, 
+            config.jwtConfig.jwtSecret, 
+            { expiresIn: '1h' } 
         );
-        console.log('Generated reset token:', resetToken); // Log the generated token
+        console.log('Generated reset token:', resetToken); 
 
-        // Save the token in the database (optional)
+   
         await bppUsers.update(
             { passwordResetToken: resetToken, passwordResetExpires: Date.now() + 3600000 }, 
             { where: { email: email } }
         );
-        console.log('Token saved to database'); // Log when token is saved
+        console.log('Token saved to database'); 
 
-        // Generate the reset link with the JWT token
+      
         const resetLink = `${config.config.frontendUrl}/auth/resetpassword?token=${resetToken}`;
-        console.log('Reset link:', resetLink); // Log the generated reset link
+        console.log('Reset link:', resetLink); 
 
-        // Send the password reset email with the link
+      
         await sendMail({
             to: email,
             subject: 'Password Reset Request',
@@ -701,11 +429,11 @@ const sendlinkforForgotPassword = async (req, res) => {
                 <p><a href="${resetLink}">${resetLink}</a></p>
             `
         });
-        console.log('Password reset email sent'); // Log when email is sent
+        console.log('Password reset email sent'); 
 
         return res.status(200).json({ message: 'Password reset link sent to your email.' });
     } catch (error) {
-        console.error('Error in forgot password:', error); // Log the full error
+        console.error('Error in forgot password:', error); 
         return res.status(500).json({ message: 'Error processing your request.', error: error.message });
     }
 };
@@ -716,135 +444,12 @@ const sendlinkforForgotPassword = async (req, res) => {
 
 const passwordResetStore = {};
 
-// const forgotPasswordrecet = async (req, res) => {
-//     const { token, newPassword, confirmPassword } = req.body;
-
-//     try {
-//       const user = await credentialDetails.findOne({
-//             where: {
-//                 password: { [Op.ne]: null },  
-//             }
-//         });
-
-//         if (!user || !passwordResetStore[token] || passwordResetStore[token].expires < Date.now()) {
-//             return res.status(400).json({ message: 'Invalid or expired reset token' });
-//         }
-
- 
-//         if (newPassword !== confirmPassword) {
-//             return res.status(400).json({ message: 'Passwords do not match' });
-//         }
-
-//         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-       
-//         await credentialDetails.update(
-//             { password: hashedPassword },
-//             { where: { email: user.email } }
-//         );
-//         delete passwordResetStore[token];
-
-//         return res.status(200).json({ message: 'Password successfully updated' });
-//     } catch (error) {
-//         console.error('Error in resetting password:', error);
-//         return res.status(500).json({ message: 'Error processing your request' });
-//     }
-//     // const { token, newPassword, confirmPassword } = req.body;
- 
-   
-//     // console.log("Received reset password request with data:", { token, newPassword, confirmPassword });
- 
-  
-//     // if (!token || !newPassword || !confirmPassword) {
-//     //     return res.status(400).json({ message: 'Missing fields' });
-//     // }
- 
-//     // if (newPassword !== confirmPassword) {
-//     //     return res.status(400).json({ message: 'Passwords do not match' });
-//     // }
- 
-
-//     // const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
-//     // if (!passwordRegex.test(newPassword)) {
-//     //     return res.status(400).json({
-//     //         message: 'Password should contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-//     //     });
-//     // }
- 
-//     // try {
-       
-//     //     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     //     const userId = decoded.id; // Assuming the token contains user ID
- 
-//     //     // Hash the new password
-//     //     const hashedPassword = await bcrypt.hash(newPassword, 10);
- 
-//     //     // Find the user and update their password
-//     //     const user = await User.findByIdAndUpdate(userId, { password: hashedPassword }, { new: true });
- 
-//     //     if (!user) {
-//     //         return res.status(404).json({ message: 'User not found' });
-//     //     }
- 
-//     //     // Return success response
-//     //     res.status(200).json({ message: 'Password updated successfully' });
-//     // } catch (err) {
-//     //     console.error('Error during password reset:', err);
-//     //     res.status(500).json({ message: 'Internal server error' });
-//     // }
-// };
-
-
-
-
-// const forgotPasswordrecet = async (req, res) => {
-//     const { token, newPassword, confirmPassword } = req.body;
-
-  
-//     console.log('Received token:', token);
-
-//     try {
-    
-//         const tokenData = passwordResetStore[token];
-//         if (!tokenData || tokenData.expires < Date.now()) {
-//             return res.status(400).json({ message: 'Invalid or expired reset token' });
-//         }
-
-   
-//         if (newPassword !== confirmPassword) {
-//             return res.status(400).json({ message: 'Passwords do not match' });
-//         }
-
-    
-//         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-     
-//         const user = await credentialDetails.findOne({ where: { email: tokenData.email } });
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-
-      
-//         await credentialDetails.update(
-//             { password: hashedPassword },
-//             { where: { email: user.email } }
-//         );
-
-       
-//         delete passwordResetStore[token];
-
-//         return res.status(200).json({ message: 'Password successfully updated' });
-//     } catch (error) {
-//         console.error('Error in resetting password:', error);
-//         return res.status(500).json({ message: 'Error processing your request' });
-//     }
-// };
 
 const forgotPasswordrecet = async (req, res) => {
     const { token, newPassword, confirmPassword } = req.body;
 
     try {
-        // Verify the JWT token
+     
         const decoded = jwt.verify(token,  config.jwtConfig.jwtSecret);
 
     
@@ -1055,6 +660,94 @@ const updatePersonalAndBankDetails = async (req, res) => {
   };
   
 
+
+  const addBusinessParent = async (req, res) => {
+    try {
+        const { fullName, email, phonenumber, ParentbusinessPartnerId } = req.body;
+
+        console.log('Request body:', req.body);
+
+       
+        const referringBusinessPartner = await credentialDetails.findOne({
+            where: { businessPartnerID: ParentbusinessPartnerId }
+        });
+        if (!referringBusinessPartner) {
+            return res.status(400).json({ message: 'Invalid parent business partner ID.' });
+        }
+
+        const generatePassword = () => {
+            return crypto.randomBytes(8).toString('hex');
+        };
+
+        const defaultPassword = generatePassword();
+
+      
+        const hashPassword = async (password) => {
+            return await bcrypt.hash(password, 10);
+        };
+
+        const hashedPassword = await hashPassword(defaultPassword);
+
+       
+        const businessPartnerID = await generateBusinessPartnerID();
+        
+        const generateRefferal = await generateReferralLink(businessPartnerID);
+      
+        // const studentStatus = [{
+        //     currentStatus: 'Pending',
+        //     status: 'Pending',
+        //     comment: '',
+        //     timestamp: new Date()
+        // }];
+
+        console.log('Creating new referral with:', {
+            fullName,
+            email,
+            phonenumber,
+            // parentbusinessPartnerId,
+            // status: studentStatus
+        });
+
+      
+        const newUser = await bppUsers.create({
+            fullName,
+            email,
+            phonenumber,
+            // password: hashedPassword,
+            // status: 'active',
+            roleId:1
+        });
+
+       
+        await credentialDetails.create({
+            password: hashedPassword,
+            businessPartnerID: businessPartnerID,
+            userId: newUser.id, 
+            createdBy: referringBusinessPartner.userId, 
+            addedBy: ParentbusinessPartnerId, 
+            noOfLogins: 0,
+            noOfLogouts: 0,
+            referralLink: generateRefferal,
+        });
+
+     
+        await transporter.sendMail({
+            from: config.mailConfig.mailUser,
+            to: email,
+            subject: 'Your Default Password',
+            text: `Congratulations, your referral business account has been created successfully. Your default password is: ${defaultPassword}`
+        });
+
+        res.status(201).json({
+            message: 'Referral business created successfully and email with default password sent.',
+            data: newUser
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred', error });
+    }
+};
+
 module.exports = {
     login,
     sendOtp,
@@ -1066,6 +759,7 @@ module.exports = {
     personaldetails,
     updatePersonalAndBankDetails,
     decryptfun,
+    addBusinessParent
 
 };
 
