@@ -386,6 +386,7 @@ const decryptfun = async (req, res) => {
 
 
 const sendMail = require('../utiles/sendmailer'); 
+// const credentialDetails = require('../models/bpp/credentialDetails');
 
 const sendlinkforForgotPassword = async (req, res) => {
     const { email } = req.body;
@@ -571,14 +572,15 @@ const personaldetails = async (req, res) => {
 };
 const updatePersonalAndBankDetails = async (req, res) => {
     try {
-      // Using multer to handle file uploads if any (for example, for profile image)
+    
       upload.single('image')(req, res, async (err) => {
         if (err) {
           return res.status(400).json({ error: err.message });
         }
   
-        const { id } = req.params; // User ID from the route
+        const { id } = req.params; 
         const {
+            
           address,
           panCardNO,
           contactNo,
@@ -639,15 +641,32 @@ const updatePersonalAndBankDetails = async (req, res) => {
         // If a profile image is uploaded, update the profile image URL
         if (req.file) {
           const updatedProfileImage = await Personaldetails.update(
-            { profileImage: req.file.location },
+            { image: req.uploadedFileKey },
             { where: { profileId: id } }
           );
         }
   
         return res.status(200).json({
           message: 'Personal and bank details updated successfully',
-          personalDetails: personalDetailsUpdate[1],
-          bankDetails: bankDetailsUpdate[1],
+        //   personalDetails: personalDetailsUpdate[1],
+        //   bankDetails: bankDetailsUpdate[1],
+        userId: personalDet.profileId,
+        address,
+        image:req.uploadedFileKey,
+        panCardNO,
+        contactNo,
+        whatapp_no,
+        aadharNo,
+        businessName,
+        cin_no,
+        gst_no,
+        bankName,
+        holder_name,
+        account_no,
+        ifsc_code,
+        branch,
+
+
         });
       });
     } catch (error) {
@@ -659,6 +678,122 @@ const updatePersonalAndBankDetails = async (req, res) => {
     }
   };
   
+
+//   const getPersonalDetailsById = async (req, res) => {
+//     try {
+//         const { id } = req.params; // Extract the ID from the route parameters.
+
+//         // Fetch personal details for the given ID
+//         const personalDetails = await Personaldetails.findOne({
+//             where: { profileId: id }, // Match profileId with the provided ID
+          
+//         });
+//         const userdetails = await bppUsers.findOne({
+//             where: { id: id }, // Match profileId with the provided ID
+          
+//         });
+//         const Credentialsare = await credentialDetails.findOne({
+//             where: { id: id }, // Match profileId with the provided ID
+          
+//         });
+
+
+
+//         // If no details are found, return a 404 error
+//         if (!personalDetails) {
+//             return res.status(404).json({ error: 'No personal details found for the given ID' });
+//         }
+
+//         // Respond with the found details
+//         return res.status(200).json({
+//             message: 'Personal details retrieved successfully',
+//             data: personalDetails,
+//             data:userdetails,
+//             data:Credentialsare
+//         });
+//     } catch (error) {
+//         console.error('Error while retrieving personal details:', error);
+//         return res.status(500).json({
+//             error: 'An error occurred while retrieving personal details',
+//             details: error.message,
+//         });
+//     }
+// };
+
+
+const getPersonalDetailsById = async (req, res) => {
+    try {
+        const { id } = req.params; // Extract the ID from the route parameters.
+
+        // Fetch personal details for the given ID
+        const personalDetails = await Personaldetails.findOne({
+            where: { profileId: id },
+        });
+
+        if (!personalDetails) {
+            return res.status(404).json({ error: 'No personal details found for the given ID' });
+        }
+
+        // Fetch associated user details from bppUsers
+        const userDetails = await bppUsers.findOne({
+            where: { id: personalDetails.profileId },
+            attributes: ['fullName', 'email', 'phonenumber'], // Adjust fields as needed
+        });
+
+        // Fetch associated credential details
+        const credentialDetailsofusers = await credentialDetails.findOne({
+            where: { userId: personalDetails.profileId },
+            attributes: [ 'lastLogin'], // Adjust fields as needed
+        });
+
+        // Fetch associated bank details
+        const bankDetails = await bankDetails.findOne({
+            where: { userId: personalDetails.profileId },
+            attributes: ['bankName', 'holder_name', 'account_no', 'ifsc_code', 'branch'],
+        });
+
+        // Combine all data into a single object
+        const combinedDetails = {
+            personalDetails,
+            userDetails,
+            credentialDetailsofusers,
+            bankDetails,
+        };
+
+        // Respond with the combined details
+        return res.status(200).json({
+            message: 'Personal details retrieved successfully',
+            data: combinedDetails,
+        });
+    } catch (error) {
+        console.error('Error while retrieving personal details:', error);
+        return res.status(500).json({
+            error: 'An error occurred while retrieving personal details',
+            details: error.message,
+        });
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   const addBusinessParent = async (req, res) => {
@@ -759,7 +894,8 @@ module.exports = {
     personaldetails,
     updatePersonalAndBankDetails,
     decryptfun,
-    addBusinessParent
+    addBusinessParent,
+    getPersonalDetailsById 
 
 };
 
