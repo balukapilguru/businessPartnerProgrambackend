@@ -17,6 +17,10 @@ const {DataTypes} = require("sequelize")
         },
         roleId:{
           type: DataTypes.INTEGER,
+          references:{
+            model: 'Roles',
+            key: 'id',
+        },
         }
       },
       {
@@ -53,7 +57,10 @@ const {DataTypes} = require("sequelize")
         foreignKey:'changedBy',
         
 
-      })
+      });
+      bppUsers.belongsTo(models.Role, {
+        foreignKey: 'roleId',
+    });
     };
   
 module.exports = bppUsers
