@@ -1,7 +1,7 @@
 
 const express = require('express');
 const router = express.Router();
-const referStudentController = require('../controllers/referStudentcontroller');
+const referStudentController = require('../controllers/referStudent');
 
 
 router.post('/refer-student', referStudentController.createReferral);

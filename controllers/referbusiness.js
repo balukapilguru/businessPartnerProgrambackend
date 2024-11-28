@@ -1,5 +1,5 @@
 
-const referBusinessModel = require('../models/referBusinessModel');
+const referBusinessModel = require('../models/referBusiness');
 const Sequelize = require("sequelize")
 
 

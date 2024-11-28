@@ -5,8 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const sequelize = require('./config/db');
 // const signuprouter = require('./routes/signuprouter');
-const referStudentroute = require('./routes/referStudentroute');
-const referBusinessroute = require('./routes/referBusinessroute');
+const referStudentroute = require('./routes/referStudent');
+const referBusinessroute = require('./routes/referBusiness');
 
 const userSignup = require('./routes/bpp/users');
 
@@ -30,7 +30,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
 app.use(cors());
-const PORT = process.env.PORT || 3030;
+const PORT = process.env.PORT || 3050;
 
 app.use(bodyParser.json());
 

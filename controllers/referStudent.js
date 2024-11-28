@@ -1,5 +1,5 @@
 
-const referStudentmodel = require('../models/referStudentmodel');
+const referStudentmodel = require('../models/referStudent');
 const { Op ,Sequelize} = require("sequelize")
 // const { Op } = require('sequelize'); 
 
