@@ -42,7 +42,7 @@ const sendOtp = async (req, res) => {
         tempOtpStorage.push({
             email,
             otp: emailGeneratedOtp,
-            expiresAt: Date.now() + 2 * 60 * 1000 
+            expiresAt: Date.now() + 6 * 60 * 1000 
         });
 
  
@@ -68,94 +68,72 @@ const sendOtp = async (req, res) => {
 };
 
 
+
+
+
 const verifyOtpAndRegisterUser = async (req, res) => {
     const { email, emailOtp, fullName, phonenumber } = req.body;
 
     try {
-        const storedOtpData = tempOtpStorage.find((otpData) => otpData.email === email);
+        const storedOtpData = tempOtpStorage.find(otpData => otpData.email === email);
 
         if (storedOtpData) {
             if (storedOtpData.otp === emailOtp && Date.now() < storedOtpData.expiresAt) {
-                
-                tempOtpStorage = tempOtpStorage.filter((otpData) => otpData.email !== email);
-
-              
-                const generatePassword = () => crypto.randomBytes(8).toString('hex');
-                const hashPassword = async (password) => await bcrypt.hash(password, 10);
-
              
+                tempOtpStorage = tempOtpStorage.filter(otpData => otpData.email !== email);
+
+            
+                const generatePassword = () => {
+                    return crypto.randomBytes(8).toString('hex'); 
+                };
+
+                const hashPassword = async (password) => {
+                    return await bcrypt.hash(password, 10);
+                };
+
                 const defaultPassword = generatePassword();
                 const hashedPassword = await hashPassword(defaultPassword);
 
-                
+              
                 const businessPartnerID = await generateBusinessPartnerID();
                 const generateRefferal = await generateReferralLink(businessPartnerID);
-
-               
-                const existingUser = await bppUsers.findOne({ where: { email } });
-
-                if (existingUser) {
-                   
-                    const [_, updatedRows] = await credentialDetails.increment('noOfLogins', {
-                        by: 1,
-                        where: { userId: existingUser.id },
-                        returning: true, 
-                    });
-
-                    const updatedCredential = updatedRows[0];
-
-                    return res.status(200).json({
-                        message: 'Login successful. Login count incremented.',
-                        user: {
-                            email,
-                            fullName: existingUser.fullName,
-                            noOfLogins: updatedCredential.noOfLogins,
-                        },
-                    });
-                }
-
-               
+                console.log('Link is',generateRefferal);
                 const user = await bppUsers.create({
                     fullName,
                     email,
                     phonenumber,
-                    roleId: 1,
-                }).catch((error) => {
-                    console.error('Error while saving user to bppUsers table:', error.message || error);
-                    throw new Error('Error while saving user to bppUsers table');
+                    roleId: 1
+                }).catch(error => {
+                    console.error('Error while saving user to the bppUsers table:', error.message || error);
+                    throw new Error('Error while saving user to the bppUsers table');
                 });
 
-                
-                const newCredential = await credentialDetails.create({
+             
+                await credentialDetails.create({
                     password: hashedPassword,
                     businessPartnerID,
                     userId: user.id,
                     createdBy: null,
-                    noOfLogins: 1, 
-                    noOfLogouts: 0, 
+                    noOfLogins: 0,
+                    noOfLogouts: 0,
                     referralLink: generateRefferal,
-                }).catch((error) => {
-                    console.error('Error while saving credentials to credentialDetails table:', error.message || error);
-                    throw new Error('Error while saving credentials to credentialDetails table');
+                }).catch(error => {
+                    console.error('Error while saving business partner ID to credentialDetails:', error.message || error);
+                    throw new Error('Error while saving business partner ID to credentialDetails');
                 });
 
-                
+           
                 await transporter.sendMail({
                     from: config.mailConfig.mailUser,
                     to: email,
                     subject: 'Verification Successful',
-                    text: `Congratulations, your email has been successfully verified! Your default password is: ${defaultPassword}`,
+                    text: `Congratulations, your email has been successfully verified! Your default password is: ${defaultPassword}`
                 });
 
                 return res.status(200).json({
                     message: 'User registered and verified successfully. Check your email for the default password.',
-                    user: {
-                        email,
-                        fullName,
-                        businessPartnerID,
-                        noOfLogins: newCredential.noOfLogins,
-                    },
-                    redirectUrl: '/login',
+                    user: { email, fullName, businessPartnerID },
+                    redirectUrl: '/login'
                 });
             } else {
                 return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -167,7 +145,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
         console.error('Error during OTP verification or user registration:', error.message || error);
         return res.status(500).json({
             message: 'Error during OTP verification or user registration',
-            error: error.message || 'Unknown error',
+            error: error.message || 'Unknown error'
         });
     }
 };
@@ -234,68 +212,6 @@ const generateToken = (user) => {
     return token;
 };
 
-// const login = async (req, res) => {
-//     const { email, password, fullName, } = req.body;
-
-//     try {
-//         console.log("Received email:", email);
-//         console.log("Received password:", password);
-
-//         const user = await bppUsers.findOne({ where: { email } });
-
-//         if (!user) {
-//             console.error("User not found for email:", email);
-//             return res.status(400).json({ message: 'User not found' });
-//         }
-     
-//         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
-
-//         if (!credential || !credential.password) {
-//             console.error("No credentials or password found for user ID:", user.id);
-//             return res.status(400).json({ message: 'No credentials found or password missing' });
-//         }
-
-//         console.log("Stored Password Hash (type):", typeof credential.password);
-//         console.log("Stored Password Hash (value):", credential.password);
-
-
-//         if (typeof credential.password !== 'string') {
-//             console.error("Stored password is not a string:", credential.password);
-//             return res.status(500).json({ message: 'Internal error: stored password is not a valid string' });
-//         }
-
-
-//         if (typeof password !== 'string') {
-//             console.error("Received password is not a string:", password);
-//             return res.status(400).json({ message: 'Password must be a string' });
-//         }
-
-//         const isPasswordValid = await bcrypt.compare(password, credential.password);
-
-//         if (!isPasswordValid) {
-//             console.error("Invalid password for email:", email);
-//             return res.status(400).json({ message: 'Invalid password' });
-//         }
-//         const token = generateToken(user);
-
-//         return res.status(200).json({
-//             message: 'Login successful',
-//             user: {
-//                 id: user.id,
-//                 fullName: user.fullName,
-//                 businessPartnerID: credential.businessPartnerID,
-//                 referralLink: credential.referralLink,
-//                 email,
-               
-//             },
-//             token
-//         });
-//     } catch (error) {
-//         console.error("Error during login:", error.message);
-//         console.error("Error stack:", error.stack);
-//         return res.status(500).json({ message: 'Error during login', error: error.message });
-//     }
-// };
 
 const login = async (req, res) => {
     const { email, password } = req.body;
