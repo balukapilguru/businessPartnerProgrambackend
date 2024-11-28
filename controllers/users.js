@@ -58,7 +58,7 @@ const sendOtp = async (req, res) => {
             message: 'OTP sent to your email for verification',
             user: {
                 fullName,  
-                email      
+                email,phonenumber      
             }
         });
     } catch (error) {
@@ -132,7 +132,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
                 return res.status(200).json({
                     message: 'User registered and verified successfully. Check your email for the default password.',
-                    user: { email, fullName, businessPartnerID },
+                    user: { email, fullName, businessPartnerID,phonenumber },
                     redirectUrl: '/login'
                 });
             } else {
@@ -214,7 +214,7 @@ const generateToken = (user) => {
 
 
 const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password,phonenumber } = req.body;
 
     try {
         console.log("Received email:", email);
@@ -256,6 +256,7 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 fullName: user.fullName,
+                phonenumber:user.phonenumber,
                 businessPartnerID: updatedCredential.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
                 email,
@@ -701,26 +702,6 @@ const getPersonalDetailsById = async (req, res) => {
         });
     }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
