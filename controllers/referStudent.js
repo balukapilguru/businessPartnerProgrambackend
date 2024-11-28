@@ -1,50 +1,111 @@
 
 const referStudentmodel = require('../models/referStudent');
-const { Op ,Sequelize} = require("sequelize")
-// const { Op } = require('sequelize'); 
+const { Op } = require("sequelize")
+const statusModel = require('../models/status/status'); 
+const sequelize = require('../config/db'); 
+const bppusers = require('../models/bpp/users');
+
+
 
 const createReferral = async (req, res) => {
     try {
-        const { fullname, email, contactnumber, city, courseRequired, changedBy, status, comment, businessPartnerId } = req.body;
+        const { fullname, email, phonenumber:contactnumber, city, courseRequired, changedBy, comment, businessPartnerId } = req.body;
+
+        // Check if email already exists
         const existingReferralByEmail = await referStudentmodel.findOne({ where: { email } });
         if (existingReferralByEmail) {
             return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
         }
- 
-        const studentStatus = [{
-            currentStatus: status,
-            previousStatus: null, 
-            changedBy: changedBy || '',
-            comment: comment || 'Initial status',
-            timestamp: new Date()
-        }];
- 
-   
+
+        // Create the new referral
         const newReferral = await referStudentmodel.create({
             fullname,
             email,
-            contactnumber,
+            phonenumber,
             city,
             courseRequired,
-            comment,
-            changedBy,
-            status: studentStatus,
-            businessPartnerId, 
+            businessPartnerId,
         });
- 
-       
-        res.status(201).json({ message: 'Referral created successfully', data: newReferral });
+
+        // Create the initial status entry in the status table
+        const newStatus = await statusModel.create({
+            time: new Date(),
+            changedBy: changedBy || null,
+            currentStatus: 'new lead',
+            referStudentId: newReferral.id,
+            comment:'just created lead',
+        });
+
+        // Fetch the referral with associated statuses
+        // const referralWithStatus = await referStudentmodel.findOne({
+        //     where: { id: newReferral.id },
+        //     include: [{
+        //         model: statusModel,
+        //         as: 'statuses',
+        //     }],
+        // });
+
+        // Return the referral along with its associated status
+        res.status(201).json({
+            message: 'Referral created successfully',
+            // data: {
+            //     referral: referralWithStatus,
+            //     // status: referralWithStatus.statuses
+            // }
+        });
     } catch (error) {
         console.error(error);
- 
-      
-        if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'email') {
-            return res.status(400).json({ message: 'Email already exists. Please use a different email.' });
-        }
- 
         res.status(500).json({ message: 'An error occurred', error: error.message });
     }
 };
+
+
+
+
+
+
+// const createReferral = async (req, res) => {
+//     try {
+//         const { fullname, email, contactnumber, city, courseRequired, changedBy, status, comment, businessPartnerId } = req.body;
+//         const existingReferralByEmail = await referStudentmodel.findOne({ where: { email } });
+//         if (existingReferralByEmail) {
+//             return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
+//         }
+ 
+//         const studentStatus = [{
+//             currentStatus: status,
+//             previousStatus: null, 
+//             changedBy: changedBy || '',
+//             comment: comment || 'Initial status',
+//             timestamp: new Date()
+//         }];
+ 
+   
+//         const newReferral = await referStudentmodel.create({
+//             fullname,
+//             email,
+//             contactnumber,
+//             city,
+//             courseRequired,
+//             comment,
+//             changedBy,
+//             status: studentStatus,
+//             businessPartnerId, 
+//         });
+ 
+       
+//         res.status(201).json({ message: 'Referral created successfully', data: newReferral });
+//     } catch (error) {
+//         console.error(error);
+ 
+      
+//         if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'email') {
+//             return res.status(400).json({ message: 'Email already exists. Please use a different email.' });
+//         }
+ 
+//         res.status(500).json({ message: 'An error occurred', error: error.message });
+//     }
+// };
 
 // const getReferrals = async (req, res) => {
 //     try {

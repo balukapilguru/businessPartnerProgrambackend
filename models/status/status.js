@@ -1,6 +1,6 @@
 const sequelize = require("../../config/db")
 const {DataTypes} = require("sequelize")
-
+ 
 const status = sequelize.define('status',{
     time:{
         type: DataTypes.DATE
@@ -14,8 +14,8 @@ const status = sequelize.define('status',{
     },
     currentStatus:{
         type:DataTypes.STRING,
-      
-
+     
+ 
     },
     referStudentId:{
         type:DataTypes.INTEGER,
@@ -27,6 +27,12 @@ const status = sequelize.define('status',{
     comment:{
         type:DataTypes.STRING
     }
-
+ 
 })
+status.associate = (models) =>{
+    status.belongsTo(models.referstudentmodel,{
+        foreignKey:'referStudentId'
+    })
+}
 module.exports = status
+ 

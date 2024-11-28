@@ -34,10 +34,6 @@ const ReferBusinessModel = sequelize.define("referBusinessModel",{
         allowNull: false
 
     },
-    comment: {
-        type: DataTypes.STRING,
-        
-    },
     source:{
         type: DataTypes.STRING,  
     },

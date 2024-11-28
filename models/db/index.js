@@ -34,8 +34,5 @@ Permission.belongsToMany(Module, { through: db.PermissionModule });
 Module.belongsToMany(Permission, { through: db.PermissionModule });
 
 
-
-
-
 module.exports = db;
 
