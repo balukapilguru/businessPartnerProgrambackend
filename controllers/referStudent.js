@@ -8,7 +8,7 @@ const statusModel = require('../models/status/status');
 
 const createReferral = async (req, res) => {
     try {
-        const { fullname, email, phonenumber:contactnumber, city, courseRequired, changedBy, comment, businessPartnerId } = req.body;
+        const { fullname, email, phonenumber:contactnumber, city, courseRequired, changedBy, businessPartnerId } = req.body;
 
         
         const existingReferralByEmail = await referStudentmodel.findOne({ where: { email } });
@@ -63,181 +63,6 @@ const createReferral = async (req, res) => {
 
 
 
-// const createReferral = async (req, res) => {
-//     try {
-//         const { fullname, email, contactnumber, city, courseRequired, changedBy, status, comment, businessPartnerId } = req.body;
-//         const existingReferralByEmail = await referStudentmodel.findOne({ where: { email } });
-//         if (existingReferralByEmail) {
-//             return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
-//         }
- 
-//         const studentStatus = [{
-//             currentStatus: status,
-//             previousStatus: null, 
-//             changedBy: changedBy || '',
-//             comment: comment || 'Initial status',
-//             timestamp: new Date()
-//         }];
- 
-   
-//         const newReferral = await referStudentmodel.create({
-//             fullname,
-//             email,
-//             contactnumber,
-//             city,
-//             courseRequired,
-//             comment,
-//             changedBy,
-//             status: studentStatus,
-//             businessPartnerId, 
-//         });
- 
-       
-//         res.status(201).json({ message: 'Referral created successfully', data: newReferral });
-//     } catch (error) {
-//         console.error(error);
- 
-      
-//         if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'email') {
-//             return res.status(400).json({ message: 'Email already exists. Please use a different email.' });
-//         }
- 
-//         res.status(500).json({ message: 'An error occurred', error: error.message });
-//     }
-// };
-
-// const getReferrals = async (req, res) => {
-//     try {
-//         const {
-//             page = 1,
-//             pageSize = 10,
-//             searchTerm = '',
-//             courseRequired = '',
-//             status = '',
-//             businessPartnerId = '',
-//         } = req.query;
-
-//         const pageNumber = parseInt(page, 10);
-//         const size = pageSize === 'all' ? Number.MAX_SAFE_INTEGER : parseInt(pageSize, 10);  // If pageSize is 'all', return all records.
-
-//         const offset = pageSize === 'all' ? 0 : (pageNumber - 1) * size;
-
-//         const whereClause = {
-//             [Sequelize.Op.and]: [
-//                 {
-//                     [Sequelize.Op.or]: [
-//                         { fullname: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { email: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { contactnumber: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { courseRequired: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { city: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                     ],
-//                 },
-//                 ...(courseRequired ? [{ courseRequired: { [Sequelize.Op.like]: `%${courseRequired}%` } }] : []),
-//                 ...(status ? [{ status: { [Sequelize.Op.like]: `%${status}%` } }] : []),
-//                 ...(businessPartnerId ? [{ businessPartnerId }] : []),
-//             ],
-//         };
-
-//         const referrals = await referStudentmodel.findAndCountAll({
-//             where: whereClause,
-//             order: [['id', 'DESC']],
-//             limit: size,
-//             offset: offset,
-//             attributes: ["id", 'fullname', 'email', 'contactnumber', 'city', 'courseRequired', 'status', 'businessPartnerId', "createdAt"],
-//         });
-
-//         const totalPages = pageSize === 'all' ? 1 : Math.ceil(referrals.count / size);
-
-//         res.status(200).json({
-//             message: 'Referrals retrieved successfully',
-//             data: referrals.rows,
-//             pagination: pageSize === 'all' ? {} : {
-//                 totalRecords: referrals.count,
-//                 totalPages: totalPages,
-//                 currentPage: pageNumber,
-//                 pageSize: size,
-//             },
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: 'An error occurred', error });
-//     }
-// };
-
-// const getReferrals = async (req, res) => {
-//     try {
-//         const {
-//             page = 1,
-//             pageSize = 10,
-//             searchTerm = '',
-//             courseRequired = '',
-//             status = '',
-//             businessPartnerId = '',
-//         } = req.query;
-
-//         const pageNumber = parseInt(page, 10);
-//         const size = pageSize === 'all' ? Number.MAX_SAFE_INTEGER : parseInt(pageSize, 10); // If pageSize is 'all', return all records.
-//         const offset = pageSize === 'all' ? 0 : (pageNumber - 1) * size;
-
-//         const whereClause = {
-//             [Sequelize.Op.and]: [
-//                 {
-//                     [Sequelize.Op.or]: [
-//                         { fullname: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { email: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { contactnumber: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                         { courseRequired: { [Sequelize.Op.like]: `%${courseRequired}%` } },
-//                         { city: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-//                     ],
-//                 },
-//                 ...(courseRequired ? [{ courseRequired: { [Sequelize.Op.like]: `%${courseRequired}%` } }] : []),
-//                 ...(status ? [{ status: { [Sequelize.Op.like]: `%${status}%` } }] : []),
-//                 ...(businessPartnerId ? [{ businessPartnerId }] : []),
-//             ],
-//         };
-
-//         const referrals = await referStudentmodel.findAndCountAll({
-//             where: whereClause,
-//             order: [
-//                 ['id', 'DESC'],
-//                 ['status', 'DESC'], 
-//                 // ['updatedAt', 'DESC'], 
-                 
-//             ],
-//             limit: size,
-//             offset: offset,
-//             attributes: [
-//                 "id", 
-//                 'fullname', 
-//                 'email', 
-//                 'contactnumber', 
-//                 'city', 
-//                 'courseRequired', 
-//                 'status', 
-//                 'businessPartnerId', 
-//                 "createdAt"
-//             ],
-//         });
-
-//         const totalPages = pageSize === 'all' ? 1 : Math.ceil(referrals.count / size);
-
-//         res.status(200).json({
-//             message: 'Referrals retrieved successfully',
-//             data: referrals.rows,
-//             pagination: pageSize === 'all' ? {} : {
-//                 totalRecords: referrals.count,
-//                 totalPages: totalPages,
-//                 currentPage: pageNumber,
-//                 pageSize: size,
-//             },
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: 'An error occurred', error });
-//     }
-// };
-
 
 
 
@@ -252,17 +77,17 @@ const getReferrals = async (req, res) => {
             courseRequired='',
           
             businessPartnerId = '',
-            filterField = '',  // The field to apply additional filters on
-            filterValue = '',  // The value to filter against
-            startDate = '',    // For date range filters
-            endDate = '',      // For date range filters
+            filterField = '',  
+            filterValue = '',  
+            startDate = '',    
+            endDate = '',     
         } = req.query;
 
         const pageNumber = parseInt(page, 10);
         const size = pageSize === 'all' ? Number.MAX_SAFE_INTEGER : parseInt(pageSize, 10);
         const offset = pageSize === 'all' ? 0 : (pageNumber - 1) * size;
 
-        // Build search condition
+      
         const searchCondition = searchTerm ? {
             [Sequelize.Op.and]: [
                                 {
@@ -291,14 +116,14 @@ const getReferrals = async (req, res) => {
             }
         } : {};
 
-        // Handle date range filter if provided
+       
         const dateFilter = startDate && endDate ? {
             createdAt: {
                 [Op.between]: [new Date(startDate), new Date(endDate)]
             }
         } : {};
 
-        // Combine all filters into whereClause
+       
         const whereClause = {
             [Op.and]: [
                 searchCondition,
@@ -309,7 +134,7 @@ const getReferrals = async (req, res) => {
             ]
         };
 
-        // Fetch referrals with the applied filters
+   
         const { count: referralCount, rows: referrals } = await  referStudentmodel.findAndCountAll({
             where: whereClause,
             limit: size,
@@ -517,21 +342,6 @@ const getDashboardStats = async (req, res) => {
 };
 
 
-// const getFilteredStudents = async () => {
-//     try {
-//         const students = await referStudentmodel.findAll({
-//             where: Sequelize.where(
-//                 Sequelize.json('status.currentStatus'),
-//                 Op.eq,
-//                 'enroll'
-//             )
-//         });
 
-//         console.log('Filtered students:', students);
-//     } catch (error) {
-//         console.error('Error fetching filtered students:', error);
-//     }
-// };
-  
 
 module.exports = { createReferral, getReferrals, getReferralsByBusinessId, getDashboardStats , updateReferralStatus }
