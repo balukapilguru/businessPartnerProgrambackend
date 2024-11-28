@@ -7,7 +7,7 @@ const sequelize = require('./config/db');
 // const signuprouter = require('./routes/signuprouter');
 const referStudentroute = require('./routes/referStudent');
 const referBusinessroute = require('./routes/referBusiness');
-
+const status = require('./routes/status')
 const userSignup = require('./routes/bpp/users');
 
 const role = require('./routes/rolesAndPermissions/Role')
@@ -40,7 +40,7 @@ app.use('/api/role', role )
 app.use('/api/student', referStudentroute);
 app.use('/api/business', referBusinessroute);
 app.use('/api/business-p', userSignup);
-
+app.use('/status',status)
 
 sequelize.sync().then(() => {
   console.log("Database synced, tables created.");
