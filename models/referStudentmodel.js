@@ -17,7 +17,7 @@ const ReferStudentmodel = sequelize.define("referStudentmodel",{
           isEmail: true
         }
     },
-    contactnumber: {
+    phonenumber: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
@@ -64,6 +64,9 @@ const ReferStudentmodel = sequelize.define("referStudentmodel",{
     ReferStudentmodel.belongsTo(models.bppUsers,{
         foreignKey: 'assignedTo',
         as: 'assignedUser'
+    }),
+    ReferStudentmodel.hasMany(models.status,{
+     foreignKey:'referStudentId'
     })
   }
 

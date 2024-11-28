@@ -257,7 +257,7 @@ const login = async (req, res) => {
                 businessPartnerID: credential.businessPartnerID,
                 referralLink: credential.referralLink,
                 email,
-                password
+               
             },
             token
         });
@@ -640,47 +640,6 @@ const updatePersonalAndBankDetails = async (req, res) => {
   };
   
 
-//   const getPersonalDetailsById = async (req, res) => {
-//     try {
-//         const { id } = req.params; // Extract the ID from the route parameters.
-
-//         // Fetch personal details for the given ID
-//         const personalDetails = await Personaldetails.findOne({
-//             where: { profileId: id }, // Match profileId with the provided ID
-          
-//         });
-//         const userdetails = await bppUsers.findOne({
-//             where: { id: id }, // Match profileId with the provided ID
-          
-//         });
-//         const Credentialsare = await credentialDetails.findOne({
-//             where: { id: id }, // Match profileId with the provided ID
-          
-//         });
-
-
-
-//         // If no details are found, return a 404 error
-//         if (!personalDetails) {
-//             return res.status(404).json({ error: 'No personal details found for the given ID' });
-//         }
-
-//         // Respond with the found details
-//         return res.status(200).json({
-//             message: 'Personal details retrieved successfully',
-//             data: personalDetails,
-//             data:userdetails,
-//             data:Credentialsare
-//         });
-//     } catch (error) {
-//         console.error('Error while retrieving personal details:', error);
-//         return res.status(500).json({
-//             error: 'An error occurred while retrieving personal details',
-//             details: error.message,
-//         });
-//     }
-// };
-
 
 const getPersonalDetailsById = async (req, res) => {
     try {
@@ -704,11 +663,18 @@ const getPersonalDetailsById = async (req, res) => {
         // Fetch associated credential details
         const credentialDetailsofusers = await credentialDetails.findOne({
             where: { userId: personalDetails.profileId },
-            attributes: [ 'lastLogin'], // Adjust fields as needed
+            attributes: [
+                'userId',
+                'createdBy',
+                'addedBy',
+                'noOfLogins',
+                'referralLink',
+                'businessPartnerID',
+            ], // Adjust fields as needed
         });
 
         // Fetch associated bank details
-        const bankDetails = await bankDetails.findOne({
+        const bankDetailsRecord = await bankDetails.findOne({
             where: { userId: personalDetails.profileId },
             attributes: ['bankName', 'holder_name', 'account_no', 'ifsc_code', 'branch'],
         });
@@ -718,7 +684,7 @@ const getPersonalDetailsById = async (req, res) => {
             personalDetails,
             userDetails,
             credentialDetailsofusers,
-            bankDetails,
+            bankDetails: bankDetailsRecord, // Rename variable here to match the output structure
         };
 
         // Respond with the combined details

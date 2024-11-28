@@ -49,6 +49,11 @@ const {DataTypes} = require("sequelize")
         onDelete: 'CASCADE',
         as: 'changesMade',
       });
+      bppUsers.hasMany(models.status,{
+        foreignKey:'changedBy',
+        
+
+      })
     };
   
 module.exports = bppUsers

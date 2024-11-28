@@ -58,6 +58,10 @@ const statements = sequelize.define(
             },
             onDelete: 'CASCADE',
         },
+        amount:{
+            type:DataTypes.INTEGER,
+
+        }
     },
     {
         freezeTableName: true,
@@ -65,30 +69,30 @@ const statements = sequelize.define(
     }
 );
 
-// Correcting associations
+
 statements.associate = (models) => {
-    // Associate with bppUsers for userId
+  
     statements.belongsTo(models.bppUsers, {
         foreignKey: 'userId',
         as: 'user',
         onDelete: 'CASCADE',
     });
 
-    // Associate with bppUsers for changedBy with alias
+  
     statements.belongsTo(models.bppUsers, {
         foreignKey: 'changedBy',
         as: 'changer',
         onDelete: 'CASCADE',
     });
 
-    // Associate with referStudentmodel
+ 
     statements.belongsTo(models.referStudentmodel, {
         foreignKey: 'studentId',
         as: 'student',
         onDelete: 'CASCADE',
     });
 
-    // Associate with referBusinessModel
+   
     statements.belongsTo(models.referBusinessModel, {
         foreignKey: 'businessId',
         as: 'business',
