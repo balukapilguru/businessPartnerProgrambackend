@@ -17,7 +17,7 @@ require('./models/bpp/bankdetails');
 // require('./models/referbusinessPartnerModel');
 require('./models/bpp/statements'); 
 require('./models/bpp/users'); 
-require('./models/status/status'); 
+// require('./models/status/status'); 
 require('./models/bpp/personaldetails'); 
 require('./models/rolesAndPermissions/Module'); 
 require('./models/rolesAndPermissions/Permission');

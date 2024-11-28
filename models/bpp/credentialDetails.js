@@ -35,9 +35,11 @@ const credentialDetails = sequelize.define(
         },
         noOfLogins: {
             type: DataTypes.INTEGER,
+            
         },
         noOfLogouts: {
             type: DataTypes.INTEGER,
+        
         },
         referralLink: {
             type: DataTypes.STRING,
