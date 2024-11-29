@@ -29,10 +29,11 @@ const status = sequelize.define('status',{
     }
  
 })
-status.associate = (models) =>{
-    status.belongsTo(models.referstudentmodel,{
-        foreignKey:'referStudentId'
-    })
-}
+// status.associate = (models) =>{
+//     status.belongsTo(models.referstudentmodel,{
+//         foreignKey:'referStudentId',
+       
+//     })
+// }
 module.exports = status
  

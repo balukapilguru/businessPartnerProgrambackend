@@ -4,7 +4,7 @@ const sequelize = require("../config/db");
 
 
 
-const ReferStudentmodel = sequelize.define("referStudentmodel",{
+const ReferStudentmodel = sequelize.define("referStudentmodel", {
 
     fullname: {
         type: DataTypes.STRING,
@@ -14,7 +14,7 @@ const ReferStudentmodel = sequelize.define("referStudentmodel",{
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          isEmail: true
+            isEmail: true
         }
     },
     phonenumber: {
@@ -24,51 +24,53 @@ const ReferStudentmodel = sequelize.define("referStudentmodel",{
             is: /^\d{10}$/
         }
     },
-    city:{
+    city: {
         type: DataTypes.STRING,
         allowNull: false
     },
- 
-    courseRequired:{
+
+    courseRequired: {
         type: DataTypes.STRING,
         allowNull: false
 
     },
-    source:{
-        type: DataTypes.STRING,  
+    source: {
+        type: DataTypes.STRING,
     },
-     status:{
+    status: {
         type: DataTypes.JSON,
-        defaultValue:[]
+        defaultValue: []
     },
-     businessPartnerId:{
+    businessPartnerId: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    assignedTo:{
+    assignedTo: {
         type: DataTypes.INTEGER,
-        allowNull:true,
-        references:{
+        allowNull: true,
+        references: {
             model: 'bppUsers',
-            key:'id'
+            key: 'id'
         },
         onDelete: 'CASCADE'
     }
-},{
+}, {
 
     freezeTableName: true,
-        timestamps: true,
+    timestamps: true,
 }
 );
-  ReferStudentmodel.associate = (models) =>{
-    ReferStudentmodel.belongsTo(models.bppUsers,{
+ReferStudentmodel.associate = (models) => {
+    ReferStudentmodel.belongsTo(models.bppUsers, {
         foreignKey: 'assignedTo',
         as: 'assignedUser'
     }),
-    ReferStudentmodel.hasMany(models.status,{
-     foreignKey:'referStudentId'
-    })
-  }
+        console.log(models)
+    // ReferStudentmodel.hasMany(models.status, {
+    //     foreignKey: 'referStudentId',
+       
+    // })
+}
 
 
 

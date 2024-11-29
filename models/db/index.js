@@ -1,38 +1,38 @@
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require("../../config/db"); // Update this path if necessary
 
+// Initialize the database object
+const db = {};
 
-const { DataTypes } = require('sequelize');
-const sequelize = require("../../config/db");
-
-const db = {}
-
+// Attach Sequelize instance to the database object
 db.sequelize = sequelize;
 
-
-
-
+// Import models
 db.Role = require('../rolesAndPermissions/Role')(sequelize, DataTypes);
 db.Module = require('../rolesAndPermissions/Module')(sequelize, DataTypes);
 db.Permission = require('../rolesAndPermissions/Permission')(sequelize, DataTypes);
 db.RoleModule = require('../rolesAndPermissions/RolePermission')(sequelize, DataTypes);
 db.PermissionModule = require('../rolesAndPermissions/PermissionModule')(sequelize, DataTypes);
 
+db.ReferStudentmodel = require('../referStudent'); // Refer Student model
+db.Status = require('../status/status'); // Status model
 
+// Define associations for roles and permissions
+db.Role.belongsToMany(db.Permission, { through: 'RolePermission', as: 'permissions' });
+db.Permission.belongsToMany(db.Role, { through: 'RolePermission', as: 'roles' });
 
-// Define associations
-const Role = db.Role;
-const Module = db.Module;
-const Permission = db.Permission
-const PermissionModule = db.PermissionModule
+db.Permission.belongsToMany(db.Module, { through: db.PermissionModule, as: 'modules' });
+db.Module.belongsToMany(db.Permission, { through: db.PermissionModule, as: 'permissions' });
 
+// Define associations for ReferStudentmodel and Status
+db.ReferStudentmodel.hasMany(db.Status, {
+    foreignKey: 'referStudentId',
+    as: 'statuses',
+});
+db.Status.belongsTo(db.ReferStudentmodel, {
+    foreignKey: 'referStudentId',
+    as: 'referStudent',
+});
 
-// Define associations
-Role.belongsToMany(Permission, { through: 'RolePermission' });
-Permission.belongsToMany(Role, { through: 'RolePermission' });
-
-
-Permission.belongsToMany(Module, { through: db.PermissionModule });
-Module.belongsToMany(Permission, { through: db.PermissionModule });
-
-
+// Export the database object with models and Sequelize instance
 module.exports = db;
-
