@@ -5,7 +5,7 @@ const Sequelize = require("sequelize")
 
 const createBusiness = async (req, res) => {
     try {
-        const { fullname, email, phonenumber, serviceRequired,comment, description, status, changedBy,  businessPartnerId, } = req.body;
+        const { fullname, email, phonenumber, serviceRequired,comment, description, status, changedBy,  businessPartnerID, } = req.body;
  
         const existingReferralByEmail = await referBusinessModel.findOne({ where: { email } });
         if (existingReferralByEmail) {
@@ -29,7 +29,7 @@ const createBusiness = async (req, res) => {
             description,
             changedBy,
             status: studentStatus,
-            businessPartnerId,
+            businessPartnerId:businessPartnerID,
         });
  
     
