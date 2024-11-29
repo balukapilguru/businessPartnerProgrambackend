@@ -12,13 +12,13 @@ const createReferral = async (req, res) => {
         const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerId } = req.body;
 
         
-        const existingReferralByEmail = await referStudentmodel.findOne({ where: { email } });
+        const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
         if (existingReferralByEmail) {
             return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
         }
 
      
-        const newReferral = await referStudentmodel.create({
+        const newReferral = await ReferStudentmodel.create({
             fullname,
             email,
             phonenumber:contactnumber,
@@ -28,7 +28,7 @@ const createReferral = async (req, res) => {
         });
 
 
-        const newStatus = await statuses.create({
+        const newStatus = await Status.create({
             time: new Date(),
             changedBy: changedBy || null,
             currentStatus: 'new lead',
@@ -71,7 +71,7 @@ const getReferrals = async (req, res) => {
         const size = pageSize === "all" ? Number.MAX_SAFE_INTEGER : parseInt(pageSize, 10);
         const offset = pageSize === "all" ? 0 : (pageNumber - 1) * size;
 
-        // Fetch all referrals without using WHERE condition
+       
         const referrals = await ReferStudentmodel.findAll({
             limit: size,
             offset: offset,
@@ -82,16 +82,19 @@ const getReferrals = async (req, res) => {
                     as: 'statuses',
                     attributes: ['currentStatus', 'comment', 'time'],
                     required: false,
+                    order: [['time', 'DESC']],
                 },
             ],
-            order: [['createdAt', 'DESC']],
+            order: [['createdAt', 'DESC'],
+         ]
+
         });
 
-        // Manually filter the results based on the query parameters
+      
         const filteredReferrals = referrals.filter(referral => {
             let isValid = true;
 
-            // Search Term Filter
+            
             if (searchTerm) {
                 isValid = isValid && (referral.fullname.includes(searchTerm) || 
                                       referral.email.includes(searchTerm) || 
@@ -100,22 +103,22 @@ const getReferrals = async (req, res) => {
                                       referral.city.includes(searchTerm));
             }
 
-            // Status Filter
+            
             if (status && referral.status && referral.status !== status) {
                 isValid = isValid && false;
             }
 
-            // Course Required Filter
+            
             if (courseRequired && referral.courseRequired !== courseRequired) {
                 isValid = isValid && false;
             }
 
-            // Business Partner Filter
+          
             if (businessPartnerId && referral.businessPartnerId !== businessPartnerId) {
                 isValid = isValid && false;
             }
 
-            // Filter by Date Range (if startDate and endDate are provided)
+           
             if (startDate && endDate) {
                 const createdAt = new Date(referral.createdAt);
                 const start = new Date(startDate);
@@ -127,10 +130,10 @@ const getReferrals = async (req, res) => {
             return isValid;
         });
 
-        const referralCount = filteredReferrals.length; // Total count after filtering
+        const referralCount = filteredReferrals.length; 
         const totalPages = Math.ceil(referralCount / size);
 
-        // Paginate the filtered referrals
+       
         const paginatedReferrals = filteredReferrals.slice(offset, offset + size);
 
         return res.status(200).json({
@@ -388,7 +391,7 @@ const updateReferralStatus = async (req, res) => {
         const { status, comment , changedBy } = req.body;
  
        
-        const referral = await referStudentmodel.findByPk(id);
+        const referral = await ReferStudentmodel.findByPk(id);
         if (!referral) {
             return res.status(404).json({ message: "Referral doesn't exist!" });
         }
@@ -410,7 +413,7 @@ const updateReferralStatus = async (req, res) => {
         existingStatusCollection.unshift(newStatusEntry); 
  
       
-        await referStudentmodel.update(
+        await ReferStudentmodel.update(
             { status: existingStatusCollection },
             { where: { id } }
         );
