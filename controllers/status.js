@@ -48,11 +48,24 @@ const createStatus = async (req, res) => {
 
 
 
-// in progress 
+
 const getAll = async (req, res) => {
   try {
-    const { filter } = req.query; 
-    const filterStatuses = filter ? filter.split(',').map((status) => status.trim()) : null;
+    const { filter, search } = req.query; 
+
+    let filterStatuses = null;
+    let startDate = null;
+    let endDate = null;
+
+    
+    if (filter) {
+      const parsedFilter = JSON.parse(filter);
+      filterStatuses = parsedFilter.statuses
+        ? parsedFilter.statuses.split(',').map((status) => status.trim())
+        : null;
+      startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
+      endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
+    }
 
     const recentStatuses = await statusModel.findAll({
       attributes: [
@@ -71,6 +84,18 @@ const getAll = async (req, res) => {
       });
     }
 
+    const searchConditions = search
+      ? {
+          [Op.or]: [
+            { fullname: { [Op.like]: `%${search}%` } }, 
+            { phoneNumber: { [Op.like]: `%${search}%` } }, 
+            { email: { [Op.like]: `%${search}%` } }, 
+            { courseRequired: { [Op.like]: `%${search}%` } }, 
+          ],
+        }
+      : {};
+
+   
     const fullStatuses = await statusModel.findAll({
       where: {
         id: {
@@ -80,7 +105,7 @@ const getAll = async (req, res) => {
       },
       include: [
         {
-          model: referStudentmodel, 
+          model: referStudentmodel,
           as: 'referStudent',
           attributes: [
             'id', 
@@ -92,7 +117,13 @@ const getAll = async (req, res) => {
             'source', 
             'courseRequired', 
             'city'
-          ], 
+          ],
+          where: {
+            ...(startDate && endDate && {
+              createdAt: { [Op.between]: [startDate, endDate] },
+            }),
+            ...searchConditions, 
+          },
         },
       ],
     });
@@ -108,6 +139,19 @@ const getAll = async (req, res) => {
         },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }), 
       },
+      include: [
+        {
+          model: referStudentmodel,
+          as: 'referStudent',
+          attributes: [],
+          where: {
+            ...(startDate && endDate && {
+              createdAt: { [Op.between]: [startDate, endDate] },
+            }),
+            ...searchConditions, 
+          },
+        },
+      ],
       group: ['currentStatus'],
       raw: true, 
     });
@@ -116,6 +160,7 @@ const getAll = async (req, res) => {
       acc[currentStatus] = count;
       return acc;
     }, {});
+
     return res.status(200).json({
       statuses: fullStatuses, 
       count: statusCountMapping, 
@@ -127,7 +172,7 @@ const getAll = async (req, res) => {
 };
 
 
-  
+
 const getStudentAllStatus = async (req, res) => {
     try {
         const { studentreferId } = req.params;
