@@ -53,7 +53,7 @@ const statements = sequelize.define(
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'ReferBusinessModel',
+                model: 'referBusinessModel',
                 key: 'id',
             },
             onDelete: 'CASCADE',
