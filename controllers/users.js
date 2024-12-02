@@ -485,11 +485,7 @@ const personaldetails = async (req, res) => {
             if (!address || !contactNo || !whatapp_no ) {
                 return res.status(400).json({ error: 'Required fields are missing' });
             }
-
-            
-            const { id } = req.user;
-
-            
+           const { id } = req.user;
             const imageUrl = req.file
                 ? req.uploadedFileKey
                 : null;
@@ -559,7 +555,7 @@ const updatePersonalAndBankDetails = async (req, res) => {
           branch,
         } = req.body;
   
-        // Check if the user exists
+      
         const personalDet = await Personaldetails.findOne({
           where: { profileId: id },
         });
@@ -568,7 +564,7 @@ const updatePersonalAndBankDetails = async (req, res) => {
           return res.status(404).json({ error: 'User not found' });
         }
   
-        // Update personal details with the provided data or keep existing if not provided
+       
         const personalDetailsUpdate = await Personaldetails.update(
           {
             address: address || personalDet.address,
@@ -586,7 +582,7 @@ const updatePersonalAndBankDetails = async (req, res) => {
           }
         );
   
-        // Update bank details if provided
+       
         const bankDetailsUpdate = await bankDetails.update(
           {
             bankName: bankName || personalDet.bankName,
@@ -601,7 +597,7 @@ const updatePersonalAndBankDetails = async (req, res) => {
           }
         );
   
-        // If a profile image is uploaded, update the profile image URL
+       
         if (req.file) {
           const updatedProfileImage = await Personaldetails.update(
             { image: req.uploadedFileKey },
@@ -643,53 +639,66 @@ const updatePersonalAndBankDetails = async (req, res) => {
   
 
 
+
+
 const getPersonalDetailsById = async (req, res) => {
     try {
-        const { id } = req.params; // Extract the ID from the route parameters.
+        const { id } = req.params;
 
-        // Fetch personal details for the given ID
+     
         const personalDetails = await Personaldetails.findOne({
             where: { profileId: id },
+            attributes: [
+                ['profileId', 'id'],
+                'gst_no',
+                'cin_no',
+                'wallet',
+                'image',
+                'businessName',
+                'aadharNo',
+                'whatapp_no',
+                'contactNo',
+                'panCardNO',
+                'address'
+            ]
         });
 
         if (!personalDetails) {
             return res.status(404).json({ error: 'No personal details found for the given ID' });
         }
 
-        // Fetch associated user details from bppUsers
+       
         const userDetails = await bppUsers.findOne({
-            where: { id: personalDetails.profileId },
-            attributes: ['fullName', 'email', 'phonenumber'], // Adjust fields as needed
+            where: { id: personalDetails.id },
+            attributes: ['fullName', 'email', 'phonenumber'],
         });
 
-        // Fetch associated credential details
+        
         const credentialDetailsofusers = await credentialDetails.findOne({
-            where: { userId: personalDetails.profileId },
+            where: { userId: personalDetails.id }, 
             attributes: [
-                'userId',
                 'createdBy',
                 'addedBy',
                 'noOfLogins',
                 'referralLink',
                 'businessPartnerID',
-            ], // Adjust fields as needed
+            ],
         });
 
-        // Fetch associated bank details
+     
         const bankDetailsRecord = await bankDetails.findOne({
-            where: { userId: personalDetails.profileId },
+            where: { userId: personalDetails.id },
             attributes: ['bankName', 'holder_name', 'account_no', 'ifsc_code', 'branch'],
         });
 
-        // Combine all data into a single object
+        
         const combinedDetails = {
-            personalDetails,
+            personalDetails: personalDetails.toJSON(), 
             userDetails,
-            credentialDetailsofusers,
-            bankDetails: bankDetailsRecord, // Rename variable here to match the output structure
+            credentialDetails: credentialDetailsofusers,
+            bankDetails: bankDetailsRecord,
         };
 
-        // Respond with the combined details
         return res.status(200).json({
             message: 'Personal details retrieved successfully',
             data: combinedDetails,

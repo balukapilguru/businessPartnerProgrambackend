@@ -3,7 +3,7 @@ const usersControllers = require('../../controllers/users');
 const { changePassword } = require('../../controllers/users');
 const authenticate = require('../../middlewares/authmiddlewares');
 
-const router = express.Router(); // Ensure that this line initializes the router correctly
+const router = express.Router(); 
 
 router.post('/signup', usersControllers.sendOtp);
 router.post('/verify-otp', usersControllers.verifyOtpAndRegisterUser);
@@ -13,7 +13,7 @@ router.post('/forgot-password', usersControllers.sendlinkforForgotPassword);
 router.post('/resetforgot_password', usersControllers.forgotPasswordrecet);
 router.post('/personalDetails', authenticate,usersControllers. personaldetails)
 router.put('/update/personaldetails/:id', authenticate,usersControllers. updatePersonalAndBankDetails)
-router.get('/getallusersdetails/:id', authenticate,usersControllers. getPersonalDetailsById )
+router.get('/getallusersdetails/:id',usersControllers. getPersonalDetailsById )
 router.get('/decrypt',usersControllers.decryptfun),
 router.post('/refe-parent', usersControllers. addBusinessParent);
 // router.post('/refe-bp', referaBusinessPartnerController.createBusiness);

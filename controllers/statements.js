@@ -1,6 +1,9 @@
 
 const statements = require('../models/bpp/statements')
 const bppUsers = require('../models/bpp/users');
+
+
+
 const getAllStatements = async(req,res)=>{
 try{
     const response = await statements.findAll();

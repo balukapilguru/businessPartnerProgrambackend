@@ -367,7 +367,7 @@ const getReferrals = async (req, res) => {
 const getReferralsByBusinessId = async (req, res) => {
     try {
         const { id } = req.params;
-        const referrals = await referStudentmodel.findAll({
+        const referrals = await ReferStudentmodel.findAll({
             where: { 'id': id },  
             order: [['id', 'DESC']
         ,['status','DESC']],  
@@ -470,7 +470,7 @@ const getDashboardStats = async (req, res) => {
         const discardStatuses = ['not allowed'];
 
         // Step 3: Count leads in each group
-        const enrollCount = await referStudentmodel.count({
+        const enrollCount = await ReferStudentmodel.count({
             where: {
                 ...commonFilters,
                 [Op.and]: [
@@ -485,7 +485,7 @@ const getDashboardStats = async (req, res) => {
             },
         });
 
-        const pipelineCount = await referStudentmodel.count({
+        const pipelineCount = await ReferStudentmodel.count({
             where: {
                 ...commonFilters,
                 [Op.and]: [
