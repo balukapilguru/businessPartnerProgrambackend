@@ -61,7 +61,7 @@ const createReferral = async (req, res) => {
 
 
 
-
+// notusing
 
 const getReferrals = async (req, res) => {
     try {
@@ -362,27 +362,26 @@ const getReferrals = async (req, res) => {
 // };
 
 
-
-
-const getReferralsByBusinessId = async (req, res) => {
+// this is using
+const getReferralsByStudentId = async (req, res) => {
     try {
         const { id } = req.params;
-        const referrals = await ReferStudentmodel.findAll({
-            where: { 'id': id },  
-            order: [['id', 'DESC']
-        ,['status','DESC']],  
-          });
+        const referrals = await ReferStudentmodel.findOne({
+            where: { id: id },  
+            attributes: { exclude: ['status'] } 
+        });
 
-        if (referrals.length > 0) {
+        if (referrals) {  
             res.status(200).json({ message: 'Referrals retrieved successfully', data: referrals });
         } else {
-            res.status(404).json({ message: 'No referrals found for the given businessPartnerId' });
+            res.status(404).json({ message: 'No referrals found for the given studentId' });
         }
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred', error });
     }
 };
+
 
 
 const updateReferralStatus = async (req, res) => {
@@ -530,4 +529,4 @@ const getDashboardStats = async (req, res) => {
 
 
 
-module.exports = { createReferral, getReferrals, getReferralsByBusinessId, getDashboardStats , updateReferralStatus }
+module.exports = { createReferral, getReferrals,getReferralsByStudentId , getDashboardStats , updateReferralStatus }

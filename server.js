@@ -15,6 +15,7 @@ const status = require('./routes/status')
 const statements = require('./routes/statements')
 const request = require('./routes/request')
 const userSignup = require('./routes/bpp/users');
+const businessstatus = require('./routes/businessStatus')
 
 const role = require('./routes/rolesAndPermissions/Role')
 
@@ -23,7 +24,7 @@ require('./models/bpp/bankdetails');
 // require('./models/referbusinessPartnerModel');
 require('./models/bpp/statements'); 
 require('./models/bpp/users'); 
-// require('./models/status/status'); 
+require('./models/status/BusinessStatus'); 
 require('./models/bpp/personaldetails'); 
 require('./models/rolesAndPermissions/Module'); 
 require('./models/rolesAndPermissions/Permission');
@@ -51,15 +52,17 @@ app.use(bodyParser.json());
 app.use('/api/auth', userSignup )
 app.use('/api/role', role )
 app.use('/api/student', referStudentroute);
-app.use('/api/business', referBusinessroute);
+app.use('/business', referBusinessroute);
 app.use('/api/business-p', userSignup);
 app.use('/status',status)
 app.use('/statements',statements)
 app.use('/request',request)
+app.use('/businessstatus',businessstatus)
+
 app.get('/', (req, res) => {
   return res.status(200).send('Hello, Connected with BPP..');
 });
-sequelize.sync().then(() => {
+sequelize.sync({alter:true}).then(() => {
   console.log("Database synced, tables created.");
 }).catch(error => {
   console.error("Error syncing the database:", error);

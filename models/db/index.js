@@ -16,6 +16,8 @@ db.PermissionModule = require('../rolesAndPermissions/PermissionModule')(sequeli
 
 db.ReferStudentmodel = require('../referStudent'); // Refer Student model
 db.Status = require('../status/status'); // Status model
+db.ReferBusinessmodel = require('../referBusiness'),
+db.businessStatus = require('../status/BusinessStatus')
 db.Statements = require('../bpp/statements');
 db.bppUsers = require('../bpp/users');
 db.request = require('../requests')
@@ -43,6 +45,21 @@ db.Status.belongsTo(db.ReferStudentmodel, {
     foreignKey: 'referStudentId',
     as: 'referStudent',
 });
+
+db.ReferBusinessmodel.hasMany(db.businessStatus, {
+    foreignKey: 'referbusinessId',
+    as: 'businessStatus',
+});
+db.businessStatus.belongsTo(db.ReferBusinessmodel, {
+    foreignKey: 'referbusinessId',
+    as: 'referBusiness',
+});
+
+
+
+
+
+
 db.bppUsers.hasMany(db.request, {
     foreignKey: 'userId',
     onDelete: 'CASCADE',

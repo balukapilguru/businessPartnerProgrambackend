@@ -1,50 +1,89 @@
 
 const referBusinessModel = require('../models/referBusiness');
+const businessStatus = require('../models/status/BusinessStatus')
 const Sequelize = require("sequelize")
+
 
 
 const createBusiness = async (req, res) => {
     try {
-        const { fullname, email, phonenumber, serviceRequired,comment, description, status, changedBy,  businessPartnerID, } = req.body;
+        const { fullname, email, contactnumber, serviceRequired, description, changedBy,  businessPartnerID, } = req.body;
  
+		
         const existingReferralByEmail = await referBusinessModel.findOne({ where: { email } });
         if (existingReferralByEmail) {
             return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
         }
- 
-        const studentStatus = [{
-            currentStatus: status,
-            previousStatus: null, 
-            changedBy: changedBy || '',
-            comment: comment || 'Initial status',
-            timestamp: new Date()
-        }];
- 
-  
-        const newReferral = await referBusinessModel.create({
+         const newReferral = await referBusinessModel.create({
             fullname,
             email,
-            phonenumber,
+            phonenumber:contactnumber,
             serviceRequired,
             description,
-            changedBy,
-            status: studentStatus,
-            businessPartnerId:businessPartnerID,
+            businessPartnerId:businessPartnerID
         });
  
-    
+       const newStatus = await businessStatus.create({
+            time: new Date(),
+            changedBy: changedBy || null,
+            currentStatus: 'new lead',
+            referId: newReferral.id,
+            comment:'just created lead',
+        });
+											  
+																		  
         res.status(201).json({ message: 'Referral created successfully', data: newReferral });
-    } catch (error) {
+					  } catch (error) {
         console.error(error);
  
-      
-        if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'email') {
-            return res.status(400).json({ message: 'Email already exists. Please use a different email.' });
-        }
- 
-        res.status(500).json({ message: 'An error occurred', error: error.message });
+     res.status(500).json({ message: 'An error occurred', error: error.message });
     }
 };
+
+// const createBusiness = async (req, res) => {
+//     try {
+//         const { fullname, email, phonenumber, serviceRequired,comment, description, status, changedBy,  businessPartnerID, } = req.body;
+ 
+//         const existingReferralByEmail = await referBusinessModel.findOne({ where: { email } });
+//         if (existingReferralByEmail) {
+//             return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
+//         }
+ 
+//         const studentStatus = [{
+//             currentStatus: status,
+//             previousStatus: null, 
+//             changedBy: changedBy || '',
+//             comment: comment || 'Initial status',
+//             timestamp: new Date()
+//         }];
+ 
+  
+//         const newReferral = await referBusinessModel.create({
+//             fullname,
+//             email,
+//             phonenumber,
+//             serviceRequired,
+//             description,
+//             changedBy,
+//             status: studentStatus,
+//             businessPartnerId:businessPartnerID,
+//         });
+ 
+    
+//         res.status(201).json({ message: 'Referral created successfully', data: newReferral });
+//     } catch (error) {
+//         console.error(error);
+ 
+      
+//         if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'email') {
+//             return res.status(400).json({ message: 'Email already exists. Please use a different email.' });
+//         }
+ 
+//         res.status(500).json({ message: 'An error occurred', error: error.message });
+//     }
+// };
+
+
 
 
 const getReferrals = async (req, res) => {
@@ -118,27 +157,24 @@ const getReferrals = async (req, res) => {
 
 
 
-const getReferralsByBusinessId = async (req, res) => {
+const  getReferralsByBusinessId = async (req, res) => {
     try {
         const { id } = req.params;
-        const referrals = await referBusinessModel.findAll({
-            where: { 'id': id },  
-            // order: [['id', 'DESC']],  
-          });
+        const referrals = await referBusinessModel.findOne({
+            where: { id: id },  
+            attributes: { exclude: ['status'] } 
+        });
 
-        if (referrals.length > 0) {
+        if (referrals) {  
             res.status(200).json({ message: 'Referrals retrieved successfully', data: referrals });
         } else {
-            res.status(404).json({ message: 'No referrals found for the given businessPartnerId' });
+            res.status(404).json({ message: 'No referrals found for the given studentId' });
         }
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred', error });
     }
 };
-
-
-
 
 
 const updateReferralStatus = async (req, res) => {
@@ -181,16 +217,6 @@ const updateReferralStatus = async (req, res) => {
         res.status(500).json({ message: 'An error occurred while updating status', error: error.message || error });
     }
 };
-
-
-
-
-
-
-
-
-
-
 
 
 module.exports = {createBusiness, getReferrals, getReferralsByBusinessId, updateReferralStatus}

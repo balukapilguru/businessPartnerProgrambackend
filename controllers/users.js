@@ -1,13 +1,11 @@
-
 const bppUsers = require('../models/bpp/users');
-
 const { Op } = require('sequelize');
-
 const crypto = require('crypto');
-
 const credentialDetails = require('../models/bpp/credentialDetails');
 const Personaldetails = require('../models/bpp/personaldetails')
 const bankDetails= require('../models/bpp/bankdetails');
+const statements = require('../models/bpp/statements')
+const referBusinessModel = require('../models/referBusiness')
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
@@ -18,6 +16,8 @@ const s3 = require('../utiles/awsConfig');
 const { JWT_SECRET } = require('../utiles/jwtconfig');
 const { encrypt,decrypt} = require('../utiles/encryptAndDecrypt')
 require('dotenv').config();
+const { sequelize,fn } = require('sequelize');
+
 
 let tempOtpStorage = [];
 
@@ -31,29 +31,21 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-
 const sendOtp = async (req, res) => {
     const { email, fullName, phonenumber } = req.body;
-
-    try {
+     try {
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-       
-        tempOtpStorage.push({
+          tempOtpStorage.push({
             email,
             otp: emailGeneratedOtp,
-            expiresAt: Date.now() + 6 * 60 * 1000 
+            expiresAt: Date.now() + 9 * 60 * 1000 
         });
-
- 
         await transporter.sendMail({
             from: config.mailConfig.mailUser,
             to: email,
             subject: 'Email Verification OTP',
             text: `Your OTP for email verification is: ${emailGeneratedOtp}`
         });
-
-    
         return res.status(200).json({
             message: 'OTP sent to your email for verification',
             user: {
@@ -67,24 +59,16 @@ const sendOtp = async (req, res) => {
     }
 };
 
-
-
-
-
 const verifyOtpAndRegisterUser = async (req, res) => {
     const { email, emailOtp, fullName, phonenumber } = req.body;
-
     try {
         const storedOtpData = tempOtpStorage.find(otpData => otpData.email === email);
-
         if (storedOtpData) {
             if (storedOtpData.otp === emailOtp && Date.now() < storedOtpData.expiresAt) {
              
                 tempOtpStorage = tempOtpStorage.filter(otpData => otpData.email !== email);
-
-            
                 const generatePassword = () => {
-                    return crypto.randomBytes(8).toString('hex'); 
+                return crypto.randomBytes(8).toString('hex'); 
                 };
 
                 const hashPassword = async (password) => {
@@ -93,8 +77,6 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
                 const defaultPassword = generatePassword();
                 const hashedPassword = await hashPassword(defaultPassword);
-
-              
                 const businessPartnerID = await generateBusinessPartnerID();
                 const generateRefferal = await generateReferralLink(businessPartnerID);
                 console.log('Link is',generateRefferal);
@@ -107,9 +89,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     console.error('Error while saving user to the bppUsers table:', error.message || error);
                     throw new Error('Error while saving user to the bppUsers table');
                 });
-
-             
-                await credentialDetails.create({
+                 await credentialDetails.create({
                     password: hashedPassword,
                     businessPartnerID,
                     userId: user.id,
@@ -121,9 +101,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     console.error('Error while saving business partner ID to credentialDetails:', error.message || error);
                     throw new Error('Error while saving business partner ID to credentialDetails');
                 });
-
-           
-                await transporter.sendMail({
+                 await transporter.sendMail({
                     from: config.mailConfig.mailUser,
                     to: email,
                     subject: 'Verification Successful',
@@ -141,7 +119,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
         } else {
             return res.status(400).json({ message: 'OTP not found or has expired' });
         }
-    } catch (error) {
+         } catch (error) {
         console.error('Error during OTP verification or user registration:', error.message || error);
         return res.status(500).json({
             message: 'Error during OTP verification or user registration',
@@ -150,35 +128,81 @@ const verifyOtpAndRegisterUser = async (req, res) => {
     }
 };
 
+// const generateBusinessPartnerID = async () => {
+//     try {
+//         const lastPartner = await credentialDetails.findOne({
+//             order: [['businessPartnerID', 'DESC']],
+//             attributes: ['businessPartnerID'],
+//         });
+
+//         if (!lastPartner) {
+//             return 'BP001';
+//         }
+//         const lastID = lastPartner.businessPartnerID;
+//         const numberPart = parseInt(lastID.replace('BP', ''), 10);
+
+//         if (isNaN(numberPart)) {
+//             throw new Error('Invalid business partner ID format');
+//         }
+//         const newID = `BP${(numberPart + 1).toString().padStart(3, '0')}`;
+//         return newID;
+//         } catch (error) {
+//         console.error('Error generating Business Partner ID:', error);
+//         throw new Error('Could not generate Business Partner ID');
+//     }
+// };
+
+// new function
+
+
 
 
 
 const generateBusinessPartnerID = async () => {
     try {
+        // Query the last business partner record
         const lastPartner = await credentialDetails.findOne({
             order: [['businessPartnerID', 'DESC']],
             attributes: ['businessPartnerID'],
         });
 
-        if (!lastPartner) {
-            return 'BP001';
+        // Default starting point for the new ID format
+        let newID = 'KKHBP511';
+
+        // If there are existing partners, generate the next ID
+        if (lastPartner) {
+            const lastID = lastPartner.businessPartnerID;
+
+            // If the old ID format (BPXXX), start the new sequence with KKHBP501
+            if (lastID.startsWith('BP')) {
+                newID = 'KKHBP511';  // Starting point for the new format
+            } else if (lastID.startsWith('KKHBP5')) {
+                // For the new format IDs (KKHBPXXX), extract the numeric part and increment
+                const numberPart = parseInt(lastID.replace('KKHBP5', ''), 10);
+                if (isNaN(numberPart)) {
+                    throw new Error('Invalid business partner ID format');
+                }
+
+                newID = `KKHBP5${(numberPart + 1).toString()}`;
+            }
         }
 
-        const lastID = lastPartner.businessPartnerID;
-        const numberPart = parseInt(lastID.replace('BP', ''), 10);
-
-        if (isNaN(numberPart)) {
-            throw new Error('Invalid business partner ID format');
-        }
-
-        const newID = `BP${(numberPart + 1).toString().padStart(3, '0')}`;
         return newID;
-
     } catch (error) {
         console.error('Error generating Business Partner ID:', error);
         throw new Error('Could not generate Business Partner ID');
     }
 };
+
+
+
+
+
+
+
+
+
+
 
 const generateReferralLink = async (businessPartnerID) => {
     const baseURL = 'http://localhost:3030/api/auth/decrypt';
@@ -194,9 +218,6 @@ const generateReferralLink = async (businessPartnerID) => {
     return `${baseURL}/?search=${res}`
 };
 
-
-
-
 // const generateToken = (userId) => {
 //     const secretKey = process.env.JWT_SECRET || 'your-secret-key';  
 //     return jwt.sign({ userId }, secretKey, { expiresIn: '3h' });  
@@ -205,13 +226,10 @@ const generateReferralLink = async (businessPartnerID) => {
 const generateToken = (user) => {
     const payload = { id: user.id, email: user.email };
     const secret = process.env.JWT_SECRET || 'secret';
-    const options = { expiresIn: '2h' };  
-
-  
+    const options = { expiresIn: '24h' };  
     const token = jwt.sign(payload, secret, options);
     return token;
 };
-
 
 const login = async (req, res) => {
     const { email, password,phonenumber } = req.body;
@@ -219,16 +237,12 @@ const login = async (req, res) => {
     try {
         console.log("Received email:", email);
         console.log("Received password:", password);
-
-     
-        const user = await bppUsers.findOne({ where: { email } });
+         const user = await bppUsers.findOne({ where: { email } });
 
         if (!user) {
             console.error("User not found for email:", email);
             return res.status(400).json({ message: 'User not found' });
         }
-
-        
         const credential = await credentialDetails.findOne({ where: { userId: user.id } });
 
         if (!credential || !credential.password) {
@@ -241,16 +255,9 @@ const login = async (req, res) => {
             console.error("Invalid password for email:", email);
             return res.status(400).json({ message: 'Invalid password' });
         }
-
-        
         await credentialDetails.increment('noOfLogins', { by: 1, where: { userId: user.id } });
-
-        
         const updatedCredential = await credentialDetails.findOne({ where: { userId: user.id } });
-
-       
         const token = generateToken(user);
-
         return res.status(200).json({
             message: 'Login successful',
             user: {
@@ -271,47 +278,31 @@ const login = async (req, res) => {
     }
 };
 
-
-
-
 const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
-
-    try {
+     try {
         const userId = req.user.id; 
-
-      
         const user = await bppUsers.findOne({ where: { id: userId } });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-   
         const credentials = await credentialDetails.findOne({ where: { userId: user.id } });
         if (!credentials) {
             return res.status(404).json({ message: 'Credentials not found' });
         }
-
-      
         const isMatch = await bcrypt.compare(currentPassword, credentials.password);
         if (!isMatch) {
             return res.status(401).json({ message: 'Current password is incorrect' });
         }
-
-   
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    
         credentials.password = hashedPassword;
         await credentials.save();
-
         return res.status(200).json({ message: 'Password has been successfully updated' });
     } catch (error) {
         console.error('Error during change password', error);
         return res.status(500).json({ message: 'Error during change password', error });
     }
 };
-
 
 const decryptfun = async (req, res) => {
     try {
@@ -342,50 +333,32 @@ const decryptfun = async (req, res) => {
         return res.status(500).json({ error: 'Decryption failed' });
     }
 };
-
-
-
-
-
-
 const sendMail = require('../utiles/sendmailer'); 
 // const credentialDetails = require('../models/bpp/credentialDetails');
 
 const sendlinkforForgotPassword = async (req, res) => {
     const { email } = req.body;
-
     try {
         console.log('Received email:', email); 
-
-     
         const user = await bppUsers.findOne({ where: { email } });
         console.log('User found:', user); 
-
         if (!user) {
             return res.status(404).json({ message: 'User not found with this email.' });
         }
-
-       
         const resetToken = jwt.sign(
             { email: user.email }, 
             config.jwtConfig.jwtSecret, 
             { expiresIn: '1h' } 
         );
         console.log('Generated reset token:', resetToken); 
-
-   
         await bppUsers.update(
             { passwordResetToken: resetToken, passwordResetExpires: Date.now() + 3600000 }, 
             { where: { email: email } }
         );
         console.log('Token saved to database'); 
-
-      
         const resetLink = `${config.config.frontendUrl}/auth/resetpassword?token=${resetToken}`;
         console.log('Reset link:', resetLink); 
-
-      
-        await sendMail({
+         await sendMail({
             to: email,
             subject: 'Password Reset Request',
             html: `
@@ -394,42 +367,26 @@ const sendlinkforForgotPassword = async (req, res) => {
             `
         });
         console.log('Password reset email sent'); 
-
         return res.status(200).json({ message: 'Password reset link sent to your email.' });
     } catch (error) {
         console.error('Error in forgot password:', error); 
         return res.status(500).json({ message: 'Error processing your request.', error: error.message });
     }
 };
-
-
-
-
-
 const passwordResetStore = {};
-
 
 const forgotPasswordrecet = async (req, res) => {
     const { token, newPassword, confirmPassword } = req.body;
-
-    try {
-     
-        const decoded = jwt.verify(token,  config.jwtConfig.jwtSecret);
-
-    
-        const user = await bppUsers.findOne({ where: { email: decoded.email } });
-
-        if (!user) {
+     try {
+     const decoded = jwt.verify(token,  config.jwtConfig.jwtSecret);
+     const user = await bppUsers.findOne({ where: { email: decoded.email } });
+     if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-      
-        if (newPassword !== confirmPassword) {
+     if (newPassword !== confirmPassword) {
             return res.status(400).json({ message: 'Passwords do not match' });
         }
-
-       
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await credentialDetails.update(
             { password: hashedPassword },
@@ -446,25 +403,16 @@ const sendPasswordResetToken = async (userEmail) => {
     const token = generateResetToken();  
     const expires = Date.now() + 3600000;
     passwordResetStore[token] = { email: userEmail, expires };
-
-
-    return token; 
+     return token; 
 };
 
-
-
-
-
 const personaldetails = async (req, res) => {
-    
     upload.single('image')(req, res, async (err) => {
         if (err) {
             console.error('Error during file upload:', err);
             return res.status(400).json({ error: 'Error during file upload', details: err.message });
         }
-
-        try {
-            
+       try {
             const {
                 address,
                 panCardNO,
@@ -480,8 +428,6 @@ const personaldetails = async (req, res) => {
                 ifsc_code,
                 branch 
             } = req.body;
-
-            
             if (!address || !contactNo || !whatapp_no ) {
                 return res.status(400).json({ error: 'Required fields are missing' });
             }
@@ -529,18 +475,16 @@ const personaldetails = async (req, res) => {
         }
     });
 };
+
 const updatePersonalAndBankDetails = async (req, res) => {
     try {
-    
-      upload.single('image')(req, res, async (err) => {
+    upload.single('image')(req, res, async (err) => {
         if (err) {
           return res.status(400).json({ error: err.message });
         }
-  
         const { id } = req.params; 
         const {
-            
-          address,
+         address,
           panCardNO,
           contactNo,
           whatapp_no,
@@ -554,8 +498,6 @@ const updatePersonalAndBankDetails = async (req, res) => {
           ifsc_code,
           branch,
         } = req.body;
-  
-      
         const personalDet = await Personaldetails.findOne({
           where: { profileId: id },
         });
@@ -624,9 +566,7 @@ const updatePersonalAndBankDetails = async (req, res) => {
         account_no,
         ifsc_code,
         branch,
-
-
-        });
+    });
       });
     } catch (error) {
       console.error('Error while updating details:', error);
@@ -637,16 +577,10 @@ const updatePersonalAndBankDetails = async (req, res) => {
     }
   };
   
-
-
-
-
 const getPersonalDetailsById = async (req, res) => {
     try {
         const { id } = req.params;
-
-     
-        const personalDetails = await Personaldetails.findOne({
+         const personalDetails = await Personaldetails.findOne({
             where: { profileId: id },
             attributes: [
                 ['profileId', 'id'],
@@ -666,14 +600,10 @@ const getPersonalDetailsById = async (req, res) => {
         if (!personalDetails) {
             return res.status(404).json({ error: 'No personal details found for the given ID' });
         }
-
-       
         const userDetails = await bppUsers.findOne({
             where: { id: personalDetails.id },
             attributes: ['fullName', 'email', 'phonenumber'],
         });
-
-        
         const credentialDetailsofusers = await credentialDetails.findOne({
             where: { userId: personalDetails.id }, 
             attributes: [
@@ -684,14 +614,10 @@ const getPersonalDetailsById = async (req, res) => {
                 'businessPartnerID',
             ],
         });
-
-     
         const bankDetailsRecord = await bankDetails.findOne({
             where: { userId: personalDetails.id },
             attributes: ['bankName', 'holder_name', 'account_no', 'ifsc_code', 'branch'],
         });
-
-        
         const combinedDetails = {
             personalDetails: personalDetails.toJSON(), 
             userDetails,
@@ -713,38 +639,29 @@ const getPersonalDetailsById = async (req, res) => {
 };
 
 
-
-  const addBusinessParent = async (req, res) => {
+// become a parent partner
+const addBusinessPartner = async (req, res) => {
     try {
         const { fullName, email, phonenumber, ParentbusinessPartnerId } = req.body;
-
-        console.log('Request body:', req.body);
-
-       
-        const referringBusinessPartner = await credentialDetails.findOne({
+         console.log('Request body:', req.body);
+         const referringBusinessPartner = await credentialDetails.findOne({
             where: { businessPartnerID: ParentbusinessPartnerId }
         });
         if (!referringBusinessPartner) {
             return res.status(400).json({ message: 'Invalid parent business partner ID.' });
         }
-
         const generatePassword = () => {
             return crypto.randomBytes(8).toString('hex');
         };
 
         const defaultPassword = generatePassword();
-
-      
         const hashPassword = async (password) => {
             return await bcrypt.hash(password, 10);
         };
 
         const hashedPassword = await hashPassword(defaultPassword);
-
-       
-        const businessPartnerID = await generateBusinessPartnerID();
-        
-        const generateRefferal = await generateReferralLink(businessPartnerID);
+       const businessPartnerID = await generateBusinessPartnerID();
+       const generateRefferal = await generateReferralLink(businessPartnerID);
       
         // const studentStatus = [{
         //     currentStatus: 'Pending',
@@ -801,6 +718,230 @@ const getPersonalDetailsById = async (req, res) => {
     }
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const getAllBusinessPartners = async (req, res) => {
+    try {
+        const { businessPartnerID } = req.params;  
+        
+       
+        if (!businessPartnerID) {
+            return res.status(400).json({ message: 'businessPartnerID is required.' });
+        }
+
+       
+        const totalEnrollments = await credentialDetails.count({
+            where: { addedBy: businessPartnerID }  
+        });
+
+        if (totalEnrollments === 0) {
+            return res.status(404).json({ message: 'No enrollments found for this business partner.' });
+        }
+
+        const enrollmentAmount = 1000;  // Amount per enrollment
+        const totalIncome = totalEnrollments * enrollmentAmount;
+
+        const revenueSharePercentage = 0.2;  // 20% revenue share
+        const revenueShare = totalIncome * revenueSharePercentage;
+
+
+
+        res.status(200).json({
+            message: 'Total enrollments retrieved successfully.',
+            businessPartnerID,
+            totalEnrollments, 
+            totalIncome,
+            revenueShare
+        });
+    } catch (error) {
+        console.error('Error in getTotalEnrollments:', error);  
+        res.status(500).json({
+            message: 'An error occurred',
+            error: error.message || error,  
+        });
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const getAllBusinessPartners = async (req, res) => {
+//     try {
+//         // Fetch all parent business partners and their related credentials
+//         const businessPartners = await credentialDetails.findAll({
+//             attributes: [
+//                 'addedBy', // Parent business partner ID
+//                 [Sequelize.fn('COUNT', Sequelize.col('businessPartnerID')), 'totalEnrollments'],
+//                 [Sequelize.fn('SUM', Sequelize.col('income')), 'totalIncome'], // Assuming `income` column exists
+//             ],
+//             include: [
+//                 {
+//                     model: bppUsers,
+//                     attributes: ['fullName', 'email', 'phonenumber'], // Business partner details
+//                 },
+//             ],
+//             group: ['addedBy'], // Group by parent business partner ID
+//         });
+
+//         // Format the results to include revenue share
+//         const result = businessPartners.map((partner) => {
+//             const totalIncome = parseFloat(partner.dataValues.totalIncome) || 0;
+//             const revenueShare = totalIncome * 0.1; // Assuming 10% revenue share
+
+//             return {
+//                 parentBusinessPartnerID: partner.addedBy,
+//                 fullName: partner.bppUser.fullName,
+//                 email: partner.bppUser.email,
+//                 phonenumber: partner.bppUser.phonenumber,
+//                 totalEnrollments: parseInt(partner.dataValues.totalEnrollments, 10) || 0,
+//                 totalIncome: totalIncome,
+//                 revenueShare: revenueShare,
+//             };
+//         });
+
+//         res.status(200).json({
+//             message: 'Business partners retrieved successfully.',
+//             data: result,
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({
+//             message: 'An error occurred while fetching business partners.',
+//             error,
+//         });
+//     }
+// };
+
+
+// const getAllBusinessPartners = async (req, res) => {
+//     try {
+      
+//         const businessPartners = await referBusinessModel.findAll({
+//             include: [
+//                 {
+//                     model: bppUsers,
+//                     attributes: ['fullName', 'email'], 
+//                 },
+//                 {
+//                     model: credentialDetails,
+//                     attributes: ['businessPartnerID'],
+//                     required: false, 
+//                 },
+//                 {
+//                     model: statements,
+//                     attributes: [[sequelize.fn('SUM', sequelize.col('amount')), 'totalIncome']], // Sum of the amounts for each partner
+//                     required: false, 
+//                     group: ['statements.businessId'],
+//                 },
+//             ],
+//             attributes: ['id', 'fullname'], // Get basic details of the business partner
+//         });
+
+//         // Add enrollments count and calculate revenue share for each business partner
+//         const result = await Promise.all(businessPartners.map(async (partner) => {
+//             // Count the number of enrollments for the current partner
+//             const totalEnrollments = await credentialDetails.count({
+//                 where: { businessPartnerID: partner.id }
+//             });
+
+//             // Calculate the total income from statements for the current partner
+//             const totalIncome = partner.statements.length > 0 ? partner.statements[0].totalIncome : 0;
+
+//             // Assuming a revenue share percentage (e.g., 10%)
+//             const revenueSharePercentage = 0.10;
+//             const revenueShare = totalIncome * revenueSharePercentage;
+
+//             return {
+//                 ...partner.dataValues,
+//                 totalEnrollments,
+//                 totalIncome,
+//                 revenueShare,
+//             };
+//         }));
+
+//         return res.status(200).json({
+//             message: "Business partners retrieved successfully.",
+//             data: result,
+//         });
+
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ message: "An error occurred", error });
+//     }
+// };
+
+
+
+
+
 module.exports = {
     login,
     sendOtp,
@@ -812,9 +953,9 @@ module.exports = {
     personaldetails,
     updatePersonalAndBankDetails,
     decryptfun,
-    addBusinessParent,
-    getPersonalDetailsById 
-
+    addBusinessPartner,
+    getPersonalDetailsById ,
+    getAllBusinessPartners
 };
 
 

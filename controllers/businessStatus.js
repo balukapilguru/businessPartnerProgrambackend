@@ -1,6 +1,6 @@
-const referStudentmodel = require('../models/referStudent');
+const referBusinessModel = require('../models/referBusiness');
 const { Op , fn, col} = require("sequelize")
-const statusModel = require('../models/status/status'); 
+const statusModel = require('../models/status/BusinessStatus'); 
 const sequelize = require('../config/db'); 
 const bppusers = require('../models/bpp/users');
 const dayjs = require('dayjs');
@@ -8,9 +8,9 @@ const now = dayjs();
 const statements = require('../models/bpp/statements')
 
 
-const createStatus = async (req, res) => {
+const createBusinessStatus = async (req, res) => {
   try {
-      const { id, currentStatus, referStudentId, comment } = req.body;
+      const { id, currentStatus,  referbusinessId, comment } = req.body;
       if (currentStatus === 'enroll') {
          
           await statements.create({
@@ -21,14 +21,14 @@ const createStatus = async (req, res) => {
               changedBy: id,
               userId: id,
               reason: 'Enrolled student',
-              studentId: referStudentId,
+              businessId: referbusinessId,
               amount: 1000
           });
       }
         await statusModel.create({
           changedBy: id,
           currentStatus,
-          referStudentId,
+          referbusinessId,
           comment,
           time: new Date()
       });
@@ -168,7 +168,7 @@ const createStatus = async (req, res) => {
 // };
 
  
-const getAll = async (req, res) => {
+const getAllbusiness = async (req, res) => {
     try {
       const { filter, search, page = 1, limit, pageSize } = req.query;
    
@@ -190,10 +190,10 @@ const getAll = async (req, res) => {
    
       const recentStatuses = await statusModel.findAll({
         attributes: [
-          'referStudentId',
+          'referbusinessId',
           [fn('MAX', col('id')), 'latestId'],
         ],
-        group: ['referStudentId'],
+        group: ['referbusinessId'],
         where: {
           ...(startDate && endDate && {
             createdAt: { [Op.between]: [startDate, endDate] },
@@ -219,7 +219,7 @@ const getAll = async (req, res) => {
               { fullname: { [Op.like]: `%${search}%` } },
               { phoneNumber: { [Op.like]: `%${search}%` } },
               { email: { [Op.like]: `%${search}%` } },
-              { courseRequired: { [Op.like]: `%${search}%` } },
+              { serviceRequired: { [Op.like]: `%${search}%` } },
             ],
           }
         : {};
@@ -238,8 +238,8 @@ const getAll = async (req, res) => {
         },
         include: [
           {
-            model: referStudentmodel,
-            as: 'referStudent',
+            model: referBusinessModel,
+            as: 'referBusiness',
             attributes: [
               'id',
               'fullname',
@@ -247,9 +247,10 @@ const getAll = async (req, res) => {
               'phoneNumber',
               'assignedTo',
               'businessPartnerId',
+              'description',
               'source',
-              'courseRequired',
-              'city',
+              'serviceRequired',
+              
             ],
             where: {
               ...searchConditions,
@@ -272,8 +273,8 @@ const getAll = async (req, res) => {
         },
         include: [
           {
-            model: referStudentmodel,
-            as: 'referStudent',
+            model: referBusinessModel,
+            as: 'referBusiness',
             attributes: [],
             where: {
               ...searchConditions,
@@ -300,8 +301,8 @@ const getAll = async (req, res) => {
         },
         include: [
           {
-            model: referStudentmodel,
-            as: 'referStudent',
+            model: referBusinessModel,
+            as:'referBusiness',
             attributes: [],
             where: {
               ...searchConditions,
@@ -333,23 +334,42 @@ const getAll = async (req, res) => {
    
    
   
-const getStudentAllStatus = async (req, res) => {
-    try {
-        const { studentreferId } = req.params;
-        const response = await statusModel.findAll({
-            where: { referStudentId: studentreferId }, 
-            order: [['id', 'DESC']], 
-        });
-        res.status(200).json(response);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'An error occurred while fetching the records.' });
-    }
+// const getbusinessAllStatus = async (req, res) => {
+//     try {
+//         const { referbusinessId} = req.params;
+//         const response = await statusModel.findOne({
+//             where: { referbusinessId}, 
+//             order: [['id', 'DESC']], 
+//         });
+//         res.status(200).json(response);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ error: 'An error occurred while fetching the records.' });
+//     }
+// };
+
+const getbusinessAllStatus = async (req, res) => {
+  try {
+      console.log(req.params); 
+      const { referbusinessId } = req.params;
+      if (!referbusinessId) {
+          throw new Error('referbusinessId is undefined');
+      }
+      const response = await statusModel.findAll({
+          where: { referbusinessId },
+          order: [['id', 'DESC']],
+      });
+      res.status(200).json(response);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message || 'An error occurred while fetching the records.' });
+  }
 };
 
 
+
 module.exports = {
-    createStatus,
-    getStudentAllStatus,
-    getAll
+  createBusinessStatus,
+    getbusinessAllStatus,
+    getAllbusiness
 }
