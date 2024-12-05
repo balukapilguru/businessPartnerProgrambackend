@@ -32,13 +32,22 @@ const getUserStatements = async (req, res) => {
         if (!statementsData.length) {
             return res.status(404).json({ message: "No statements found for the given user ID" });
         }
-        const totalCredits = statementsData
+        const businessPartnerStatements = statementsData.filter(statement => statement.commission === 'n');
+        const parentPartnerStatements = statementsData.filter(statement => statement.commission === 'y');
+
+        const totalBusinessPartnerAmount = businessPartnerStatements
+            .filter(statement => statement.action === 'Credit')
+            .reduce((sum, statement) => sum + statement.amount, 0);
+
+        const totalParentPartnerAmount = parentPartnerStatements
             .filter(statement => statement.action === 'Credit')
             .reduce((sum, statement) => sum + statement.amount, 0);
 
         res.status(200).json({
-            Amount:totalCredits,
-            statements: statementsData,
+            totalBusinessPartnerAmount,
+            totalParentPartnerAmount,
+            businessPartnerStatements,
+            parentPartnerStatements,
         });
     } catch (error) {
         console.error(error);

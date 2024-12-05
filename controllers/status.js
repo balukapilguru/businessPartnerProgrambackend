@@ -20,8 +20,8 @@ const createStatus = async (req, res) => {
             userId: id
           }
          })
- 
-         if(user.createdBy){
+ console.log(user?.createdBy)
+         if(user?.createdBy){
           console.log('user.id',user.createdBy);
           await statements.create({
             date: now.format('YYYY-MM-DD'),
@@ -32,7 +32,8 @@ const createStatus = async (req, res) => {
             userId: id,
             reason: 'Enrolled student',
             studentId: referStudentId,
-            amount: 800
+            amount: 800, 
+            commission: 'n'
           })
           await statements.create({
             date: now.format('YYYY-MM-DD'),
@@ -43,7 +44,8 @@ const createStatus = async (req, res) => {
             userId: user.dataValues.createdBy,
             reason: `Enrolled student - commision from ${id} `,
             studentId: referStudentId,
-            amount: 200
+            amount: 200,
+            commission : 'y'
           })
          }
          else{
@@ -52,11 +54,12 @@ const createStatus = async (req, res) => {
               time: now.format('HH:mm:ss'),
               action: 'Credit',
               status: 'Successful',
-              changedBy: id,
+              // changedBy: id,
               userId: id,
               reason: 'Enrolled student',
               studentId: referStudentId,
-              amount: 1000
+              amount: 1000,
+              commission: 'n'
           });
         }
       }

@@ -61,6 +61,9 @@ const statements = sequelize.define(
         amount:{
             type:DataTypes.INTEGER,
 
+        },
+        commission:{
+            type: DataTypes.STRING,
         }
     },
     {
