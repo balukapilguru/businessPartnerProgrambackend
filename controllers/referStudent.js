@@ -3,6 +3,7 @@
 const { Op } = require("sequelize")
 // const statuses = require('../models/db/index'); 
 const { ReferStudentmodel, Status, Sequelize } = require('../models/db/index'); 
+const credentialDetails = require("../models/bpp/credentialDetails");
 // console.log(statuses)
 
 
@@ -10,7 +11,11 @@ const { ReferStudentmodel, Status, Sequelize } = require('../models/db/index');
 const createReferral = async (req, res) => {
     try {
         const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID } = req.body;
-
+        const user = await credentialDetails. findOne({
+            where :{
+                businessPartnerID: businessPartnerID
+            }
+        })
         
         const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
         if (existingReferralByEmail) {
@@ -25,6 +30,7 @@ const createReferral = async (req, res) => {
             city,
             courseRequired,
             businessPartnerId:businessPartnerID,
+            bpstudents: user.dataValues.userId
         });
 
 
