@@ -62,7 +62,7 @@ app.use('/businessstatus',businessstatus)
 app.get('/', (req, res) => {
   return res.status(200).send('Hello, Connected with BPP..');
 });
-sequelize.sync({alter:true}).then(() => {
+sequelize.sync().then(() => {
   console.log("Database synced, tables created.");
 }).catch(error => {
   console.error("Error syncing the database:", error);

@@ -35,6 +35,15 @@ const {DataTypes} = require("sequelize")
         onDelete: 'CASCADE',
       });
   
+      bppUsers.hasMany(models.ReferStudentmodel, {
+        foreignKey: 'bpstudents',
+        as: 'bpStudentReferences',
+        onDelete: 'CASCADE',
+      });
+
+
+
+
       bppUsers.hasOne(models.credentialDetails, {
         foreignKey: 'userId',
         onDelete: 'CASCADE',

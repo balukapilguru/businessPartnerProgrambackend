@@ -53,7 +53,16 @@ const ReferStudentmodel = sequelize.define("referStudentmodel", {
             key: 'id'
         },
         onDelete: 'CASCADE'
-    }
+    },
+    bpstudents: {
+        type: DataTypes.INTEGER, 
+        allowNull: true,
+        references: {
+          model: 'bppUsers', 
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+      },
 }, {
 
     freezeTableName: true,
@@ -65,7 +74,17 @@ ReferStudentmodel.associate = (models) => {
         foreignKey: 'assignedTo',
         as: 'assignedUser'
     }),
+
+
         console.log(models)
+
+        ReferStudentmodel.belongsTo(models.bppUsers, {
+            foreignKey: 'bpstudents',
+            as: 'bpStudentsUser',
+            onDelete: 'CASCADE',
+          });
+
+
     // ReferStudentmodel.hasMany(models.status, {
     //     foreignKey: 'referStudentId',
        

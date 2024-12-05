@@ -9,7 +9,7 @@ const { ReferStudentmodel, Status, Sequelize } = require('../models/db/index');
 
 const createReferral = async (req, res) => {
     try {
-        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerId } = req.body;
+        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID } = req.body;
 
         
         const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
@@ -24,7 +24,7 @@ const createReferral = async (req, res) => {
             phonenumber:contactnumber,
             city,
             courseRequired,
-            businessPartnerId,
+            businessPartnerId:businessPartnerID,
         });
 
 
