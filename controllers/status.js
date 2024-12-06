@@ -85,8 +85,6 @@ const createStatus = async (req, res) => {
 };
  
  
- 
- 
 const getAll = async (req, res) => {
   try {
     const { filter, search, page = 1, limit, pageSize } = req.query;
@@ -101,12 +99,11 @@ const getAll = async (req, res) => {
     if (filter) {
       const parsedFilter = JSON.parse(filter);
       filterStatuses = parsedFilter.statuses
-        ? parsedFilter.statuses.split(',').map((status) => status.trim())
+        ? parsedFilter.statuses.map((status) => status.trim())
         : null;
       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
     }
- 
     const recentStatuses = await statusModel.findAll({
       attributes: [
         'referStudentId',
@@ -251,8 +248,6 @@ const getAll = async (req, res) => {
 };
  
  
- 
- 
 const getStudentAllStatus = async (req, res) => {
     try {
         const { studentreferId } = req.params;
@@ -267,8 +262,7 @@ const getStudentAllStatus = async (req, res) => {
     }
 };
  
- 
- 
+  
 module.exports = {
     createStatus,
     getStudentAllStatus,
