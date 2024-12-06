@@ -270,6 +270,7 @@ const login = async (req, res) => {
                 referralLink: updatedCredential.referralLink,
                 email,
                 noOfLogins: updatedCredential.noOfLogins,
+                isParentPartner: updatedCredential.isParentPartner,
             },
             token
         });
@@ -711,7 +712,12 @@ const addBusinessPartner = async (req, res) => {
             subject: 'Your Default Password',
             text: `Congratulations, your referral business account has been created successfully. Your default password is: ${defaultPassword}`
         });
-
+        await credentialDetails.update({
+            // businessPartnerID: ParentbusinessPartnerId,
+            isParentPartner: true
+        }, {
+            where: { id: referringBusinessPartner.id || referringBusinessPartner.dataValues.id}
+        });
         res.status(201).json({
             message: 'Referral business created successfully and email with default password sent.',
             data: newUser

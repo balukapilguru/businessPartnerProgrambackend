@@ -44,6 +44,9 @@ const credentialDetails = sequelize.define(
         referralLink: {
             type: DataTypes.STRING,
         },
+        isParentPartner:{
+            type: DataTypes.BOOLEAN
+        }
     },
     {
         freezeTableName: true,
