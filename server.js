@@ -22,6 +22,7 @@ const role = require('./routes/rolesAndPermissions/Role')
 require('./models/bpp/credentialDetails'); 
 require('./models/bpp/bankdetails'); 
 // require('./models/referbusinessPartnerModel');
+require('./models/bpp/courses')
 require('./models/bpp/statements'); 
 require('./models/bpp/users'); 
 require('./models/status/BusinessStatus'); 

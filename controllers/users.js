@@ -768,18 +768,6 @@ const addBusinessPartner = async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 const getAllBusinessPartners = async (req, res) => {
     try {
         const { businessPartnerID } = req.params;
@@ -813,19 +801,6 @@ const getAllBusinessPartners = async (req, res) => {
         });
     }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
