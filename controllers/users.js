@@ -226,7 +226,7 @@ const generateReferralLink = async (businessPartnerID) => {
 // };
 
 const generateToken = (user) => {
-    const payload = { id: user.id, email: user.email };
+    const payload = { id: user.id, email: user.email, roleId: user.roleId };
     const secret = process.env.JWT_SECRET || 'secret';
     const options = { expiresIn: '24h' };
     const token = jwt.sign(payload, secret, options);
