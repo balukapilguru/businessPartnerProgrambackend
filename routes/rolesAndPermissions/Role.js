@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const roleController = require('../../controllers/rolesAndPermissions/role');
 
-const authenticate = require('../../middlewares/authenticateuser');
+const {authenticateUser} = require('../../middlewares/authenticateuser');
+const hasPermission = require('../../middlewares/rolesAndPermissions/rolepermission');
+// const authenticateUser = require('../../middlewares/authenticateuser');
 
 // Apply authentication middleware to protect the routes
-router.post('/create-role', roleController.createRoleWithPermissions);
-router.put('/update-role/:roleId', roleController.updateRoleWithPermissions)
-router.post('/getroles', roleController.getAllRoles)
-router.delete('/deleteRole/:roleId', roleController.deleteRoleById)
-router.get('/getrolebyid/:roleId', roleController.getRolePermissionsById)
+router.use(authenticateUser)
+router.post('/create-role', hasPermission('Roles', 'canCreate'),roleController.createRoleWithPermissions);
+router.put('/update-role/:roleId',hasPermission('Roles','canUpdate'), roleController.updateRoleWithPermissions)
+router.post('/getroles',hasPermission('Roles','canCreate'), roleController.getAllRoles)
+router.delete('/deleteRole/:roleId', hasPermission('Roles','canDelete'),roleController.deleteRoleById)
+router.get('/getrolebyid/:roleId',hasPermission('Roles','canRead'), roleController.getRolePermissionsById)
 module.exports = router;
