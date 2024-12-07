@@ -105,6 +105,27 @@ const updateCourse = async (req, res) => {
     }
 };
 
+const deleteCourse = async (req, res) => {
+    try {
+        const { id } = req.params; // Extract the ID from URL params
+
+        // Check if course exists
+        const course = await courses.findByPk(id);
+        if (!course) {
+            return res.status(404).json({ message: "Course not found." });
+        }
+
+        // Delete course
+        await course.destroy();
+
+        return res.status(200).json({ message: "Course deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting course:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
 
 
-module.exports = { createCourse,getAllCourses, updateCourse };
+
+
+module.exports = { createCourse,getAllCourses, updateCourse ,deleteCourse};

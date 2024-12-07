@@ -17,4 +17,10 @@ coursePackage:{
     freezeTableName:true,
 })
 
+
+
+
+
+
+
 module.exports= courses;
