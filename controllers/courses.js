@@ -1,5 +1,6 @@
 
 const courses = require('../models/bpp/courses'); 
+const studentcourses = require('../models/bpp/studentcourses')
 const { Op } = require("sequelize");
 
 const createCourse = async (req, res) => {
@@ -107,18 +108,24 @@ const updateCourse = async (req, res) => {
 
 const deleteCourse = async (req, res) => {
     try {
-        const { id } = req.params; // Extract the ID from URL params
-
-        // Check if course exists
+        const { id } = req.params;
         const course = await courses.findByPk(id);
         if (!course) {
             return res.status(404).json({ message: "Course not found." });
         }
+        const deletedStudentCourses = await studentcourses.destroy({
+            where: { courseId: id }
+        });
 
-        // Delete course
+        if (deletedStudentCourses === 0) {
+            return res.status(400).json({
+                message: "No student-course records found to delete for this course."
+            });
+        }
+
         await course.destroy();
 
-        return res.status(200).json({ message: "Course deleted successfully." });
+        return res.status(200).json({ message: "Course and associated student-course records deleted successfully." });
     } catch (error) {
         console.error("Error deleting course:", error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
