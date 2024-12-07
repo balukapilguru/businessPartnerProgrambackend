@@ -25,11 +25,18 @@ db.request = require('../requests')
 
 db.credentials = require('../bpp/credentialDetails')
 // Define associations for roles and permissions
+
+
+
 db.Role.belongsToMany(db.Permission, { through: 'RolePermission', as: 'permissions' });
 db.Permission.belongsToMany(db.Role, { through: 'RolePermission', as: 'roles' });
 
 db.Permission.belongsToMany(db.Module, { through: db.PermissionModule, as: 'modules' });
 db.Module.belongsToMany(db.Permission, { through: db.PermissionModule, as: 'permissions' });
+
+
+
+
 db.Statements .belongsTo(db.bppUsers, {
     foreignKey: 'userId',
     as: 'user',

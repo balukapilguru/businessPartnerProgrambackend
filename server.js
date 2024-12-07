@@ -19,7 +19,7 @@ const businessstatus = require('./routes/businessStatus')
 const courses = require('./routes/bpp/courses')
 
 const role = require('./routes/rolesAndPermissions/Role')
-
+require ('./models/bpp/studentcourses')
 require('./models/bpp/credentialDetails'); 
 require('./models/bpp/bankdetails'); 
 // require('./models/referbusinessPartnerModel');

@@ -4,6 +4,8 @@ const { Op } = require("sequelize")
 // const statuses = require('../models/db/index'); 
 const { ReferStudentmodel, Status, Sequelize } = require('../models/db/index'); 
 const credentialDetails = require("../models/bpp/credentialDetails");
+const course = require("../models/bpp/courses")
+const studentCourses = require("../models/bpp/studentcourses")
 // console.log(statuses)
 
 
@@ -16,11 +18,20 @@ const createReferral = async (req, res) => {
                 businessPartnerID: businessPartnerID
             }
         })
-        
-        const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
-        if (existingReferralByEmail) {
-            return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
+
+        const courseFound = await course.findOne({
+            where: {
+                courseName: courseRequired  // Fixed the typo from courseNmae to courseName
+            }
+        });
+        if (!courseFound) {
+            return res.status(400).json({ message: 'Course not found.' });
         }
+
+        // const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
+        // if (existingReferralByEmail) {
+        //     return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
+        // }
 
      
         const newReferral = await ReferStudentmodel.create({
@@ -28,12 +39,18 @@ const createReferral = async (req, res) => {
             email,
             phonenumber:contactnumber,
             city,
-            courseRequired,
+              courseRequired: courseFound.id, 
             businessPartnerId:businessPartnerID,
             bpstudents: user.dataValues.userId
         });
 
 
+
+        await studentCourses.create({
+            studentId: newReferral.id,
+            courseId: courseFound.id  // Linking the course ID here
+        });
+        // await newReferral.addCourse(courseFound);
         const newStatus = await Status.create({
             time: new Date(),
             changedBy: changedBy || null,
@@ -54,6 +71,7 @@ const createReferral = async (req, res) => {
        
         res.status(201).json({
             message: 'Referral created successfully',
+            referal :newReferral
             // data: {
             //     referral: referralWithStatus,
             //     // status: referralWithStatus.statuses

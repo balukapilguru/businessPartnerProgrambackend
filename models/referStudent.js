@@ -89,6 +89,7 @@ ReferStudentmodel.associate = (models) => {
     //     foreignKey: 'referStudentId',
        
     // })
+
 }
 
 
