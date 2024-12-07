@@ -22,6 +22,8 @@ db.businessStatus = require('../status/BusinessStatus')
 db.Statements = require('../bpp/statements');
 db.bppUsers = require('../bpp/users');
 db.request = require('../requests')
+
+db.credentials = require('../bpp/credentialDetails')
 // Define associations for roles and permissions
 
 
@@ -84,6 +86,15 @@ db.bppUsers.hasMany(db.request, {
   db.request .belongsTo(db.bppUsers, {
     foreignKey: 'changedBy',
     as: 'changedByUser',
+    onDelete: 'CASCADE',
+});
+
+db.bppUsers.hasOne(db.credentials, {
+    foreignKey: 'userId',
+    onDelete: 'CASCADE',
+  });
+  db.credentials.belongsTo(db.bppUsers, {
+    foreignKey: 'userId',
     onDelete: 'CASCADE',
 });
 
