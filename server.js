@@ -16,6 +16,7 @@ const statements = require('./routes/statements')
 const request = require('./routes/request')
 const userSignup = require('./routes/bpp/users');
 const businessstatus = require('./routes/businessStatus')
+const courses = require('./routes/bpp/courses')
 
 const role = require('./routes/rolesAndPermissions/Role')
 
@@ -59,6 +60,7 @@ app.use('/status',status)
 app.use('/statements',statements)
 app.use('/request',request)
 app.use('/businessstatus',businessstatus)
+app.use('/courses',courses)
 
 app.get('/', (req, res) => {
   return res.status(200).send('Hello, Connected with BPP..');

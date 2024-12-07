@@ -17,6 +17,7 @@ db.PermissionModule = require('../rolesAndPermissions/PermissionModule')(sequeli
 db.ReferStudentmodel = require('../referStudent'); // Refer Student model
 db.Status = require('../status/status'); // Status model
 db.ReferBusinessmodel = require('../referBusiness'),
+db.courses = require('../bpp/courses')
 db.businessStatus = require('../status/BusinessStatus')
 db.Statements = require('../bpp/statements');
 db.bppUsers = require('../bpp/users');
@@ -78,5 +79,33 @@ db.bppUsers.hasMany(db.request, {
     as: 'changedByUser',
     onDelete: 'CASCADE',
 });
+
+
+db.ReferStudentmodel.belongsToMany(db.courses, {
+    through: 'StudentCourses', // Name of the junction table
+    foreignKey: 'studentId', // Foreign key in the junction table for ReferStudentmodel
+    otherKey: 'courseId', // Foreign key in the junction table for courses
+    as: 'enrolledCourses',
+});
+
+db.courses.belongsToMany(db.ReferStudentmodel, {
+    through: 'StudentCourses', // Name of the junction table
+    foreignKey: 'courseId', // Foreign key in the junction table for courses
+    otherKey: 'studentId', // Foreign key in the junction table for ReferStudentmodel
+    as: 'interestedStudents',
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Export the database object with models and Sequelize instance
 module.exports = db;

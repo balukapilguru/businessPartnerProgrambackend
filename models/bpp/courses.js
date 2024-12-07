@@ -1,10 +1,8 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require("../db");
+const sequelize = require("../../config/db")
 
 const courses = sequelize.define('courses',{
-   
-
-courseName:{
+   courseName:{
     type:DataTypes.STRING,
     defaultValue:true
     
