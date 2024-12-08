@@ -491,17 +491,18 @@ const createBusinessStatus = async (req, res) => {
 // };
 
 
+
 const getAllbusiness = async (req, res) => {
   try {
     const { filter, search, page = 1, limit, pageSize } = req.query;
-
+ 
     let filterStatuses = null;
     let startDate = null;
     let endDate = null;
-
+ 
     // pageSize
     const effectiveLimit = parseInt(pageSize || limit || 10);
-
+ 
     if (filter) {
       const parsedFilter = JSON.parse(filter);
       filterStatuses = parsedFilter.statuses
@@ -510,7 +511,32 @@ const getAllbusiness = async (req, res) => {
       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
     }
-
+ 
+    const recentStatuses = await statusModel.findAll({
+      attributes: [
+        'referbusinessId',
+        [fn('MAX', col('id')), 'latestId'],
+      ],
+      group: ['referbusinessId'],
+      where: {
+        ...(startDate && endDate && {
+          createdAt: { [Op.between]: [startDate, endDate] },
+        }),
+      },
+    });
+ 
+    const latestIds = recentStatuses.map((status) => status.dataValues.latestId);
+ 
+    if (!latestIds.length) {
+      return res.status(200).json({
+        statuses: [],
+        count: {},
+        totalRecords: 0,
+        totalPages: 0,
+        currentPage: page,
+      });
+    }
+ 
     const searchConditions = search
       ? {
           [Op.or]: [
@@ -521,12 +547,14 @@ const getAllbusiness = async (req, res) => {
           ],
         }
       : {};
-
+ 
     const offset = (page - 1) * effectiveLimit;
-
-    // Fetch all statuses associated with the referBusinessId and order by `currentStatus` and `createdAt`
+ 
     const fullStatuses = await statusModel.findAll({
       where: {
+        id: {
+          [Op.in]: latestIds,
+        },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -546,6 +574,7 @@ const getAllbusiness = async (req, res) => {
             'description',
             'source',
             'serviceRequired',
+            
           ],
           where: {
             ...searchConditions,
@@ -554,16 +583,13 @@ const getAllbusiness = async (req, res) => {
       ],
       offset,
       limit: effectiveLimit,
-      order: [
-        // First order by `currentStatus` to make sure 'lead' and 'initial' come first (assuming 'lead' is a status value)
-        [Sequelize.literal("CASE WHEN currentStatus IN ('lead', 'initial') THEN 1 ELSE 2 END"), 'ASC'],
-        // Then order by `createdAt` in descending order for both lead and updated statuses
-        ['id', 'DESC'],
-      ],
     });
-
+ 
     const totalRecords = await statusModel.count({
       where: {
+        id: {
+          [Op.in]: latestIds,
+        },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -580,16 +606,18 @@ const getAllbusiness = async (req, res) => {
         },
       ],
     });
-
+ 
     const totalPages = Math.ceil(totalRecords / effectiveLimit);
-
-    // Fetch status count per currentStatus (lead, updated, etc.)
+ 
     const statusCount = await statusModel.findAll({
       attributes: [
         'currentStatus',
         [fn('COUNT', col('currentStatus')), 'count'],
       ],
       where: {
+        id: {
+          [Op.in]: latestIds,
+        },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -598,7 +626,7 @@ const getAllbusiness = async (req, res) => {
       include: [
         {
           model: referBusinessModel,
-          as: 'referBusiness',
+          as:'referBusiness',
           attributes: [],
           where: {
             ...searchConditions,
@@ -606,26 +634,27 @@ const getAllbusiness = async (req, res) => {
         },
       ],
       group: ['currentStatus'],
+      raw: true,
     });
-
-    // Prepare the result to return with pagination details
-    res.status(200).json({
+ 
+    const statusCountMapping = statusCount.reduce((acc, { currentStatus, count }) => {
+      acc[currentStatus] = count;
+      return acc;
+    }, {});
+ 
+    return res.status(200).json({
       statuses: fullStatuses,
-      count: statusCount.reduce((acc, status) => {
-        acc[status.currentStatus] = status.dataValues.count;
-        return acc;
-      }, {}),
+      count: statusCountMapping,
       totalRecords,
       totalPages,
-      currentPage: page,
+      currentPage: parseInt(page),
       pageSize: effectiveLimit,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'An error occurred while fetching business statuses.' });
+    console.error('Error fetching data:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching the records.' });
   }
 };
-
 
 const getbusinessAllStatus = async (req, res) => {
   try {
