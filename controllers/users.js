@@ -1,5 +1,5 @@
 const bppUsers = require('../models/bpp/users');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const crypto = require('crypto');
 const credentialDetails = require('../models/bpp/credentialDetails');
 const Personaldetails = require('../models/bpp/personaldetails')
@@ -19,6 +19,7 @@ const { JWT_SECRET } = require('../utiles/jwtconfig');
 const { encrypt, decrypt } = require('../utiles/encryptAndDecrypt')
 require('dotenv').config();
 const { sequelize, fn } = require('sequelize');
+const Role = require('../models/rolesAndPermissions/Role')
 
 
 let tempOtpStorage = [];
@@ -52,7 +53,8 @@ const sendOtp = async (req, res) => {
             message: 'OTP sent to your email for verification',
             user: {
                 fullName,
-                email, phonenumber
+                email,
+                 phonenumber
             }
         });
     } catch (error) {
@@ -113,7 +115,8 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 return res.status(200).json({
                     message: 'User registered and verified successfully. Check your email for the default password.',
                     user: { email, fullName, businessPartnerID, phonenumber },
-                    redirectUrl: '/login'
+                    redirectUrl: '/login',
+                    // console.log("userdeatils",user)
                 });
             } else {
                 return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -155,8 +158,6 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 // };
 
 // new function
-
-
 
 
 
@@ -234,13 +235,13 @@ const generateToken = (user) => {
 };
 
 const login = async (req, res) => {
-    const { email, password, phonenumber } = req.body;
-
+    const { email, password, } = req.body;
+     
     try {
         console.log("Received email:", email);
         console.log("Received password:", password);
         const user = await bppUsers.findOne({ where: { email } });
-
+       console.log(user)
         if (!user) {
             console.error("User not found for email:", email);
             return res.status(400).json({ message: 'User not found' });
@@ -260,12 +261,28 @@ const login = async (req, res) => {
         await credentialDetails.increment('noOfLogins', { by: 1, where: { userId: user.id } });
         const updatedCredential = await credentialDetails.findOne({ where: { userId: user.id } });
         const token = generateToken(user);
+        console.log({
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                fullName: user.dataValues.fullName,
+                phonenumber: user.phonenumber,
+               
+                businessPartnerID: updatedCredential.businessPartnerID,
+                referralLink: updatedCredential.referralLink,
+                email,
+                noOfLogins: updatedCredential.noOfLogins,
+                isParentPartner: updatedCredential.isParentPartner,
+            },
+            token
+        });
         return res.status(200).json({
             message: 'Login successful',
             user: {
                 id: user.id,
-                fullName: user.fullName,
+                fullName:user.dataValues.fullName,
                 phonenumber: user.phonenumber,
+               
                 businessPartnerID: updatedCredential.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
                 email,
@@ -811,6 +828,178 @@ const getAllBusinessPartners = async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+// users api  for sales 
+
+
+//   createUserlogin = async (req, res) => {
+//     try {
+//       const { fullName, emailId, phoneNumber, roleId } = req.body;
+  
+  
+
+//       const rolersDetails = await Role.findOne({
+//         where :{
+//           name: roleId
+//         }
+//       })
+
+//       const roleuser = await bppUsers.create({
+//          fullName,
+//           emailId,
+//            phoneNumber,
+//            roleId:rolersDetails.id
+//          });
+
+
+// const rolesusers = await credentialDetails.create({
+//     fullName,
+//     emailId,
+//      phoneNumber,
+//      roleId:rolersDetails.id
+// })
+
+//       res.status(201).json({ message: 'User created successfully!', data: user });
+//     } catch (error) {
+//       res.status(500).json({ message: 'Error creating user', error: error.message });
+//     }
+//   };
+
+// const createUserlogin = async (req, res) => {
+//     try {
+//         const { fullName, emailId, phoneNumber, rolename } = req.body;
+
+//         // Ensure Role.findOne works
+//         const roleDetails = await Role.findOne({
+//             where: { name: rolename },
+//         });
+
+//         if (!roleDetails) {
+//             return res.status(400).json({ message: 'Invalid role provided' });
+//         }
+
+//         // const existingUser = await bppUsers.findOne({ where: { emailId } });
+//         // if (existingUser) {
+//         //     return res.status(400).json({ message: 'User already exists with this email' });
+//         // }
+
+//         const defaultPassword = crypto.randomBytes(8).toString('hex');
+//         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+//         const user = await bppUsers.create({
+//             fullName,
+//             emailId,
+//             phoneNumber,
+//             roleId: roleDetails.id,
+//         });
+
+//         await credentialDetails.create({
+//             password: hashedPassword,
+//             emailId,
+//             userId: user.id,
+//             noOfLogins: 0,
+//             noOfLogouts: 0,
+//         });
+
+//         await transporter.sendMail({
+//             from: config.mailConfig.mailUser,
+//             to: emailId,
+//             subject: 'Welcome! Your Account Has Been Created',
+//             text: `Hi ${fullName},\n\nYour account has been created successfully. Your default password is: ${defaultPassword}.\n\nPlease log in and change your password immediately.\n\nBest regards,\nTeam`,
+//         });
+
+//         return res.status(201).json({ message: 'User created successfully!', user });
+//     } catch (error) {
+//         console.error('Error creating user:', error.message || error);
+//         return res.status(500).json({ message: 'Error creating user', error: error.message });
+//     }
+// };
+
+const createUserlogin = async (req, res) => {
+    try {
+        const { fullName, email, phonenumber, rolename } = req.body;
+
+        // Validate input
+        if (!fullName || !email || !phonenumber || !rolename) {
+            return res.status(400).json({ message: 'All fields are required.' });
+        }
+        console.log(Role)
+        // Check if the role exists
+        console.log(Role.findOne);
+
+        const roleDetails = await Role.findOne({
+            where: { name: rolename },
+        });
+
+        if (!roleDetails) {
+            return res.status(400).json({ message: 'Invalid role name provided.' });
+        }
+
+        // Check if the user already exists
+        const existingUser = await bppUsers.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists with this email.' });
+        }
+
+        // Generate default password and hash it
+        const defaultPassword = crypto.randomBytes(8).toString('hex');
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+        // Create user in `bppUsers`
+        const user = await bppUsers.create({
+            fullName,
+            email,
+            phonenumber,
+            roleId: roleDetails.id, // Associate role ID
+        });
+
+
+        // Create credentials in `credentialDetails`
+        await credentialDetails.create({
+            password: hashedPassword,
+            email,
+            userId: user.id,
+            noOfLogins: 0,
+            noOfLogouts: 0,
+        });
+
+        // Send email with default password
+        await transporter.sendMail({
+            from: config.mailConfig.mailUser,
+            to: email,
+            subject: 'Welcome! Your Account Has Been Created',
+            text: `Hi ${fullName},\n\nYour account has been created successfully. Your default password is: ${defaultPassword}.\n\nPlease log in and change your password immediately.\n\nBest regards,\nTeam`,
+        });
+
+        return res.status(201).json({
+            message: 'User created successfully!',
+            user: {
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                roleId: roleDetails.id,
+            },
+        });
+    } catch (error) {
+        console.error('Error creating user:', error.message || error);
+        return res.status(500).json({ message: 'Error creating user', error: error.message });
+    }
+};
+
+
+
+
+
+
+// 
 module.exports = {
     login,
     sendOtp,
@@ -824,7 +1013,8 @@ module.exports = {
     decryptfun,
     addBusinessPartner,
     getPersonalDetailsById,
-    getAllBusinessPartners
+    getAllBusinessPartners,
+    createUserlogin
 };
 
 

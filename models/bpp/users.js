@@ -1,6 +1,7 @@
 
 const sequelize = require("../../config/db")
-const {DataTypes} = require("sequelize")
+const {DataTypes} = require("sequelize");
+const { Role } = require("../rolesAndPermissions/Role");
 
 
     const bppUsers = sequelize.define(
@@ -69,6 +70,7 @@ const {DataTypes} = require("sequelize")
       });
       bppUsers.belongsTo(models.Role, {
         foreignKey: 'roleId',
+        as:Role
     });
     };
   

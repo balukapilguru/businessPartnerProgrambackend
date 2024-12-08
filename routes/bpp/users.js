@@ -17,5 +17,7 @@ router.get('/getallusersdetails/:id',usersControllers. getPersonalDetailsById ) 
 router.get('/decrypt',usersControllers.decryptfun),
 router.post('/refe-parent', usersControllers. addBusinessPartner);
 router.get('/getallbecomeparents/:businessPartnerID', usersControllers. getAllBusinessPartners);
+router.post('/userform', usersControllers.createUserlogin);
+
 // router.post('/refe-bp', referaBusinessPartnerController.createBusiness);
 module.exports = router;

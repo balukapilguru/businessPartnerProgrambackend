@@ -287,7 +287,7 @@ const getDashboardDetails = async (req, res) => {
       return acc;
     }, {});
 
-    // Prepare for fetching status data
+    
     const userIds = children.map(child => child.userId);
     const recentStatuses = await statusModel.findAll({
       attributes: [
@@ -310,6 +310,7 @@ const getDashboardDetails = async (req, res) => {
     const latestIds = recentStatuses.map(status => status.latestId);
 
     if (!latestIds.length) {
+      
       return res.status(200).json({
         statuses: [],
         uniqueBpStudentsCount: 0,
@@ -320,7 +321,7 @@ const getDashboardDetails = async (req, res) => {
       });
     }
 
-    // Calculate enrollments
+ 
     const enrollmentCounts = await statusModel.findAll({
       attributes: [
         [fn('COUNT', col('status.id')), 'count'],
@@ -339,7 +340,7 @@ const getDashboardDetails = async (req, res) => {
       raw: true,
     });
 
-    // Filter and apply counts to childrenObject
+  
     enrollmentCounts.filter(item => userIds.includes(parseInt(item.bpstudents))).forEach(item => {
       if (childrenObject[item.bpstudents]) {
         childrenObject[item.bpstudents].enrollments = parseInt(item.count);

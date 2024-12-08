@@ -1,7 +1,7 @@
 const referBusinessModel = require('../models/referBusiness');
 const { Op , fn, col} = require("sequelize")
 const statusModel = require('../models/status/BusinessStatus'); 
-const sequelize = require('../config/db'); 
+const Sequelize = require('../config/db'); 
 const bppusers = require('../models/bpp/users');
 const dayjs = require('dayjs');
 const now = dayjs();
@@ -168,169 +168,169 @@ const createBusinessStatus = async (req, res) => {
 // };
 
  
-const getAllbusiness = async (req, res) => {
-    try {
-      const { filter, search, page = 1, limit, pageSize } = req.query;
+// const getAllbusiness = async (req, res) => {
+//     try {
+//       const { filter, search, page = 1, limit, pageSize } = req.query;
    
-      let filterStatuses = null;
-      let startDate = null;
-      let endDate = null;
+//       let filterStatuses = null;
+//       let startDate = null;
+//       let endDate = null;
    
-      // pageSize
-      const effectiveLimit = parseInt(pageSize || limit || 10);
+//       // pageSize
+//       const effectiveLimit = parseInt(pageSize || limit || 10);
    
-      if (filter) {
-        const parsedFilter = JSON.parse(filter);
-        filterStatuses = parsedFilter.statuses
-          ? parsedFilter.statuses.split(',').map((status) => status.trim())
-          : null;
-        startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
-        endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
-      }
+//       if (filter) {
+//         const parsedFilter = JSON.parse(filter);
+//         filterStatuses = parsedFilter.statuses
+//           ? parsedFilter.statuses.split(',').map((status) => status.trim())
+//           : null;
+//         startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
+//         endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
+//       }
    
-      const recentStatuses = await statusModel.findAll({
-        attributes: [
-          'referbusinessId',
-          [fn('MAX', col('id')), 'latestId'],
-        ],
-        group: ['referbusinessId'],
-        where: {
-          ...(startDate && endDate && {
-            createdAt: { [Op.between]: [startDate, endDate] },
-          }),
-        },
-      });
+//       const recentStatuses = await statusModel.findAll({
+//         attributes: [
+//           'referbusinessId',
+//           [fn('MAX', col('id')), 'latestId'],
+//         ],
+//         group: ['referbusinessId'],
+//         where: {
+//           ...(startDate && endDate && {
+//             createdAt: { [Op.between]: [startDate, endDate] },
+//           }),
+//         },
+//       });
    
-      const latestIds = recentStatuses.map((status) => status.dataValues.latestId);
+//       const latestIds = recentStatuses.map((status) => status.dataValues.latestId);
    
-      if (!latestIds.length) {
-        return res.status(200).json({
-          statuses: [],
-          count: {},
-          totalRecords: 0,
-          totalPages: 0,
-          currentPage: page,
-        });
-      }
+//       if (!latestIds.length) {
+//         return res.status(200).json({
+//           statuses: [],
+//           count: {},
+//           totalRecords: 0,
+//           totalPages: 0,
+//           currentPage: page,
+//         });
+//       }
    
-      const searchConditions = search
-        ? {
-            [Op.or]: [
-              { fullname: { [Op.like]: `%${search}%` } },
-              { phoneNumber: { [Op.like]: `%${search}%` } },
-              { email: { [Op.like]: `%${search}%` } },
-              { serviceRequired: { [Op.like]: `%${search}%` } },
-            ],
-          }
-        : {};
+//       const searchConditions = search
+//         ? {
+//             [Op.or]: [
+//               { fullname: { [Op.like]: `%${search}%` } },
+//               { phoneNumber: { [Op.like]: `%${search}%` } },
+//               { email: { [Op.like]: `%${search}%` } },
+//               { serviceRequired: { [Op.like]: `%${search}%` } },
+//             ],
+//           }
+//         : {};
    
-      const offset = (page - 1) * effectiveLimit;
+//       const offset = (page - 1) * effectiveLimit;
    
-      const fullStatuses = await statusModel.findAll({
-        where: {
-          id: {
-            [Op.in]: latestIds,
-          },
-          ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
-          ...(startDate && endDate && {
-            createdAt: { [Op.between]: [startDate, endDate] },
-          }),
-        },
-        include: [
-          {
-            model: referBusinessModel,
-            as: 'referBusiness',
-            attributes: [
-              'id',
-              'fullname',
-              'email',
-              'phoneNumber',
-              'assignedTo',
-              'businessPartnerId',
-              'description',
-              'source',
-              'serviceRequired',
+//       const fullStatuses = await statusModel.findAll({
+//         where: {
+//           id: {
+//             [Op.in]: latestIds,
+//           },
+//           ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//           ...(startDate && endDate && {
+//             createdAt: { [Op.between]: [startDate, endDate] },
+//           }),
+//         },
+//         include: [
+//           {
+//             model: referBusinessModel,
+//             as: 'referBusiness',
+//             attributes: [
+//               'id',
+//               'fullname',
+//               'email',
+//               'phoneNumber',
+//               'assignedTo',
+//               'businessPartnerId',
+//               'description',
+//               'source',
+//               'serviceRequired',
               
-            ],
-            where: {
-              ...searchConditions,
-            },
-          },
-        ],
-        offset,
-        limit: effectiveLimit,
-      });
+//             ],
+//             where: {
+//               ...searchConditions,
+//             },
+//           },
+//         ],
+//         offset,
+//         limit: effectiveLimit,
+//       });
    
-      const totalRecords = await statusModel.count({
-        where: {
-          id: {
-            [Op.in]: latestIds,
-          },
-          ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
-          ...(startDate && endDate && {
-            createdAt: { [Op.between]: [startDate, endDate] },
-          }),
-        },
-        include: [
-          {
-            model: referBusinessModel,
-            as: 'referBusiness',
-            attributes: [],
-            where: {
-              ...searchConditions,
-            },
-          },
-        ],
-      });
+//       const totalRecords = await statusModel.count({
+//         where: {
+//           id: {
+//             [Op.in]: latestIds,
+//           },
+//           ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//           ...(startDate && endDate && {
+//             createdAt: { [Op.between]: [startDate, endDate] },
+//           }),
+//         },
+//         include: [
+//           {
+//             model: referBusinessModel,
+//             as: 'referBusiness',
+//             attributes: [],
+//             where: {
+//               ...searchConditions,
+//             },
+//           },
+//         ],
+//       });
    
-      const totalPages = Math.ceil(totalRecords / effectiveLimit);
+//       const totalPages = Math.ceil(totalRecords / effectiveLimit);
    
-      const statusCount = await statusModel.findAll({
-        attributes: [
-          'currentStatus',
-          [fn('COUNT', col('currentStatus')), 'count'],
-        ],
-        where: {
-          id: {
-            [Op.in]: latestIds,
-          },
-          ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
-          ...(startDate && endDate && {
-            createdAt: { [Op.between]: [startDate, endDate] },
-          }),
-        },
-        include: [
-          {
-            model: referBusinessModel,
-            as:'referBusiness',
-            attributes: [],
-            where: {
-              ...searchConditions,
-            },
-          },
-        ],
-        group: ['currentStatus'],
-        raw: true,
-      });
+//       const statusCount = await statusModel.findAll({
+//         attributes: [
+//           'currentStatus',
+//           [fn('COUNT', col('currentStatus')), 'count'],
+//         ],
+//         where: {
+//           id: {
+//             [Op.in]: latestIds,
+//           },
+//           ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//           ...(startDate && endDate && {
+//             createdAt: { [Op.between]: [startDate, endDate] },
+//           }),
+//         },
+//         include: [
+//           {
+//             model: referBusinessModel,
+//             as:'referBusiness',
+//             attributes: [],
+//             where: {
+//               ...searchConditions,
+//             },
+//           },
+//         ],
+//         group: ['currentStatus'],
+//         raw: true,
+//       });
    
-      const statusCountMapping = statusCount.reduce((acc, { currentStatus, count }) => {
-        acc[currentStatus] = count;
-        return acc;
-      }, {});
+//       const statusCountMapping = statusCount.reduce((acc, { currentStatus, count }) => {
+//         acc[currentStatus] = count;
+//         return acc;
+//       }, {});
    
-      return res.status(200).json({
-        statuses: fullStatuses,
-        count: statusCountMapping,
-        totalRecords,
-        totalPages,
-        currentPage: parseInt(page),
-        pageSize: effectiveLimit,
-      });
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      return res.status(500).json({ error: 'An error occurred while fetching the records.' });
-    }
-  };
+//       return res.status(200).json({
+//         statuses: fullStatuses,
+//         count: statusCountMapping,
+//         totalRecords,
+//         totalPages,
+//         currentPage: parseInt(page),
+//         pageSize: effectiveLimit,
+//       });
+//     } catch (error) {
+//       console.error('Error fetching data:', error);
+//       return res.status(500).json({ error: 'An error occurred while fetching the records.' });
+//     }
+//   };
    
    
   
@@ -347,6 +347,285 @@ const getAllbusiness = async (req, res) => {
 //         res.status(500).json({ error: 'An error occurred while fetching the records.' });
 //     }
 // };
+
+
+
+
+// gpt code 905
+
+// const getAllbusiness = async (req, res) => {
+//   try {
+//     const { filter, search, page = 1, limit, pageSize } = req.query;
+
+//     let filterStatuses = null;
+//     let startDate = null;
+//     let endDate = null;
+
+//     // pageSize
+//     const effectiveLimit = parseInt(pageSize || limit || 10);
+
+//     if (filter) {
+//       const parsedFilter = JSON.parse(filter);
+//       filterStatuses = parsedFilter.statuses
+//         ? parsedFilter.statuses.split(',').map((status) => status.trim())
+//         : null;
+//       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
+//       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
+//     }
+
+//     const searchConditions = search
+//       ? {
+//           [Op.or]: [
+//             { fullname: { [Op.like]: `%${search}%` } },
+//             { phoneNumber: { [Op.like]: `%${search}%` } },
+//             { email: { [Op.like]: `%${search}%` } },
+//             { serviceRequired: { [Op.like]: `%${search}%` } },
+//           ],
+//         }
+//       : {};
+
+//     const offset = (page - 1) * effectiveLimit;
+
+//     // Fetch all statuses associated with the referBusinessId and order by `currentStatus` and `createdAt`
+//     const fullStatuses = await statusModel.findAll({
+//       where: {
+//         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+//       include: [
+//         {
+//           model: referBusinessModel,
+//           as: 'referBusiness',
+//           attributes: [
+//             'id',
+//             'fullname',
+//             'email',
+//             'phoneNumber',
+//             'assignedTo',
+//             'businessPartnerId',
+//             'description',
+//             'source',
+//             'serviceRequired',
+//           ],
+//           where: {
+//             ...searchConditions,
+//           },
+//         },
+//       ],
+//       offset,
+//       limit: effectiveLimit,
+//       order: [
+//         // First order by `currentStatus` to make sure 'lead' comes first (assuming 'lead' is a status value)
+//         [Sequelize.literal("CASE WHEN currentStatus = 'lead' THEN 1 ELSE 2 END"), 'ASC'],
+//         // Then order by `createdAt` in descending order for both lead and updated statuses
+//         ['createdAt', 'DESC'],
+//       ],
+//     });
+
+//     const totalRecords = await statusModel.count({
+//       where: {
+//         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+//       include: [
+//         {
+//           model: referBusinessModel,
+//           as: 'referBusiness',
+//           attributes: [],
+//           where: {
+//             ...searchConditions,
+//           },
+//         },
+//       ],
+//     });
+
+//     const totalPages = Math.ceil(totalRecords / effectiveLimit);
+
+//     // Fetch status count per currentStatus (lead, updated, etc.)
+//     const statusCount = await statusModel.findAll({
+//       attributes: [
+//         'currentStatus',
+//         [fn('COUNT', col('currentStatus')), 'count'],
+//       ],
+//       where: {
+//         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+//       include: [
+//         {
+//           model: referBusinessModel,
+//           as: 'referBusiness',
+//           attributes: [],
+//           where: {
+//             ...searchConditions,
+//           },
+//         },
+//       ],
+//       group: ['currentStatus'],
+//       raw: true,
+//     });
+
+//     const statusCountMapping = statusCount.reduce((acc, { currentStatus, count }) => {
+//       acc[currentStatus] = count;
+//       return acc;
+//     }, {});
+
+//     return res.status(200).json({
+//       statuses: fullStatuses,
+//       count: statusCountMapping,
+//       totalRecords,
+//       totalPages,
+//       currentPage: parseInt(page),
+//       pageSize: effectiveLimit,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching data:', error);
+//     return res.status(500).json({ error: 'An error occurred while fetching the records.' });
+//   }
+// };
+
+
+const getAllbusiness = async (req, res) => {
+  try {
+    const { filter, search, page = 1, limit, pageSize } = req.query;
+
+    let filterStatuses = null;
+    let startDate = null;
+    let endDate = null;
+
+    // pageSize
+    const effectiveLimit = parseInt(pageSize || limit || 10);
+
+    if (filter) {
+      const parsedFilter = JSON.parse(filter);
+      filterStatuses = parsedFilter.statuses
+        ? parsedFilter.statuses.split(',').map((status) => status.trim())
+        : null;
+      startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
+      endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
+    }
+
+    const searchConditions = search
+      ? {
+          [Op.or]: [
+            { fullname: { [Op.like]: `%${search}%` } },
+            { phoneNumber: { [Op.like]: `%${search}%` } },
+            { email: { [Op.like]: `%${search}%` } },
+            { serviceRequired: { [Op.like]: `%${search}%` } },
+          ],
+        }
+      : {};
+
+    const offset = (page - 1) * effectiveLimit;
+
+    // Fetch all statuses associated with the referBusinessId and order by `currentStatus` and `createdAt`
+    const fullStatuses = await statusModel.findAll({
+      where: {
+        ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+        ...(startDate && endDate && {
+          createdAt: { [Op.between]: [startDate, endDate] },
+        }),
+      },
+      include: [
+        {
+          model: referBusinessModel,
+          as: 'referBusiness',
+          attributes: [
+            'id',
+            'fullname',
+            'email',
+            'phoneNumber',
+            'assignedTo',
+            'businessPartnerId',
+            'description',
+            'source',
+            'serviceRequired',
+          ],
+          where: {
+            ...searchConditions,
+          },
+        },
+      ],
+      offset,
+      limit: effectiveLimit,
+      order: [
+        // First order by `currentStatus` to make sure 'lead' and 'initial' come first (assuming 'lead' is a status value)
+        [Sequelize.literal("CASE WHEN currentStatus IN ('lead', 'initial') THEN 1 ELSE 2 END"), 'ASC'],
+        // Then order by `createdAt` in descending order for both lead and updated statuses
+        ['id', 'DESC'],
+      ],
+    });
+
+    const totalRecords = await statusModel.count({
+      where: {
+        ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+        ...(startDate && endDate && {
+          createdAt: { [Op.between]: [startDate, endDate] },
+        }),
+      },
+      include: [
+        {
+          model: referBusinessModel,
+          as: 'referBusiness',
+          attributes: [],
+          where: {
+            ...searchConditions,
+          },
+        },
+      ],
+    });
+
+    const totalPages = Math.ceil(totalRecords / effectiveLimit);
+
+    // Fetch status count per currentStatus (lead, updated, etc.)
+    const statusCount = await statusModel.findAll({
+      attributes: [
+        'currentStatus',
+        [fn('COUNT', col('currentStatus')), 'count'],
+      ],
+      where: {
+        ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+        ...(startDate && endDate && {
+          createdAt: { [Op.between]: [startDate, endDate] },
+        }),
+      },
+      include: [
+        {
+          model: referBusinessModel,
+          as: 'referBusiness',
+          attributes: [],
+          where: {
+            ...searchConditions,
+          },
+        },
+      ],
+      group: ['currentStatus'],
+    });
+
+    // Prepare the result to return with pagination details
+    res.status(200).json({
+      statuses: fullStatuses,
+      count: statusCount.reduce((acc, status) => {
+        acc[status.currentStatus] = status.dataValues.count;
+        return acc;
+      }, {}),
+      totalRecords,
+      totalPages,
+      currentPage: page,
+      pageSize: effectiveLimit,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'An error occurred while fetching business statuses.' });
+  }
+};
+
 
 const getbusinessAllStatus = async (req, res) => {
   try {
