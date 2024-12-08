@@ -54,7 +54,16 @@ const ReferBusinessModel = sequelize.define("referBusinessModel",{
             key:'id'
         },
         onDelete: 'CASCADE'
-    }
+    },
+    bpbussiness: {
+        type: DataTypes.INTEGER, 
+        allowNull: true,
+        references: {
+          model: 'bppUsers', 
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+      },
 },{
 
     freezeTableName: true,
@@ -72,6 +81,10 @@ ReferBusinessModel.associate = (models) =>{
     ReferBusinessModel.belongsTo(models.bppUsers,{
         foreignKey: 'assignedTo',
         as: 'assignedUser'
+    }),
+    ReferBusinessModel.belongsTo(models.bppUsers,{
+        foreignKey: 'bpbussiness',
+        as: 'business'
     })
   }
 
