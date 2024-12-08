@@ -35,17 +35,35 @@ const getUserStatements = async (req, res) => {
         const businessPartnerStatements = statementsData.filter(statement => statement.commission === 'n');
         const parentPartnerStatements = statementsData.filter(statement => statement.commission === 'y');
 
-        const totalBusinessPartnerAmount = businessPartnerStatements
-            .filter(statement => statement.action === 'Credit')
-            .reduce((sum, statement) => sum + statement.amount, 0);
+        let totalBusinessPartnerWalletAmount = 0; 
+        let totalParentPartnerWalletAmount = 0; 
 
-        const totalParentPartnerAmount = parentPartnerStatements
-            .filter(statement => statement.action === 'Credit')
-            .reduce((sum, statement) => sum + statement.amount, 0);
+        let totalBusinessPartnerAmount = 0;
+        let totalParentPartnerAmount = 0;
+
+        businessPartnerStatements.forEach(statement => {
+            if (statement.action === 'Credit') {
+                totalBusinessPartnerAmount += statement.amount;
+            } else if (statement.action === 'Debit') {
+                totalBusinessPartnerAmount -= statement.amount;
+                totalBusinessPartnerWalletAmount += statement.amount; 
+            }
+        });
+
+        parentPartnerStatements.forEach(statement => {
+            if (statement.action === 'Credit') {
+                totalParentPartnerAmount += statement.amount;
+            } else if (statement.action === 'Debit') {
+                totalParentPartnerAmount -= statement.amount;
+                totalParentPartnerWalletAmount += statement.amount; 
+            }
+        });
 
         res.status(200).json({
             totalBusinessPartnerAmount,
-            totalParentPartnerAmount,
+            totalBusinessPartnerWalletAmount: Math.abs(totalBusinessPartnerWalletAmount), 
+            totalParentPartnerAmount, 
+            totalParentPartnerWalletAmount: Math.abs(totalParentPartnerWalletAmount), 
             businessPartnerStatements,
             parentPartnerStatements,
         });

@@ -22,5 +22,9 @@ const request = sequelize.define('request',{
         },
         allowNull:true
     },
+    commission:{
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 })
 module.exports = request
