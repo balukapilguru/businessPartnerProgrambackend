@@ -8,6 +8,7 @@ const dayjs = require('dayjs');
 const now = dayjs();
 const statements = require('../models/bpp/statements');
 const credentialDetails = require('../models/bpp/credentialDetails');
+const coursesModel = require('../models/bpp/courses')
 
 
 const createStatus = async (req, res) => {
@@ -85,17 +86,188 @@ const createStatus = async (req, res) => {
 };
  
  
+// const getAll = async (req, res) => {
+//   try {
+//     const { filter, search, page = 1, limit, pageSize } = req.query;
+ 
+//     let filterStatuses = null;
+//     let startDate = null;
+//     let endDate = null;
+  
+ 
+//     // pageSize
+//     const effectiveLimit = parseInt(pageSize || limit || 10);
+ 
+//     if (filter) {
+//       const parsedFilter = JSON.parse(filter);
+//       filterStatuses = parsedFilter.statuses
+//         ? parsedFilter.statuses.map((status) => status.trim())
+//         : null;
+//       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
+//       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
+//     }
+//     const recentStatuses = await statusModel.findAll({
+//       attributes: [
+//         'referStudentId',
+//         [fn('MAX', col('id')), 'latestId'],
+//       ],
+//       group: ['referStudentId'],
+//       where: {
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+//     });
+ 
+//     const latestIds = recentStatuses.map((status) => status.dataValues.latestId);
+ 
+//     if (!latestIds.length) {
+//       return res.status(200).json({
+//         statuses: [],
+//         count: {},
+//         totalRecords: 0,
+//         totalPages: 0,
+//         currentPage: page,
+//       });
+//     }
+ 
+//     const searchConditions = search
+//       ? {
+//           [Op.or]: [
+//             { fullname: { [Op.like]: `%${search}%` } },
+//             { phoneNumber: { [Op.like]: `%${search}%` } },
+//             { email: { [Op.like]: `%${search}%` } },
+//             { courseRequired: { [Op.like]: `%${search}%` } },
+//           ],
+//         }
+//       : {};
+ 
+//     const offset = (page - 1) * effectiveLimit;
+ 
+
+   
+//     const fullStatuses = await statusModel.findAll({
+//       where: {
+//         id: {
+//           [Op.in]: latestIds,
+//         },
+//         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+
+   
+//       include: [
+//         {
+//           model: referStudentmodel,
+//           as: 'referStudent',
+//           attributes: [
+//             'id',
+//             'fullname',
+//             'email',
+//             'phoneNumber',
+//             'assignedTo',
+//             'businessPartnerId',
+//             'source',
+//             'courseRequired',
+//             'city',
+//             'bpstudents'
+//           ],
+//           where: {
+//             ...searchConditions,
+//           },
+//         },
+//       ],
+//       offset,
+//       limit: effectiveLimit,
+//     });
+ 
+//     const totalRecords = await statusModel.count({
+//       where: {
+//         id: {
+//           [Op.in]: latestIds,
+//         },
+//         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+//       include: [
+//         {
+//           model: referStudentmodel,
+//           as: 'referStudent',
+//           attributes: [],
+//           where: {
+//             ...searchConditions,
+//           },
+//         },
+//       ],
+//     });
+ 
+//     const totalPages = Math.ceil(totalRecords / effectiveLimit);
+ 
+//     const statusCount = await statusModel.findAll({
+//       attributes: [
+//         'currentStatus',
+//         [fn('COUNT', col('currentStatus')), 'count'],
+//       ],
+//       where: {
+//         id: {
+//           [Op.in]: latestIds,
+//         },
+//         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
+//         ...(startDate && endDate && {
+//           createdAt: { [Op.between]: [startDate, endDate] },
+//         }),
+//       },
+//       include: [
+//         {
+//           model: referStudentmodel,
+//           as: 'referStudent',
+//           attributes: [],
+//           where: {
+//             ...searchConditions,
+//           },
+//         },
+//       ],
+//       group: ['currentStatus'],
+//       raw: true,
+//     });
+ 
+//     const statusCountMapping = statusCount.reduce((acc, { currentStatus, count }) => {
+//       acc[currentStatus] = count;
+//       return acc;
+//     }, {});
+ 
+//     return res.status(200).json({
+//       statuses: fullStatuses,
+//       count: statusCountMapping,
+//       totalRecords,
+//       totalPages,
+//       currentPage: parseInt(page),
+//       pageSize: effectiveLimit,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching data:', error);
+//     return res.status(500).json({ error: 'An error occurred while fetching the records.' });
+//   }
+// };
+ 
+
+// const { Op, fn, col } = require('sequelize');
+
 const getAll = async (req, res) => {
   try {
     const { filter, search, page = 1, limit, pageSize } = req.query;
- 
+
     let filterStatuses = null;
     let startDate = null;
     let endDate = null;
- 
+
     // pageSize
     const effectiveLimit = parseInt(pageSize || limit || 10);
- 
+
     if (filter) {
       const parsedFilter = JSON.parse(filter);
       filterStatuses = parsedFilter.statuses
@@ -104,11 +276,9 @@ const getAll = async (req, res) => {
       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
     }
+
     const recentStatuses = await statusModel.findAll({
-      attributes: [
-        'referStudentId',
-        [fn('MAX', col('id')), 'latestId'],
-      ],
+      attributes: ['referStudentId', [fn('MAX', col('id')), 'latestId']],
       group: ['referStudentId'],
       where: {
         ...(startDate && endDate && {
@@ -116,9 +286,9 @@ const getAll = async (req, res) => {
         }),
       },
     });
- 
+
     const latestIds = recentStatuses.map((status) => status.dataValues.latestId);
- 
+
     if (!latestIds.length) {
       return res.status(200).json({
         statuses: [],
@@ -128,25 +298,23 @@ const getAll = async (req, res) => {
         currentPage: page,
       });
     }
- 
+
     const searchConditions = search
       ? {
           [Op.or]: [
             { fullname: { [Op.like]: `%${search}%` } },
             { phoneNumber: { [Op.like]: `%${search}%` } },
             { email: { [Op.like]: `%${search}%` } },
-            { courseRequired: { [Op.like]: `%${search}%` } },
+            { '$referStudent.enrolledCourses.name$': { [Op.like]: `%${search}%` } },
           ],
         }
       : {};
- 
+
     const offset = (page - 1) * effectiveLimit;
- 
+
     const fullStatuses = await statusModel.findAll({
       where: {
-        id: {
-          [Op.in]: latestIds,
-        },
+        id: { [Op.in]: latestIds },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -163,25 +331,31 @@ const getAll = async (req, res) => {
             'phoneNumber',
             'assignedTo',
             'businessPartnerId',
+         
             'source',
-            'courseRequired',
             'city',
-            'bpstudents'
+            'bpstudents',
           ],
           where: {
             ...searchConditions,
           },
+          include: [
+            {
+              model: coursesModel,
+              // as: 'enrolledCourses', // Use the alias defined in the association
+              // attributes: ['courseName'], // Include the course name
+              // through: { attributes: [] }, // Exclude junction table details
+            },
+          ],
         },
       ],
       offset,
       limit: effectiveLimit,
     });
- 
+
     const totalRecords = await statusModel.count({
       where: {
-        id: {
-          [Op.in]: latestIds,
-        },
+        id: { [Op.in]: latestIds },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -198,18 +372,16 @@ const getAll = async (req, res) => {
         },
       ],
     });
- 
+
     const totalPages = Math.ceil(totalRecords / effectiveLimit);
- 
+
     const statusCount = await statusModel.findAll({
       attributes: [
         'currentStatus',
         [fn('COUNT', col('currentStatus')), 'count'],
       ],
       where: {
-        id: {
-          [Op.in]: latestIds,
-        },
+        id: { [Op.in]: latestIds },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -228,12 +400,12 @@ const getAll = async (req, res) => {
       group: ['currentStatus'],
       raw: true,
     });
- 
+
     const statusCountMapping = statusCount.reduce((acc, { currentStatus, count }) => {
       acc[currentStatus] = count;
       return acc;
     }, {});
- 
+
     return res.status(200).json({
       statuses: fullStatuses,
       count: statusCountMapping,
@@ -247,7 +419,11 @@ const getAll = async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while fetching the records.' });
   }
 };
- 
+
+
+
+
+
 const getDashboardDetails = async (req, res) => {
   try {
     const { filter, search, page = 1, limit, pageSize = 10 } = req.query; // Set a default pageSize

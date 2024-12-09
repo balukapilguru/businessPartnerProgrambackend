@@ -1,5 +1,6 @@
 const bppUsers = require('../models/bpp/users');
-const { Op, where } = require('sequelize');
+const db = require('../models/db/index')
+const { Op, where, DataTypes } = require('sequelize');
 const crypto = require('crypto');
 const credentialDetails = require('../models/bpp/credentialDetails');
 const Personaldetails = require('../models/bpp/personaldetails')
@@ -19,7 +20,7 @@ const { JWT_SECRET } = require('../utiles/jwtconfig');
 const { encrypt, decrypt } = require('../utiles/encryptAndDecrypt')
 require('dotenv').config();
 const { sequelize, fn } = require('sequelize');
-const Role = require('../models/rolesAndPermissions/Role')
+const Role = require('../models/rolesAndPermissions/Role')(db.sequelize,DataTypes)
 
 
 let tempOtpStorage = [];
@@ -386,7 +387,7 @@ const decryptfunction = async (req, res) => {
     }
 };
 const sendMail = require('../utiles/sendmailer');
-const db = require('../models/db');
+
 // const credentialDetails = require('../models/bpp/credentialDetails');
 
 const sendlinkforForgotPassword = async (req, res) => {
@@ -963,14 +964,11 @@ const createUserlogin = async (req, res) => {
     try {
         const { fullName, email, phonenumber, rolename } = req.body;
 
-        // Validate input
+       
         if (!fullName || !email || !phonenumber || !rolename) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
-        console.log(Role)
-        // Check if the role exists
-        console.log(Role.findOne);
-
+        
         const roleDetails = await Role.findOne({
             where: { name: rolename },
         });
@@ -979,26 +977,20 @@ const createUserlogin = async (req, res) => {
             return res.status(400).json({ message: 'Invalid role name provided.' });
         }
 
-        // Check if the user already exists
+       
         const existingUser = await bppUsers.findOne({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists with this email.' });
         }
-
-        // Generate default password and hash it
         const defaultPassword = crypto.randomBytes(8).toString('hex');
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-        // Create user in `bppUsers`
         const user = await bppUsers.create({
             fullName,
             email,
             phonenumber,
-            roleId: roleDetails.id, // Associate role ID
+            roleId: roleDetails.id, 
         });
 
-
-        // Create credentials in `credentialDetails`
         await credentialDetails.create({
             password: hashedPassword,
             email,
@@ -1007,7 +999,6 @@ const createUserlogin = async (req, res) => {
             noOfLogouts: 0,
         });
 
-        // Send email with default password
         await transporter.sendMail({
             from: config.mailConfig.mailUser,
             to: email,
@@ -1032,11 +1023,37 @@ const createUserlogin = async (req, res) => {
 };
 
 
+const getUserLogin = async (req, res) => {
+    try {
+     const users = await bppUsers.findAndCountAll({
+            include: [
+                {
+                    model: Role,
+                    as: 'Role', 
+                    attributes: ['id', 'name'], 
+                },
+            ],
+       
+        });
+        
+        return res.status(200).json({
+            message: 'Users retrieved successfully!',
+            data: users.rows,
+            totalUsers: users.count,
+            currentPage: page,
+            totalPages: Math.ceil(users.count / limit),
+        });
+    } catch (error) {
+        console.error('Error retrieving users:', error.message || error);
+        return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+    }
+};
 
 
 
 
-// 
+
+
 module.exports = {
     login,
     sendOtp,
@@ -1052,7 +1069,7 @@ module.exports = {
     addBusinessPartner,
     getPersonalDetailsById,
     getAllBusinessPartners,
-    createUserlogin
+    createUserlogin,getUserLogin
 };
 
 
