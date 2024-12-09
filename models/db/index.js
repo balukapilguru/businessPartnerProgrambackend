@@ -119,24 +119,5 @@ db.bppUsers.belongsTo(db.Role, {
 db.Role.hasMany(db.bppUsers,{
     foreignKey:'roleId',
     });
- 
- 
- 
-
-db.bppUsers.belongsTo(db.Role, {
-    foreignKey: 'roleId',
-    as:'Role'
-});
-db.Role.hasMany(db.bppUsers,{
-    foreignKey:'roleId',
-    });
-
-
-
-
-
-
-
-
 // Export the database object with models and Sequelize instance
 module.exports = db;
