@@ -68,10 +68,10 @@ const { Role } = require("../rolesAndPermissions/Role");
         
 
       });
-      bppUsers.belongsTo(models.Role, {
-        foreignKey: 'roleId',
-        as:'Role'
-    });
+    //   bppUsers.belongsTo(models.Role, {
+    //     foreignKey: 'roleId',
+    //     as:'Role'
+    // });
     };
   
 module.exports = bppUsers
