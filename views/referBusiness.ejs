@@ -51,10 +51,10 @@
     <div class="form-container">
         <h1>Fill this Form</h1>
         <p>We will reach you shortly</p>
-        <form action="/business/refer-Business" method="POST">
+        <form action="/api/business-p/refe-parent" method="POST">
             <div class="form-group">
-                <label for="fullname">Full Name:</label>
-                <input type="text" id="fullname" name="fullname" required>
+                <label for="fullName">Full Name:</label>
+                <input type="text" id="fullName" name="fullName" required>
             </div>
 
             <div class="form-group">
@@ -63,22 +63,11 @@
             </div>
 
             <div class="form-group">
-                <label for="contactnumber">Contact Number:</label>
-                <input type="text" id="contactnumber" name="contactnumber" required>
+                <label for="phonenumber">Contact Number:</label>
+                <input type="text" id="phonenumber" name="phonenumber" required>
             </div>
-
+            <input type="hidden" id="ParentbusinessPartnerId" name="ParentbusinessPartnerId" value="<%= decryptedData %>">
             
-
-            <div class="form-group">
-                <label for="serviceRequired">Service Required:</label>
-                <input type="text" id="serviceRequired" name="serviceRequired" required>
-            </div>
-            <div class="form-group">
-                <label for="Description">Description:</label>
-                <input type="description" id="description" name="description" required>
-            </div>
-            <input type="hidden" id="businessPartnerID" name="businessPartnerID" value="<%= decryptedData %>">
-            <input type="hidden" id="status" name="status" value="Initial status">
 
             <button type="submit">Submit</button>
         </form>

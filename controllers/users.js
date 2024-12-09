@@ -732,7 +732,7 @@ const getPersonalDetailsById = async (req, res) => {
 const addBusinessPartner = async (req, res) => {
     try {
         const { fullName, email, phonenumber, ParentbusinessPartnerId } = req.body;
-        console.log('Request body:', req.body);
+        console.log('Request body:', req.body, fullName, email, phonenumber, ParentbusinessPartnerId);
         const referringBusinessPartner = await credentialDetails.findOne({
             where: { businessPartnerID: ParentbusinessPartnerId }
         });
