@@ -39,6 +39,23 @@ const transporter = nodemailer.createTransport({
 const sendOtp = async (req, res) => {
     const { email, fullName, phonenumber } = req.body;
     try {
+        const user = await bppUsers.findOne({ where: { email } });
+
+        if (user) {
+         
+            return res.status(200).json({
+                message: 'Email is already in use.',
+                user: {
+                    fullName,
+                    email,
+                    phonenumber
+                }
+            });
+        }
+
+
+
+
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
         tempOtpStorage.push({
             email,
@@ -171,50 +188,29 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
 const generateBusinessPartnerID = async () => {
     try {
-        // Query the last business partner record
         const lastPartner = await credentialDetails.findOne({
             order: [['businessPartnerID', 'DESC']],
             attributes: ['businessPartnerID'],
         });
-
-        // Default starting point for the new ID format
         let newID = 'KKHBP511';
-
-        // If there are existing partners, generate the next ID
         if (lastPartner) {
             const lastID = lastPartner.businessPartnerID;
-
-            // If the old ID format (BPXXX), start the new sequence with KKHBP501
             if (lastID.startsWith('BP')) {
-                newID = 'KKHBP511';  // Starting point for the new format
+                newID = 'KKHBP511'; 
             } else if (lastID.startsWith('KKHBP5')) {
-                // For the new format IDs (KKHBPXXX), extract the numeric part and increment
                 const numberPart = parseInt(lastID.replace('KKHBP5', ''), 10);
                 if (isNaN(numberPart)) {
                     throw new Error('Invalid business partner ID format');
                 }
-
-                newID = `KKHBP5${(numberPart + 1).toString()}`;
+            newID = `KKHBP5${(numberPart + 1).toString()}`;
             }
         }
-
         return newID;
     } catch (error) {
         console.error('Error generating Business Partner ID:', error);
         throw new Error('Could not generate Business Partner ID');
     }
-};
-
-
-
-
-
-
-
-
-
-
-
+}
 const generateReferralLink = async (businessPartnerID) => {
     const baseURL = 'http://localhost:3050/api/auth/decrypt';
     const baseURL2 = 'http://localhost:3050/api/auth/decryptFun';
@@ -517,9 +513,9 @@ const personaldetails = async (req, res) => {
                 ifsc_code,
                 branch
             } = req.body;
-            if (!address || !contactNo || !whatapp_no) {
-                return res.status(400).json({ error: 'Required fields are missing' });
-            }
+            // if (!address || !contactNo || !whatapp_no) {
+            //     return res.status(400).json({ error: 'Required fields are missing' });
+            // }
             const { id } = req.user;
             const imageUrl = req.file
                 ? req.uploadedFileKey
@@ -572,6 +568,8 @@ const updatePersonalAndBankDetails = async (req, res) => {
                 return res.status(400).json({ error: err.message });
             }
             const { id } = req.params;
+            
+            console.log('Checking....',id)
             const {
                 address,
                 panCardNO,
@@ -1060,25 +1058,69 @@ const createUserlogin = async (req, res) => {
 };
 
 
+// const getUserLogin = async (req, res) => {
+//     try {
+//       console.log()
+//      const users = await bppUsers.findAndCountAll({
+//             include: [
+//                 {
+//                     model: Role,
+//                     as: 'Role', 
+//                     // attributes: ['id', 'name'], 
+//                 },
+//             ],
+       
+//         });
+       
+//         return res.status(200).json({
+//             message: 'Users retrieved successfully!',
+//             data: users.rows,
+//             // totalUsers: users.count,
+//             // currentPage,
+//             // totalPages: Math.ceil(users.count / limit),
+//         });
+//     } catch (error) {
+//         console.error('Error retrieving users:', error.message || error);
+//         return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+//     }
+// };
+
+
+
+
+
 const getUserLogin = async (req, res) => {
     try {
-     const users = await bppUsers.findAndCountAll({
+        const { page = 1, limit = 10, search = '' } = req.query;
+        const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+        const limitInt = parseInt(limit, 10);
+        const whereConditions = {};
+        if (search) {
+            whereConditions[Op.or] = [
+                { fullname: { [Op.like]: `%${search}%` } }, 
+                { email: { [Op.like]: `%${search}%` } },    
+                { '$Role.name$': { [Op.like]: `%${search}%` } },
+            ];
+        }
+        const users = await bppUsers.findAndCountAll({
+            where: whereConditions,
             include: [
                 {
                     model: Role,
                     as: 'Role', 
-                    attributes: ['id', 'name'], 
                 },
             ],
-       
+            limit: limitInt,
+            offset,
+            distinct: true, 
         });
-        
+        const totalPages = Math.ceil(users.count / limitInt);
         return res.status(200).json({
             message: 'Users retrieved successfully!',
             data: users.rows,
             totalUsers: users.count,
-            currentPage: page,
-            totalPages: Math.ceil(users.count / limit),
+            currentPage: parseInt(page, 10),
+            totalPages,
         });
     } catch (error) {
         console.error('Error retrieving users:', error.message || error);
