@@ -83,6 +83,11 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 const hashedPassword = await hashPassword(defaultPassword);
                 const businessPartnerID = await generateBusinessPartnerID();
                 const generateRefferal = await generateReferralLink(businessPartnerID);
+                const link1 = generateRefferal.link1;
+                const link2 = generateRefferal.link2;
+
+                console.log('Referral Link 1:', link1);
+                console.log('Referral Link 2:', link2);
                 console.log('Link is', generateRefferal);
                 const user = await bppUsers.create({
                     fullName,
@@ -100,7 +105,8 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     createdBy: null,
                     noOfLogins: 0,
                     noOfLogouts: 0,
-                    referralLink: generateRefferal,
+                    referralLink: link1,
+                    businessReferralLink: link2
                 }).catch(error => {
                     console.error('Error while saving business partner ID to credentialDetails:', error.message || error);
                     throw new Error('Error while saving business partner ID to credentialDetails');
@@ -208,7 +214,8 @@ const generateBusinessPartnerID = async () => {
 
 
 const generateReferralLink = async (businessPartnerID) => {
-    const baseURL = 'http://localhost:3030/api/auth/decrypt';
+    const baseURL = 'http://localhost:3050/api/auth/decrypt';
+    const baseURL2 = 'http://localhost:3050/api/auth/decryptFun';
     const encrypted = encrypt(businessPartnerID);
     const res = encrypted?.encryptedData;
     // const iv = encrypted?.iv;
@@ -218,7 +225,13 @@ const generateReferralLink = async (businessPartnerID) => {
     // console.log('key is', encodedKey);
 
     // return `${baseURL}/${iv}/${res}/${encodedKey}`; 
-    return `${baseURL}/?search=${res}`
+    const link1 = `${baseURL}/?search=${res}`;
+    const link2 = `${baseURL2}/?search=${res}`;
+
+    return {
+        link1,
+        link2
+    };
 };
 
 // const generateToken = (userId) => {
@@ -270,6 +283,7 @@ const login = async (req, res) => {
                
                 businessPartnerID: updatedCredential.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
+                businessReferralLink: updatedCredential.businessReferralLink,
                 email,
                 noOfLogins: updatedCredential.noOfLogins,
                 isParentPartner: updatedCredential.isParentPartner,
@@ -285,6 +299,7 @@ const login = async (req, res) => {
                
                 businessPartnerID: updatedCredential.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
+                businessReferralLink: updatedCredential.businessReferralLink,
                 email,
                 noOfLogins: updatedCredential.noOfLogins,
                 isParentPartner: updatedCredential.isParentPartner,
@@ -347,6 +362,23 @@ const decryptfun = async (req, res) => {
         });
         console.log('Decrypted Data:', decryptedData);
         res.render('referStudent', { decryptedData });
+
+    } catch (error) {
+        console.error('Error during decryption:', error.message);
+        return res.status(500).json({ error: 'Decryption failed' });
+    }
+};
+
+const decryptfunction = async (req, res) => {
+    try {
+       
+        const encryptedData = req.query.search;
+        console.log('encryptedData is', encryptedData);
+        const decryptedData = decrypt({
+            encryptedData,
+        });
+        console.log('Decrypted Data:', decryptedData);
+        res.render('referBusiness', { decryptedData });
 
     } catch (error) {
         console.error('Error during decryption:', error.message);
@@ -684,7 +716,11 @@ const addBusinessPartner = async (req, res) => {
         const hashedPassword = await hashPassword(defaultPassword);
         const businessPartnerID = await generateBusinessPartnerID();
         const generateRefferal = await generateReferralLink(businessPartnerID);
+        const link1 = generateRefferal.link1;
+        const link2 = generateRefferal.link2;
 
+        console.log('Referral Link 1:', link1);
+        console.log('Referral Link 2:', link2);
         // const studentStatus = [{
         //     currentStatus: 'Pending',
         //     status: 'Pending',
@@ -719,7 +755,8 @@ const addBusinessPartner = async (req, res) => {
             addedBy: ParentbusinessPartnerId,
             noOfLogins: 0,
             noOfLogouts: 0,
-            referralLink: generateRefferal,
+            referralLink: link1,
+            businessReferralLink: link2,
         });
 
 
@@ -1011,6 +1048,7 @@ module.exports = {
     personaldetails,
     updatePersonalAndBankDetails,
     decryptfun,
+    decryptfunction,
     addBusinessPartner,
     getPersonalDetailsById,
     getAllBusinessPartners,

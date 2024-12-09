@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Create Referral</title>
+    <title>Create Business - Referral</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,7 +51,7 @@
     <div class="form-container">
         <h1>Fill this Form</h1>
         <p>We will reach you shortly</p>
-        <form action="/api/student/refer-student" method="POST">
+        <form action="/business/refer-Business" method="POST">
             <div class="form-group">
                 <label for="fullname">Full Name:</label>
                 <input type="text" id="fullname" name="fullname" required>
@@ -67,16 +67,16 @@
                 <input type="text" id="contactnumber" name="contactnumber" required>
             </div>
 
-            <div class="form-group">
-                <label for="city">City:</label>
-                <input type="text" id="city" name="city" required>
-            </div>
+            
 
             <div class="form-group">
-                <label for="courseRequired">Course Required:</label>
-                <input type="text" id="courseRequired" name="courseRequired" required>
+                <label for="serviceRequired">Service Required:</label>
+                <input type="text" id="serviceRequired" name="serviceRequired" required>
             </div>
-
+            <div class="form-group">
+                <label for="Description">Description:</label>
+                <input type="description" id="description" name="description" required>
+            </div>
             <input type="hidden" id="businessPartnerID" name="businessPartnerID" value="<%= decryptedData %>">
             <input type="hidden" id="status" name="status" value="Initial status">
 

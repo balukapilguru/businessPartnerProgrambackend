@@ -44,6 +44,10 @@ const credentialDetails = sequelize.define(
         referralLink: {
             type: DataTypes.STRING,
         },
+        
+        businessReferralLink: {
+            type: DataTypes.STRING,
+        },
         isParentPartner:{
             type: DataTypes.BOOLEAN
         }
