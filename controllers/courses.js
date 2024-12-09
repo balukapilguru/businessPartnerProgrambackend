@@ -33,14 +33,14 @@ const getAllCourses = async (req, res) => {
     try {
         const { search, page = 1, limit = 10 } = req.query;
 
-        // Parse page and limit as integers
+    
         const pageNumber = parseInt(page, 10);
         const pageSize = parseInt(limit, 10);
 
-        // Calculate offset
+       
         const offset = (pageNumber - 1) * pageSize;
 
-        // Build the where clause for search
+   
         const whereClause = search
             ? {
                   [Op.or]: [
@@ -50,15 +50,15 @@ const getAllCourses = async (req, res) => {
               }
             : {};
 
-        // Fetch courses with pagination, search, and descending order
+       
         const { rows: coursesget, count: totalCourses } = await courses.findAndCountAll({
             where: whereClause,
             limit: pageSize,
             offset,
-            order: [["createdAt", "DESC"]], // Order by createdAt in descending order
+            order: [["createdAt", "DESC"]], 
         });
 
-        // Number of courses retrieved in the current page
+
         const numberOfCourses = coursesget.length;
 
         return res.status(200).json({
@@ -74,6 +74,37 @@ const getAllCourses = async (req, res) => {
         });
     } catch (error) {
         console.error("Error retrieving courses:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+
+
+
+const getCourseById = async (req, res) => {
+    try {
+        
+        const { id } = req.params;
+
+        
+        const course = await courses.findOne({
+            where: { id }, 
+        });
+
+       
+        if (!course) {
+            return res.status(404).json({
+                message: "Course not found",
+            });
+        }
+
+        
+        return res.status(200).json({
+            message: "Course retrieved successfully",
+            data: course,
+        });
+    } catch (error) {
+        console.error("Error retrieving course by ID:", error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
@@ -135,4 +166,4 @@ const deleteCourse = async (req, res) => {
 
 
 
-module.exports = { createCourse,getAllCourses, updateCourse ,deleteCourse};
+module.exports = { createCourse,getAllCourses, updateCourse ,deleteCourse, getCourseById};

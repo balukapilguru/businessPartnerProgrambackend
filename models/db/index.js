@@ -100,21 +100,18 @@ db.bppUsers.hasOne(db.credentials, {
 
 
 db.ReferStudentmodel.belongsToMany(db.courses, {
-    through: 'StudentCourses', // Name of the junction table
-    foreignKey: 'studentId', // Foreign key in the junction table for ReferStudentmodel
-    otherKey: 'courseId', // Foreign key in the junction table for courses
-    as: 'enrolledCourses',
+    through: 'StudentCourses', 
+    foreignKey: 'studentId', 
+    otherKey: 'courseId', 
+    // as: 'enrolledCourses',
 });
 
 db.courses.belongsToMany(db.ReferStudentmodel, {
-    through: 'StudentCourses', // Name of the junction table
-    foreignKey: 'courseId', // Foreign key in the junction table for courses
-    otherKey: 'studentId', // Foreign key in the junction table for ReferStudentmodel
+    through: 'StudentCourses', 
+    foreignKey: 'courseId', 
+    otherKey: 'studentId', 
     as: 'interestedStudents',
 });
-
-
-
 
 
 
