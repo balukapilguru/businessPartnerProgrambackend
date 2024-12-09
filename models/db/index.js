@@ -112,7 +112,16 @@ db.courses.belongsToMany(db.ReferStudentmodel, {
     otherKey: 'studentId', 
     as: 'interestedStudents',
 });
-
+db.bppUsers.belongsTo(db.Role, {
+    foreignKey: 'roleId',
+    as:'Role'
+});
+db.Role.hasMany(db.bppUsers,{
+    foreignKey:'roleId',
+    });
+ 
+ 
+ 
 
 
 

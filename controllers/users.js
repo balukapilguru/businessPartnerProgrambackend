@@ -20,8 +20,9 @@ const { JWT_SECRET } = require('../utiles/jwtconfig');
 const { encrypt, decrypt } = require('../utiles/encryptAndDecrypt')
 require('dotenv').config();
 const { sequelize, fn } = require('sequelize');
-const Role = require('../models/rolesAndPermissions/Role')(db.sequelize,DataTypes)
-
+const Role = db.Role;
+const Module = db.Module;
+const Permission = db.Permission;
 
 let tempOtpStorage = [];
 
@@ -255,7 +256,38 @@ const login = async (req, res) => {
         console.log("Received email:", email);
         console.log("Received password:", password);
         const user = await bppUsers.findOne({ where: { email } });
-       console.log(user)
+
+       console.log(user.dataValues.roleId)
+       const roleDetails = await Role.findOne({
+        where:{
+            id:user.dataValues.roleId
+        },
+        include: [{
+            model: Permission,
+            as: 'permissions',
+            include: [{
+              model: Module,
+              as: 'modules',
+              attributes: ['name']
+            }],
+            attributes: ['all', 'canCreate', 'canRead', 'canUpdate', 'canDelete']
+          }]
+       })
+       console.log(roleDetails)
+       const simplifiedRole = {
+        id: roleDetails.id,
+        name: roleDetails.name,
+        description: roleDetails.description,
+        selectedDashboard: roleDetails.selectedDashboard,
+        Permissions: roleDetails.permissions.map(permission => ({
+            module: permission.modules.length ? permission.modules[0].name : null,
+            all: permission.all,
+            canCreate: permission.canCreate,
+            canRead: permission.canRead,
+            canUpdate: permission.canUpdate,
+            canDelete: permission.canDelete,
+          }))
+    };
         if (!user) {
             console.error("User not found for email:", email);
             return res.status(400).json({ message: 'User not found' });
@@ -277,6 +309,7 @@ const login = async (req, res) => {
         const token = generateToken(user);
         console.log({
             message: 'Login successful',
+            role:simplifiedRole,
             user: {
                 id: user.id,
                 fullName: user.dataValues.fullName,
@@ -293,6 +326,7 @@ const login = async (req, res) => {
         });
         return res.status(200).json({
             message: 'Login successful',
+            role:simplifiedRole,
             user: {
                 id: user.id,
                 fullName:user.dataValues.fullName,
@@ -702,6 +736,7 @@ const addBusinessPartner = async (req, res) => {
         const referringBusinessPartner = await credentialDetails.findOne({
             where: { businessPartnerID: ParentbusinessPartnerId }
         });
+        console.log(referringBusinessPartner.dataValues.isParentPartner,'opopop')
         if (!referringBusinessPartner) {
             return res.status(400).json({ message: 'Invalid parent business partner ID.' });
         }
@@ -717,6 +752,7 @@ const addBusinessPartner = async (req, res) => {
         const hashedPassword = await hashPassword(defaultPassword);
         const businessPartnerID = await generateBusinessPartnerID();
         const generateRefferal = await generateReferralLink(businessPartnerID);
+        console.log(generateRefferal)
         const link1 = generateRefferal.link1;
         const link2 = generateRefferal.link2;
 
@@ -775,7 +811,8 @@ const addBusinessPartner = async (req, res) => {
         });
         res.status(201).json({
             message: 'Referral business created successfully and email with default password sent.',
-            data: newUser
+            data: newUser,
+            isParentPartner:referringBusinessPartner.dataValues.isParentPartner
         });
     } catch (error) {
         console.error(error);
