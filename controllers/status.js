@@ -263,7 +263,14 @@ const createStatus = async (req, res) => {
 // mycode 
 const getAll = async (req, res) => {
   try {
-		 const { id } = req.params;														   
+		 const { id } = req.body;		
+     const userDetails = await bppusers.findOne({
+      where:{
+        id
+      }
+     })	
+
+     console.log('check',userDetails.dataValues.roleId) 											   
     const { filter, search, page = 1, limit, pageSize } = req.query;
 
     let filterStatuses = null;
