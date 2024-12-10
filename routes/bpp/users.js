@@ -11,7 +11,7 @@ router.post('/change/password',authenticate, changePassword);
 router.post('/login', usersControllers.login);
 router.post('/forgot-password', usersControllers.sendlinkforForgotPassword);
 router.post('/resetforgot_password', usersControllers.forgotPasswordrecet);
-router.post('/personalDetails',personaldetails)     //the authentication should be there 
+router.post('/personalDetails/:id',personaldetailsall)     //the authentication should be there 
 router.put('/update/personaldetails/:id',usersControllers. updatePersonalAndBankDetails)
 router.get('/getallusersdetails/:id',usersControllers. getPersonalDetailsById )   //the authentication should be there
 router.get('/decrypt',usersControllers.decryptfun),
@@ -20,6 +20,7 @@ router.post('/refe-parent', usersControllers. addBusinessPartner);
 router.get('/getallbecomeparents/:businessPartnerID', usersControllers. getAllBusinessPartners);
 router.post('/userform', usersControllers.createUserlogin);
 router.get('/getuserform', usersControllers.getUserLogin);
-
+router.delete('/deleteuser/:userId', usersControllers.deleteUser);
+// router.delete('/deleteuser/:userId/:profileId', usersControllers.deleteUser);
 // router.post('/refe-bp', referaBusinessPartnerController.createBusiness);
 module.exports = router;

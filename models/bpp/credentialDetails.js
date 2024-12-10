@@ -27,6 +27,7 @@ const credentialDetails = sequelize.define(
                 model: 'bppUsers',
                 key: 'id',
             },
+            onDelete: 'CASCADE',
         },
         addedBy: {
             type: DataTypes.STRING,

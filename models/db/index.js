@@ -70,6 +70,7 @@ db.businessStatus.belongsTo(db.ReferBusinessmodel, {
 
 
 
+
 db.bppUsers.hasMany(db.request, {
     foreignKey: 'userId',
     onDelete: 'CASCADE',
@@ -119,5 +120,14 @@ db.bppUsers.belongsTo(db.Role, {
 db.Role.hasMany(db.bppUsers,{
     foreignKey:'roleId',
     });
+
+    db.bppUsers.hasMany(db.credentials, {
+        foreignKey: 'changedBy',
+        onDelete: 'CASCADE',
+      });
+      db.credentials.belongsTo(db.bppUsers, {
+        foreignKey: 'changedBy',
+        onDelete: 'CASCADE',
+      });
 // Export the database object with models and Sequelize instance
 module.exports = db;

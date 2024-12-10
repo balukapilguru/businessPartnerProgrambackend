@@ -20,6 +20,7 @@ const { JWT_SECRET } = require('../utiles/jwtconfig');
 const { encrypt, decrypt } = require('../utiles/encryptAndDecrypt')
 require('dotenv').config();
 const { sequelize, fn } = require('sequelize');
+const businessStatuses = require('../models/status/BusinessStatus')
 const Role = db.Role;
 const Module = db.Module;
 const Permission = db.Permission;
@@ -491,7 +492,7 @@ const sendPasswordResetToken = async (userEmail) => {
     return token;
 };
 
-const personaldetails = async (req, res) => {
+const personaldetailsall = async (req, res) => {
     upload.single('image')(req, res, async (err) => {
         if (err) {
             console.error('Error during file upload:', err);
@@ -511,12 +512,13 @@ const personaldetails = async (req, res) => {
                 holder_name,
                 account_no,
                 ifsc_code,
-                branch
+                branch,
+                phonenumber
             } = req.body;
             // if (!address || !contactNo || !whatapp_no) {
             //     return res.status(400).json({ error: 'Required fields are missing' });
             // }
-            const { id } = req.user;
+            const { id } = req.params;
             const imageUrl = req.file
                 ? req.uploadedFileKey
                 : null;
@@ -524,7 +526,7 @@ const personaldetails = async (req, res) => {
             const newDetails = await Personaldetails.create({
                 address,
                 panCardNO,
-                contactNo,
+                contactNo:phonenumber || contactNo,
                 whatapp_no,
                 aadharNo,
                 businessName: businessName || null,
@@ -699,6 +701,7 @@ const getPersonalDetailsById = async (req, res) => {
                 'noOfLogins',
                 'referralLink',
                 'businessPartnerID',
+                'businessReferralLink'
             ],
         });
         const bankDetailsRecord = await bankDetails.findOne({
@@ -807,10 +810,10 @@ const addBusinessPartner = async (req, res) => {
         }, {
             where: { id: referringBusinessPartner.id || referringBusinessPartner.dataValues.id}
         });
-        res.status(201).json({
+        res.status(200).json({
             message: 'Referral business created successfully and email with default password sent.',
             data: newUser,
-            isParentPartner:referringBusinessPartner.dataValues.isParentPartner
+            isParentPartner: true
         });
     } catch (error) {
         console.error(error);
@@ -999,11 +1002,10 @@ const createUserlogin = async (req, res) => {
     try {
         const { fullName, email, phonenumber, rolename } = req.body;
 
-       
         if (!fullName || !email || !phonenumber || !rolename) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
-        
+    
         const roleDetails = await Role.findOne({
             where: { name: rolename },
         });
@@ -1012,13 +1014,27 @@ const createUserlogin = async (req, res) => {
             return res.status(400).json({ message: 'Invalid role name provided.' });
         }
 
-       
         const existingUser = await bppUsers.findOne({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists with this email.' });
         }
+
+
+
+        // Generate business partner ID and referral links
+        const businessPartnerID = await generateBusinessPartnerID();
+        const generateRefferal = await generateReferralLink(businessPartnerID);
+        const link1 = generateRefferal.link1;
+        const link2 = generateRefferal.link2;
+
+        console.log('Referral Link 1:', link1);
+        console.log('Referral Link 2:', link2);
+
+        // Generate a default password and hash it
         const defaultPassword = crypto.randomBytes(8).toString('hex');
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+        // Create user record
         const user = await bppUsers.create({
             fullName,
             email,
@@ -1026,14 +1042,18 @@ const createUserlogin = async (req, res) => {
             roleId: roleDetails.id, 
         });
 
-        await credentialDetails.create({
+        // Create credentials record
+        const credential = await credentialDetails.create({
             password: hashedPassword,
             email,
             userId: user.id,
             noOfLogins: 0,
             noOfLogouts: 0,
+            referralLink: link1,
+            businessReferralLink: link2,
         });
 
+        // Send email to the user
         await transporter.sendMail({
             from: config.mailConfig.mailUser,
             to: email,
@@ -1041,14 +1061,17 @@ const createUserlogin = async (req, res) => {
             text: `Hi ${fullName},\n\nYour account has been created successfully. Your default password is: ${defaultPassword}.\n\nPlease log in and change your password immediately.\n\nBest regards,\nTeam`,
         });
 
+        // Respond with success
         return res.status(201).json({
             message: 'User created successfully!',
             user: {
                 id: user.id,
                 fullName: user.fullName,
                 email: user.email,
-                phoneNumber: user.phoneNumber,
+                phoneNumber: user.phonenumber,
                 roleId: roleDetails.id,
+                referralLink: credential.referralLink,
+                businessReferralLink: credential.businessReferralLink,
             },
         });
     } catch (error) {
@@ -1217,6 +1240,80 @@ const getUserLogin = async (req, res) => {
     }
 };
 
+// const deleteUser = async (req, res) => {
+//     try {
+//         const { userId, profileId } = req.params;
+
+//         if (!userId) {
+//             return res.status(400).json({ message: 'User ID is required.' });
+//         }
+//         if (!profileId) {
+//             return res.status(400).json({ message: 'Profile ID is required.' });
+//         }
+
+//         const user = await bppUsers.findOne({ where: { id: userId } });
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+
+//         const personalDetails = await PersonalDetails.findOne({ where: { profileId } });
+//         if (personalDetails) {
+//             await personalDetails.destroy({ where: { profileId } });
+//         }
+
+//         const bankDetail = await BankDetails.findOne({ where: { userId } });
+//         if (bankDetail) {
+//             await BankDetails.destroy({ where: { userId } });
+//         }
+
+//         await credentialDetails.destroy({ where: { userId } });
+//         await bppUsers.destroy({ where: { id: userId } });
+
+//         return res.status(200).json({ message: 'User and associated details deleted successfully.' });
+//     } catch (error) {
+//         console.error('Error deleting user:', error.message || error);
+//         return res.status(500).json({ message: 'Error deleting user', error: error.message });
+//     }
+// };
+
+const deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.params; 
+
+        if (!userId) {
+            return res.status(400).json({ message: 'User ID is required.' });
+        }
+         const user = await bppUsers.findOne({ where: { id: userId } });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+        const credentialDetailsRecord = await credentialDetails.findOne({ where: { userId } });
+        if (credentialDetailsRecord) {
+            await credentialDetailsRecord.destroy(); 
+        }
+        const personalDetails = await Personaldetails.findOne({ where: { profileId: userId } });
+        if (personalDetails) {
+            await personaldetails.destroy();
+        }
+        const BankDetail = await bankDetails.findOne({ where: { userId } });
+        if (BankDetail) {
+            await bankDetails.destroy({ where: { userId } });
+        }
+        await bppUsers.destroy({ where: { id: userId } });
+
+        return res.status(200).json({ message: 'User and associated details deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error.message || error);
+        return res.status(500).json({ message: 'Error deleting user', error: error.message });
+    }
+};
+
+
+
+
+
+
+
 
 
 
@@ -1228,14 +1325,16 @@ module.exports = {
     sendlinkforForgotPassword,
     forgotPasswordrecet,
     sendPasswordResetToken,
-    personaldetails,
+    personaldetailsall,
     updatePersonalAndBankDetails,
     decryptfun,
     decryptfunction,
     addBusinessPartner,
     getPersonalDetailsById,
     getAllBusinessPartners,
-    createUserlogin,getUserLogin
+    createUserlogin,
+    getUserLogin,
+    deleteUser
 };
 
 
