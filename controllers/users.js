@@ -1089,46 +1089,133 @@ const createUserlogin = async (req, res) => {
 
 
 
+// const getUserLogin = async (req, res) => {
+//     try {
+//         const { page = 1, limit , search = '' } = req.query;
+        
+//         // Parse pagination values
+//         const pageInt = parseInt(page, 10);
+//         const limitInt = parseInt(limit, 50);
+//         const offset = (pageInt - 1) * limitInt;
+
+//         // Define search conditions
+//         const whereConditions = {};
+//         if (search) {
+//             whereConditions[Op.or] = [
+//                 { fullname: { [Op.like]: `%${search}%` } },
+//                 { email: { [Op.like]: `%${search}%` } },
+//                 { '$Role.name$': { [Op.like]: `%${search}%` } },
+//             ];
+//         }
+
+//         // Fetch users with pagination and search
+//         const users = await bppUsers.findAndCountAll({
+//             where: whereConditions,
+//             include: [
+//                 {
+//                     model: Role,
+//                     as: 'Role', 
+//                 },
+//             ],
+//             limit: limitInt,
+//             offset,
+//             distinct: true, 
+//         });
+
+//         // Calculate total pages
+//         const totalPages = Math.ceil(users.count / limitInt);
+
+//         // Respond with the results
+//         return res.status(200).json({
+//             message: 'Users retrieved successfully!',
+//             data: users.rows,
+//             totalUsers: users.count,
+//             currentPage: pageInt,
+//             totalPages,
+//             pageSize: limitInt,
+//         });
+//     } catch (error) {
+//         console.error('Error retrieving users:', error.message || error);
+//         return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+//     }
+// };
+
+
+
+
 const getUserLogin = async (req, res) => {
     try {
-        const { page = 1, limit = 10, search = '' } = req.query;
-        const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-        const limitInt = parseInt(limit, 10);
-        const whereConditions = {};
-        if (search) {
-            whereConditions[Op.or] = [
-                { fullname: { [Op.like]: `%${search}%` } }, 
-                { email: { [Op.like]: `%${search}%` } },    
-                { '$Role.name$': { [Op.like]: `%${search}%` } },
-            ];
+        const { page = 1, pageSize , search = '', filter = null } = req.query;
+
+       
+        const effectiveLimit = parseInt(pageSize, 10);
+        const offset = (parseInt(page, 10) - 1) * effectiveLimit;
+
+       
+        let filterConditions = {};
+        if (filter) {
+            const parsedFilter = JSON.parse(filter);
+            if (parsedFilter.roles) {
+                filterConditions['$Role.name$'] = { [Op.in]: parsedFilter.roles };
+            }
+            if (parsedFilter.startDate && parsedFilter.endDate) {
+                filterConditions.createdAt = {
+                    [Op.between]: [new Date(parsedFilter.startDate), new Date(parsedFilter.endDate)],
+                };
+            }
         }
+
+        
+        const searchConditions = search
+            ? {
+                  [Op.or]: [
+                      { fullname: { [Op.like]: `%${search}%` } },
+                      { email: { [Op.like]: `%${search}%` } },
+                      { '$Role.name$': { [Op.like]: `%${search}%` } },
+                  ],
+              }
+            : {};
+
+      
+        const whereConditions = {
+            ...searchConditions,
+            ...filterConditions,
+        };
+
+        
         const users = await bppUsers.findAndCountAll({
             where: whereConditions,
             include: [
                 {
                     model: Role,
-                    as: 'Role', 
+                    as: 'Role',
                 },
             ],
-            limit: limitInt,
+            limit: effectiveLimit,
             offset,
             distinct: true, 
         });
-        const totalPages = Math.ceil(users.count / limitInt);
+
+        
+        const totalPages = Math.ceil(users.count / effectiveLimit);
+
+      
         return res.status(200).json({
             message: 'Users retrieved successfully!',
             data: users.rows,
             totalUsers: users.count,
-            currentPage: parseInt(page, 10),
             totalPages,
+            currentPage: parseInt(page, 10),
+            pageSize: effectiveLimit,
         });
     } catch (error) {
         console.error('Error retrieving users:', error.message || error);
-        return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+        return res.status(500).json({
+            message: 'Error retrieving users',
+            error: error.message,
+        });
     }
 };
-
-
 
 
 

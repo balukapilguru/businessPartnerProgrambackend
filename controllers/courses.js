@@ -31,11 +31,11 @@ const createCourse = async (req, res) => {
 
 const getAllCourses = async (req, res) => {
     try {
-        const { search, page = 1, limit = 10 } = req.query;
+        const { search, page = 1, pageSize  } = req.query;
 
     
         const pageNumber = parseInt(page, 10);
-        const pageSize = parseInt(limit, 10);
+        const pagelimit = parseInt(pageSize, 10);
 
        
         const offset = (pageNumber - 1) * pageSize;
@@ -53,7 +53,7 @@ const getAllCourses = async (req, res) => {
        
         const { rows: coursesget, count: totalCourses } = await courses.findAndCountAll({
             where: whereClause,
-            limit: pageSize,
+            limit: pagelimit,
             offset,
             order: [["createdAt", "DESC"]], 
         });

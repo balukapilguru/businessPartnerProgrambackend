@@ -257,8 +257,13 @@ const createStatus = async (req, res) => {
 
 // const { Op, fn, col } = require('sequelize');
 
+
+
+
+// mycode 
 const getAll = async (req, res) => {
   try {
+		 const { id } = req.params;														   
     const { filter, search, page = 1, limit, pageSize } = req.query;
 
     let filterStatuses = null;
@@ -277,6 +282,7 @@ const getAll = async (req, res) => {
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
     }
 
+										  
     const recentStatuses = await statusModel.findAll({
       attributes: ['referStudentId', [fn('MAX', col('id')), 'latestId']],
       group: ['referStudentId'],
@@ -310,8 +316,11 @@ const getAll = async (req, res) => {
         }
       : {};
 
+		 
+    const referStudentFilter = id ? { bpstudents: id } : {};																								
     const offset = (page - 1) * effectiveLimit;
 
+										 
     const fullStatuses = await statusModel.findAll({
       where: {
         id: { [Op.in]: latestIds },
@@ -337,6 +346,8 @@ const getAll = async (req, res) => {
           ],
           where: {
             ...searchConditions,
+			...referStudentFilter
+																  
           },
           include: [
             {
@@ -367,6 +378,7 @@ const getAll = async (req, res) => {
           attributes: [],
           where: {
             ...searchConditions,
+		...referStudentFilter
           },
         },
       ],
@@ -393,6 +405,7 @@ const getAll = async (req, res) => {
           attributes: [],
           where: {
             ...searchConditions,
+				...referStudentFilter				  
           },
         },
       ],
@@ -418,10 +431,6 @@ const getAll = async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while fetching the records.' });
   }
 };
-
-
-
-
 
 // const getDashboardDetails = async (req, res) => {
 //   try {
