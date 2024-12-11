@@ -28,14 +28,13 @@ const createCourse = async (req, res) => {
     }
 };
 
-
-const getAllCourses = async (req, res) => {
+const getAllCoursesPagination = async (req, res) => {
     try {
-        const { search, page = 1, limit = 10 } = req.query;
+        const { search, page = 1, pageSize  } = req.query;
 
     
         const pageNumber = parseInt(page, 10);
-        const pageSize = parseInt(limit, 10);
+        const pagelimit = parseInt(pageSize, 10);
 
        
         const offset = (pageNumber - 1) * pageSize;
@@ -53,7 +52,7 @@ const getAllCourses = async (req, res) => {
        
         const { rows: coursesget, count: totalCourses } = await courses.findAndCountAll({
             where: whereClause,
-            limit: pageSize,
+            limit: pagelimit,
             offset,
             order: [["createdAt", "DESC"]], 
         });
@@ -79,6 +78,22 @@ const getAllCourses = async (req, res) => {
 };
 
 
+const getAllCourses = async (req, res) => {
+    try {
+      
+        const coursesList = await courses.findAll({
+            // order: [["createdAt", "DESC"]],
+        });
+
+        return res.status(200).json({
+            message: "Courses retrieved successfully.",
+            data: coursesList,
+        });
+    } catch (error) {
+        console.error("Error retrieving courses:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
 
 
 const getCourseById = async (req, res) => {
@@ -122,8 +137,8 @@ const updateCourse = async (req, res) => {
             return res.status(404).json({ message: 'Course not found.' });
         }
 
-        courseupdate.courseName = courseName || course.courseName;
-        courseupdate.coursePackage = coursePackage || course.coursePackage;
+        courseupdate.courseName = courseName || courseupdate.courseName;
+        courseupdate.coursePackage = coursePackage || courseupdate.coursePackage;
 
         await courseupdate.save();
 
@@ -166,4 +181,4 @@ const deleteCourse = async (req, res) => {
 
 
 
-module.exports = { createCourse,getAllCourses, updateCourse ,deleteCourse, getCourseById};
+module.exports = { createCourse,getAllCourses,getAllCoursesPagination, updateCourse ,deleteCourse, getCourseById};

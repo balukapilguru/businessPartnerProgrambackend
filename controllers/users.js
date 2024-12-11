@@ -39,6 +39,23 @@ const transporter = nodemailer.createTransport({
 const sendOtp = async (req, res) => {
     const { email, fullName, phonenumber } = req.body;
     try {
+        const user = await bppUsers.findOne({ where: { email } });
+
+        if (user) {
+         
+            return res.status(200).json({
+                message: 'Email is already in use.',
+                user: {
+                    fullName,
+                    email,
+                    phonenumber
+                }
+            });
+        }
+
+
+
+
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
         tempOtpStorage.push({
             email,
@@ -171,50 +188,29 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
 const generateBusinessPartnerID = async () => {
     try {
-        // Query the last business partner record
         const lastPartner = await credentialDetails.findOne({
             order: [['businessPartnerID', 'DESC']],
             attributes: ['businessPartnerID'],
         });
-
-        // Default starting point for the new ID format
         let newID = 'KKHBP511';
-
-        // If there are existing partners, generate the next ID
         if (lastPartner) {
             const lastID = lastPartner.businessPartnerID;
-
-            // If the old ID format (BPXXX), start the new sequence with KKHBP501
             if (lastID.startsWith('BP')) {
-                newID = 'KKHBP511';  // Starting point for the new format
+                newID = 'KKHBP511'; 
             } else if (lastID.startsWith('KKHBP5')) {
-                // For the new format IDs (KKHBPXXX), extract the numeric part and increment
                 const numberPart = parseInt(lastID.replace('KKHBP5', ''), 10);
                 if (isNaN(numberPart)) {
                     throw new Error('Invalid business partner ID format');
                 }
-
-                newID = `KKHBP5${(numberPart + 1).toString()}`;
+            newID = `KKHBP5${(numberPart + 1).toString()}`;
             }
         }
-
         return newID;
     } catch (error) {
         console.error('Error generating Business Partner ID:', error);
         throw new Error('Could not generate Business Partner ID');
     }
-};
-
-
-
-
-
-
-
-
-
-
-
+}
 const generateReferralLink = async (businessPartnerID) => {
     const baseURL = 'http://localhost:3050/api/auth/decrypt';
     const baseURL2 = 'http://localhost:3050/api/auth/decryptFun';
@@ -517,9 +513,9 @@ const personaldetails = async (req, res) => {
                 ifsc_code,
                 branch
             } = req.body;
-            if (!address || !contactNo || !whatapp_no) {
-                return res.status(400).json({ error: 'Required fields are missing' });
-            }
+            // if (!address || !contactNo || !whatapp_no) {
+            //     return res.status(400).json({ error: 'Required fields are missing' });
+            // }
             const { id } = req.user;
             const imageUrl = req.file
                 ? req.uploadedFileKey
@@ -572,6 +568,8 @@ const updatePersonalAndBankDetails = async (req, res) => {
                 return res.status(400).json({ error: err.message });
             }
             const { id } = req.params;
+            
+            console.log('Checking....',id)
             const {
                 address,
                 panCardNO,
@@ -732,7 +730,7 @@ const getPersonalDetailsById = async (req, res) => {
 const addBusinessPartner = async (req, res) => {
     try {
         const { fullName, email, phonenumber, ParentbusinessPartnerId } = req.body;
-        console.log('Request body:', req.body);
+        console.log('Request body:', req.body, fullName, email, phonenumber, ParentbusinessPartnerId);
         const referringBusinessPartner = await credentialDetails.findOne({
             where: { businessPartnerID: ParentbusinessPartnerId }
         });
@@ -1009,7 +1007,7 @@ const createUserlogin = async (req, res) => {
         const roleDetails = await Role.findOne({
             where: { name: rolename },
         });
-
+        console.log(roleDetails.id)
         if (!roleDetails) {
             return res.status(400).json({ message: 'Invalid role name provided.' });
         }
@@ -1017,7 +1015,7 @@ const createUserlogin = async (req, res) => {
        
         const existingUser = await bppUsers.findOne({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists with this email.' });
+            return res.status(200).json({ message: 'User already exists with this email.' });
         }
         const defaultPassword = crypto.randomBytes(8).toString('hex');
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
@@ -1060,33 +1058,164 @@ const createUserlogin = async (req, res) => {
 };
 
 
+// const getUserLogin = async (req, res) => {
+//     try {
+//       console.log()
+//      const users = await bppUsers.findAndCountAll({
+//             include: [
+//                 {
+//                     model: Role,
+//                     as: 'Role', 
+//                     // attributes: ['id', 'name'], 
+//                 },
+//             ],
+       
+//         });
+       
+//         return res.status(200).json({
+//             message: 'Users retrieved successfully!',
+//             data: users.rows,
+//             // totalUsers: users.count,
+//             // currentPage,
+//             // totalPages: Math.ceil(users.count / limit),
+//         });
+//     } catch (error) {
+//         console.error('Error retrieving users:', error.message || error);
+//         return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+//     }
+// };
+
+
+
+
+
+// const getUserLogin = async (req, res) => {
+//     try {
+//         const { page = 1, limit , search = '' } = req.query;
+        
+//         // Parse pagination values
+//         const pageInt = parseInt(page, 10);
+//         const limitInt = parseInt(limit, 50);
+//         const offset = (pageInt - 1) * limitInt;
+
+//         // Define search conditions
+//         const whereConditions = {};
+//         if (search) {
+//             whereConditions[Op.or] = [
+//                 { fullname: { [Op.like]: `%${search}%` } },
+//                 { email: { [Op.like]: `%${search}%` } },
+//                 { '$Role.name$': { [Op.like]: `%${search}%` } },
+//             ];
+//         }
+
+//         // Fetch users with pagination and search
+//         const users = await bppUsers.findAndCountAll({
+//             where: whereConditions,
+//             include: [
+//                 {
+//                     model: Role,
+//                     as: 'Role', 
+//                 },
+//             ],
+//             limit: limitInt,
+//             offset,
+//             distinct: true, 
+//         });
+
+//         // Calculate total pages
+//         const totalPages = Math.ceil(users.count / limitInt);
+
+//         // Respond with the results
+//         return res.status(200).json({
+//             message: 'Users retrieved successfully!',
+//             data: users.rows,
+//             totalUsers: users.count,
+//             currentPage: pageInt,
+//             totalPages,
+//             pageSize: limitInt,
+//         });
+//     } catch (error) {
+//         console.error('Error retrieving users:', error.message || error);
+//         return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+//     }
+// };
+
+
+
+
 const getUserLogin = async (req, res) => {
     try {
-     const users = await bppUsers.findAndCountAll({
+        const { page = 1, pageSize , search = '', filter = null } = req.query;
+
+       
+        const effectiveLimit = parseInt(pageSize, 10);
+        const offset = (parseInt(page, 10) - 1) * effectiveLimit;
+
+       
+        let filterConditions = {};
+        if (filter) {
+            const parsedFilter = JSON.parse(filter);
+            if (parsedFilter.roles) {
+                filterConditions['$Role.name$'] = { [Op.in]: parsedFilter.roles };
+            }
+            if (parsedFilter.startDate && parsedFilter.endDate) {
+                filterConditions.createdAt = {
+                    [Op.between]: [new Date(parsedFilter.startDate), new Date(parsedFilter.endDate)],
+                };
+            }
+        }
+
+        
+        const searchConditions = search
+            ? {
+                  [Op.or]: [
+                      { fullname: { [Op.like]: `%${search}%` } },
+                      { email: { [Op.like]: `%${search}%` } },
+                      { '$Role.name$': { [Op.like]: `%${search}%` } },
+                  ],
+              }
+            : {};
+
+      
+        const whereConditions = {
+            ...searchConditions,
+            ...filterConditions,
+        };
+
+        
+        const users = await bppUsers.findAndCountAll({
+            where: whereConditions,
             include: [
                 {
                     model: Role,
-                    as: 'Role', 
-                    attributes: ['id', 'name'], 
+                    as: 'Role',
                 },
             ],
-       
+            limit: effectiveLimit,
+            offset,
+            distinct: true, 
         });
+
         
+        const totalPages = Math.ceil(users.count / effectiveLimit);
+
+      
         return res.status(200).json({
             message: 'Users retrieved successfully!',
             data: users.rows,
             totalUsers: users.count,
-            currentPage: page,
-            totalPages: Math.ceil(users.count / limit),
+            totalPages,
+            currentPage: parseInt(page, 10),
+            pageSize: effectiveLimit,
         });
     } catch (error) {
         console.error('Error retrieving users:', error.message || error);
-        return res.status(500).json({ message: 'Error retrieving users', error: error.message });
+        return res.status(500).json({
+            message: 'Error retrieving users',
+            error: error.message,
+        });
     }
 };
-
-
 
 
 

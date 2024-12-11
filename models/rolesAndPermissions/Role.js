@@ -24,9 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     Role.associate = (models) => {
         // Role.hasMany(models.bppUsers,{
         //     foreignKey:'roleId',
-            
-    
-        //   });
+        //     });
         Role.belongsToMany(models.Permission, { through: 'RolePermission' })
     }
     return Role
