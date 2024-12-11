@@ -10,9 +10,7 @@ const businessStatus = sequelize.define('businessStatus',{
         references: {
             model: 'bppUsers',
             key: 'id',
-
         },
-        onDelete: 'CASCADE',
     },
     currentStatus:{
         type:DataTypes.STRING,
