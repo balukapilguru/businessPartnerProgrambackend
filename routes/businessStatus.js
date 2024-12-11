@@ -3,7 +3,7 @@ const router = express.Router();
 const { createBusinessStatus, getAllbusiness,getbusinessAllStatus } = require('../controllers/businessStatus');
 
 router.post('/create', createBusinessStatus,); 
-router.post('/all', getAllbusiness);
+router.get('/all', getAllbusiness);
 router.get('/getById/:referbusinessId',getbusinessAllStatus)
 
 module.exports = router;

@@ -85,6 +85,19 @@ const sendOtp = async (req, res) => {
 const verifyOtpAndRegisterUser = async (req, res) => {
     const { email, emailOtp, fullName, phonenumber } = req.body;
     try {
+        const user = await bppUsers.findOne({ where: { email } });
+
+        if (user) {
+         
+            return res.status(200).json({
+                message: 'Email is already in use.',
+                user: {
+                    fullName,
+                    email,
+                    phonenumber
+                }
+            });
+        }
         const storedOtpData = tempOtpStorage.find(otpData => otpData.email === email);
         if (storedOtpData) {
             if (storedOtpData.otp === emailOtp && Date.now() < storedOtpData.expiresAt) {
@@ -253,10 +266,10 @@ const login = async (req, res) => {
         console.log("Received password:", password);
         const user = await bppUsers.findOne({ where: { email } });
 
-       console.log(user.dataValues.roleId)
+       console.log(user?.dataValues?.roleId)
        const roleDetails = await Role.findOne({
         where:{
-            id:user.dataValues.roleId
+            id:user?.dataValues?.roleId
         },
         include: [{
             model: Permission,
@@ -497,6 +510,7 @@ const personaldetails = async (req, res) => {
             console.error('Error during file upload:', err);
             return res.status(400).json({ error: 'Error during file upload', details: err.message });
         }
+        // const {id} = req.params;
         try {
             const {
                 address,
@@ -516,7 +530,7 @@ const personaldetails = async (req, res) => {
             // if (!address || !contactNo || !whatapp_no) {
             //     return res.status(400).json({ error: 'Required fields are missing' });
             // }
-            const { id } = req.user;
+            const { id } = req.params;
             const imageUrl = req.file
                 ? req.uploadedFileKey
                 : null;
@@ -810,7 +824,7 @@ const addBusinessPartner = async (req, res) => {
         res.status(201).json({
             message: 'Referral business created successfully and email with default password sent.',
             data: newUser,
-            isParentPartner:referringBusinessPartner.dataValues.isParentPartner
+            isParentPartner:true
         });
     } catch (error) {
         console.error(error);
@@ -1025,7 +1039,28 @@ const createUserlogin = async (req, res) => {
             phonenumber,
             roleId: roleDetails.id, 
         });
+if(roleDetails.id === 1){
 
+    const businessPartnerID = await generateBusinessPartnerID();
+                const generateRefferal = await generateReferralLink(businessPartnerID);
+                const link1 = generateRefferal.link1;
+                const link2 = generateRefferal.link2;
+
+                console.log('Referral Link 1:', link1);
+                console.log('Referral Link 2:', link2);
+                console.log('Link is', generateRefferal);
+                await credentialDetails.create({
+                    password: hashedPassword,
+                    businessPartnerID,
+                    userId: user.id,
+                    createdBy: null,
+                    noOfLogins: 0,
+                    noOfLogouts: 0,
+                    referralLink: link1,
+                    businessReferralLink: link2
+                })
+}
+else{
         await credentialDetails.create({
             password: hashedPassword,
             email,
@@ -1033,7 +1068,7 @@ const createUserlogin = async (req, res) => {
             noOfLogins: 0,
             noOfLogouts: 0,
         });
-
+    }
         await transporter.sendMail({
             from: config.mailConfig.mailUser,
             to: email,
