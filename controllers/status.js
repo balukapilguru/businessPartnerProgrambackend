@@ -13,12 +13,17 @@ const coursesModel = require('../models/bpp/courses')
 
 const createStatus = async (req, res) => {
   try {
-      const { id, currentStatus, referStudentId, comment } = req.body;
- 
+      const { id, currentStatus, referStudentId, comment } = req.body;//here id is log-in ed person(sales , support )
+      const student = await referStudentmodel.findOne({
+        where:{
+          id:referStudentId
+        }
+      })
+      console.log('student details -- ',student.bpstudents)
       if (currentStatus === 'enroll') {
          const user = await credentialDetails.findOne({
           where :{
-            userId: id
+            userId: student.bpstudents
           }
          })
  console.log(user?.createdBy)
@@ -29,23 +34,23 @@ const createStatus = async (req, res) => {
             time: now.format('HH:mm:ss'),
             action: 'Credit',
             status: 'Successful',
-            // changedBy: id,
-            userId: id,
+            changedBy: id,//credits changed id are sales support
+            userId: student.bpstudents,
             reason: 'Enrolled student',
             studentId: referStudentId,
-            amount: 800, 
-            commission: 'n'
+            amount: 1600, 
+            commission: 'n' // his earnings
           })
           await statements.create({
             date: now.format('YYYY-MM-DD'),
             time: now.format('HH:mm:ss'),
             action: 'Credit',
             status: 'Successful',
-            // changedBy: id,
+            changedBy: id,
             userId: user.dataValues.createdBy,
             reason: `Enrolled student - commision from ${id} `,
             studentId: referStudentId,
-            amount: 200,
+            amount: 400,
             commission : 'y'
           })
          }
@@ -55,11 +60,11 @@ const createStatus = async (req, res) => {
               time: now.format('HH:mm:ss'),
               action: 'Credit',
               status: 'Successful',
-              // changedBy: id,
-              userId: id,
+              changedBy: id,
+              userId: student.bpstudents,
               reason: 'Enrolled student',
               studentId: referStudentId,
-              amount: 1000,
+              amount: 2000,
               commission: 'n'
           });
         }
@@ -270,7 +275,7 @@ const getAll = async (req, res) => {
       }
      })	
 
-     console.log('check',userDetails.dataValues.roleId) 											   
+     console.log(userDetails?.roleId,'check',userDetails.dataValues.roleId) 											   
     const { filter, search, page = 1, limit, pageSize } = req.query;
 
     let filterStatuses = null;
@@ -324,7 +329,7 @@ const getAll = async (req, res) => {
       : {};
 
 		 
-    const referStudentFilter = id ? { bpstudents: id } : {};																								
+    const referStudentFilter = userDetails.roleId === 1 ? id ? { bpstudents: id } : {} : {};																								
     const offset = (page - 1) * effectiveLimit;
 
 										 
@@ -667,7 +672,7 @@ const getDashboardDetails = async (req, res) => {
     enrollmentCounts.filter(item => userIds.includes(parseInt(item.bpstudents))).forEach(item => {
       if (childrenObject[item.bpstudents]) {
         childrenObject[item.bpstudents].enrollments = parseInt(item.count);
-        childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 1000;
+        childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 2000;
         childrenObject[item.bpstudents].Income = childrenObject[item.bpstudents].Total * 0.8;
         childrenObject[item.bpstudents].Revenue = childrenObject[item.bpstudents].Total * 0.2;
       }

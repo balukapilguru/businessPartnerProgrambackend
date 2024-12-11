@@ -11,20 +11,20 @@ const statements = require('../models/bpp/statements')
 const createBusinessStatus = async (req, res) => {
   try {
       const { id, currentStatus,  referbusinessId, comment } = req.body;
-      if (currentStatus === 'enroll') {
+      // if (currentStatus === 'enroll') {
          
-          await statements.create({
-              date: now.format('YYYY-MM-DD'),
-              time: now.format('HH:mm:ss'),
-              action: 'Credit',
-              status: 'Successful',
-              changedBy: id,
-              userId: id,
-              reason: 'Enrolled student',
-              businessId: referbusinessId,
-              amount: 1000
-          });
-      }
+      //     await statements.create({
+      //         date: now.format('YYYY-MM-DD'),
+      //         time: now.format('HH:mm:ss'),
+      //         action: 'Credit',
+      //         status: 'Successful',
+      //         changedBy: id,
+      //         userId: id,
+      //         reason: 'Enrolled student',
+      //         businessId: referbusinessId,
+      //         amount: 1000
+      //     });
+      // }
         await statusModel.create({
           changedBy: id,
           currentStatus,
@@ -355,13 +355,21 @@ const createBusinessStatus = async (req, res) => {
 
 const getAllbusiness = async (req, res) => {
   try {
+    const { id } = req.body;
+    const userDetails = await bppusers.findOne({
+      where: {
+        id,
+      },
+    });
+
+    console.log(userDetails.roleId, 'check', userDetails.dataValues.roleId);
+
     const { filter, search, page = 1, limit, pageSize } = req.query;
 
     let filterStatuses = null;
     let startDate = null;
     let endDate = null;
 
-    // pageSize
     const effectiveLimit = parseInt(pageSize || limit || 10);
 
     if (filter) {
@@ -371,6 +379,28 @@ const getAllbusiness = async (req, res) => {
         : null;
       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
+    }
+
+    const recentStatuses = await statusModel.findAll({
+      attributes: ['referBusinessId', [fn('MAX', col('id')), 'latestId']],
+      group: ['referBusinessId'],
+      where: {
+        ...(startDate && endDate && {
+          createdAt: { [Op.between]: [startDate, endDate] },
+        }),
+      },
+    });
+
+    const latestIds = recentStatuses.map((status) => status.dataValues.latestId);
+
+    if (!latestIds.length) {
+      return res.status(200).json({
+        statuses: [],
+        count: {},
+        totalRecords: 0,
+        totalPages: 0,
+        currentPage: page,
+      });
     }
 
     const searchConditions = search
@@ -384,11 +414,18 @@ const getAllbusiness = async (req, res) => {
         }
       : {};
 
+    const referBusinessFilter =
+      userDetails.roleId === 1
+        ? id
+          ? { bpbussiness: id }
+          : {}
+        : {};
+
     const offset = (page - 1) * effectiveLimit;
 
-    // Fetch all statuses associated with the referBusinessId and order by `currentStatus` and `createdAt`
     const fullStatuses = await statusModel.findAll({
       where: {
+        id: { [Op.in]: latestIds },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -411,21 +448,21 @@ const getAllbusiness = async (req, res) => {
           ],
           where: {
             ...searchConditions,
+            ...referBusinessFilter,
           },
         },
       ],
       offset,
       limit: effectiveLimit,
       order: [
-        // First order by `currentStatus` to make sure 'lead' comes first (assuming 'lead' is a status value)
         [Sequelize.literal("CASE WHEN currentStatus = 'lead' THEN 1 ELSE 2 END"), 'ASC'],
-        // Then order by `createdAt` in descending order for both lead and updated statuses
         ['createdAt', 'DESC'],
       ],
     });
 
     const totalRecords = await statusModel.count({
       where: {
+        id: { [Op.in]: latestIds },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -438,6 +475,7 @@ const getAllbusiness = async (req, res) => {
           attributes: [],
           where: {
             ...searchConditions,
+            ...referBusinessFilter,
           },
         },
       ],
@@ -445,13 +483,13 @@ const getAllbusiness = async (req, res) => {
 
     const totalPages = Math.ceil(totalRecords / effectiveLimit);
 
-    // Fetch status count per currentStatus (lead, updated, etc.)
     const statusCount = await statusModel.findAll({
       attributes: [
         'currentStatus',
         [fn('COUNT', col('currentStatus')), 'count'],
       ],
       where: {
+        id: { [Op.in]: latestIds },
         ...(filterStatuses && { currentStatus: { [Op.in]: filterStatuses } }),
         ...(startDate && endDate && {
           createdAt: { [Op.between]: [startDate, endDate] },
@@ -464,6 +502,7 @@ const getAllbusiness = async (req, res) => {
           attributes: [],
           where: {
             ...searchConditions,
+            ...referBusinessFilter,
           },
         },
       ],

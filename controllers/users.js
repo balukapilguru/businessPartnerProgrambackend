@@ -1009,18 +1009,18 @@ const createUserlogin = async (req, res) => {
         const roleDetails = await Role.findOne({
             where: { name: rolename },
         });
-
+        console.log(roleDetails.id)
         if (!roleDetails) {
             return res.status(400).json({ message: 'Invalid role name provided.' });
         }
 
         const existingUser = await bppUsers.findOne({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists with this email.' });
+            return res.status(200).json({ message: 'User already exists with this email.' });
         }
 
 
-
+        
         // Generate business partner ID and referral links
         const businessPartnerID = await generateBusinessPartnerID();
         const generateRefferal = await generateReferralLink(businessPartnerID);
@@ -1293,7 +1293,7 @@ const deleteUser = async (req, res) => {
         }
         const personalDetails = await Personaldetails.findOne({ where: { profileId: userId } });
         if (personalDetails) {
-            await personaldetails.destroy();
+            await personalDetails.destroy();
         }
         const BankDetail = await bankDetails.findOne({ where: { userId } });
         if (BankDetail) {

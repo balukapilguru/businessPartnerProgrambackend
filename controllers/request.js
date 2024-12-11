@@ -65,7 +65,7 @@ const createRequest = async(req,res)=>{
             amount,
             userId,
             status,
-            changedBy: id || null,
+            // changedBy: id || null,
             commission: commission || null
         })
 
@@ -96,8 +96,8 @@ const statusChange = async(req,res)=>{
                 time: now.format('HH:mm:ss'),
                 action: 'Debit',
                 status: 'Successful',
-                // changedBy: id,
-                userId: id,
+                changedBy: id,//id sales vallu
+                userId: requestDetails.userId,
                 reason: 'Debit from parent patner wallet',
                 
                 amount: requestDetails.amount, 
@@ -110,8 +110,8 @@ const statusChange = async(req,res)=>{
                     time: now.format('HH:mm:ss'),
                     action: 'Debit',
                     status: 'Successful',
-                    // changedBy: id,
-                    userId: id,
+                    changedBy: id,//changed by debits are of acounts
+                    userId:requestDetails.userId,
                     reason: 'Debit from Business Partner wallet',
 
                     amount: requestDetails.amount, 
