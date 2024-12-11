@@ -24,7 +24,7 @@ const businessStatuses = require('../models/status/BusinessStatus')
 const Role = db.Role;
 const Module = db.Module;
 const Permission = db.Permission;
-
+const coursesModel = require('../models/bpp/courses')
 let tempOtpStorage = [];
 
 const transporter = nodemailer.createTransport({
@@ -239,7 +239,10 @@ const generateReferralLink = async (businessPartnerID) => {
 // };
 
 const generateToken = (user) => {
-    const payload = { id: user.id, email: user.email, roleId: user.roleId };
+    // console.log("Business Partner ID in user:", user.businessPartnerID);
+    // console.log("User object:", user);
+
+    const payload = { id: user.id, email: user.email, roleId: user.roleId, businessPartnerId: user.businessPartnerID};
     const secret = process.env.JWT_SECRET || 'secret';
     const options = { expiresIn: '24h' };
     const token = jwt.sign(payload, secret, options);
@@ -303,6 +306,7 @@ const login = async (req, res) => {
         }
         await credentialDetails.increment('noOfLogins', { by: 1, where: { userId: user.id } });
         const updatedCredential = await credentialDetails.findOne({ where: { userId: user.id } });
+        // console.log(updatedCredential); 
         const token = generateToken(user);
         console.log({
             message: 'Login successful',
@@ -312,7 +316,7 @@ const login = async (req, res) => {
                 fullName: user.dataValues.fullName,
                 phonenumber: user.phonenumber,
                
-                businessPartnerID: updatedCredential.businessPartnerID,
+                businessPartnerID: updatedCredential.dataValues.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
                 businessReferralLink: updatedCredential.businessReferralLink,
                 email,
@@ -328,7 +332,7 @@ const login = async (req, res) => {
                 id: user.id,
                 fullName:user.dataValues.fullName,
                 phonenumber: user.phonenumber,
-               
+                // businessPartnerID: updatedCredential.dataValues.businessPartnerID,
                 businessPartnerID: updatedCredential.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
                 businessReferralLink: updatedCredential.businessReferralLink,
@@ -393,7 +397,9 @@ const decryptfun = async (req, res) => {
             // key: decryptionKey,
         });
         console.log('Decrypted Data:', decryptedData);
-        res.render('referStudent', { decryptedData });
+        const courses = await coursesModel.findAll({ attributes: ['courseName'] });
+        
+        res.render('referStudent', { decryptedData,courses },);
 
     } catch (error) {
         console.error('Error during decryption:', error.message);
@@ -1164,6 +1170,82 @@ const createUserlogin = async (req, res) => {
 // };
 
 
+// the old code 
+
+// const getUserLogin = async (req, res) => {
+//     try {
+//         const { page = 1, pageSize , search = '', filter = null } = req.query;
+
+       
+//         const effectiveLimit = parseInt(pageSize, 10);
+//         const offset = (parseInt(page, 10) - 1) * effectiveLimit;
+
+       
+//         let filterConditions = {};
+//         if (filter) {
+//             const parsedFilter = JSON.parse(filter);
+//             if (parsedFilter.roles) {
+//                 filterConditions['$Role.name$'] = { [Op.in]: parsedFilter.roles };
+//             }
+//             if (parsedFilter.startDate && parsedFilter.endDate) {
+//                 filterConditions.createdAt = {
+//                     [Op.between]: [new Date(parsedFilter.startDate), new Date(parsedFilter.endDate)],
+//                 };
+//             }
+//         }
+
+        
+//         const searchConditions = search
+//             ? {
+//                   [Op.or]: [
+//                       { fullname: { [Op.like]: `%${search}%` } },
+//                       { email: { [Op.like]: `%${search}%` } },
+//                       { '$Role.name$': { [Op.like]: `%${search}%` } },
+//                   ],
+//               }
+//             : {};
+
+      
+//         const whereConditions = {
+//             ...searchConditions,
+//             ...filterConditions,
+//         };
+
+        
+//         const users = await bppUsers.findAndCountAll({
+//             where: whereConditions,
+//             include: [
+//                 {
+//                     model: Role,
+//                     as: 'Role',
+//                 },
+//             ],
+//             limit: effectiveLimit,
+//             offset,
+//             distinct: true, 
+//         });
+
+        
+//         const totalPages = Math.ceil(users.count / effectiveLimit);
+
+      
+//         return res.status(200).json({
+//             message: 'Users retrieved successfully!',
+//             data: users.rows,
+//             totalUsers: users.count,
+//             totalPages,
+//             currentPage: parseInt(page, 10),
+//             pageSize: effectiveLimit,
+//         });
+//     } catch (error) {
+//         console.error('Error retrieving users:', error.message || error);
+//         return res.status(500).json({
+//             message: 'Error retrieving users',
+//             error: error.message,
+//         });
+//     }
+// };
+
 
 
 const getUserLogin = async (req, res) => {
@@ -1216,13 +1298,13 @@ const getUserLogin = async (req, res) => {
             ],
             limit: effectiveLimit,
             offset,
-            distinct: true, 
+            distinct: true,
         });
 
-        
         const totalPages = Math.ceil(users.count / effectiveLimit);
 
       
+        // Response
         return res.status(200).json({
             message: 'Users retrieved successfully!',
             data: users.rows,
@@ -1239,6 +1321,7 @@ const getUserLogin = async (req, res) => {
         });
     }
 };
+
 
 // const deleteUser = async (req, res) => {
 //     try {

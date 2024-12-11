@@ -159,16 +159,16 @@ const deleteCourse = async (req, res) => {
         if (!course) {
             return res.status(404).json({ message: "Course not found." });
         }
-        const deletedStudentCourses = await studentcourses.destroy({
+        
+
+        // if (deletedStudentCourses === 0) {
+        //     return res.status(400).json({
+        //         message: "No student-course records found to delete for this course."
+        //     });
+        // }
+const deletedStudentCourses = await studentcourses.destroy({
             where: { courseId: id }
         });
-
-        if (deletedStudentCourses === 0) {
-            return res.status(400).json({
-                message: "No student-course records found to delete for this course."
-            });
-        }
-
         await course.destroy();
 
         return res.status(200).json({ message: "Course and associated student-course records deleted successfully." });

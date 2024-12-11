@@ -14,6 +14,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0px 0px 10px #ccc;
+            position: relative; /* Ensure positioning context */
         }
         .form-container h1 {
             text-align: center;
@@ -21,17 +22,23 @@
         }
         .form-group {
             margin-bottom: 15px;
+            position: relative; /* Create positioning context for dropdown */
         }
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        .form-group input {
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
         }
+      
         button {
             width: 100%;
             padding: 10px;
@@ -46,6 +53,7 @@
             background-color: #45a049;
         }
     </style>
+    
 </head>
 <body>
     <div class="form-container">
@@ -74,7 +82,12 @@
 
             <div class="form-group">
                 <label for="courseRequired">Course Required:</label>
-                <input type="text" id="courseRequired" name="courseRequired" required>
+                <select  name="courseRequired" required>
+                    <option value="" disabled selected>Select a course</option>
+                    <% courses.forEach(course => { %>
+                        <option value="<%= course.courseName %>"><%= course.courseName %></option>
+                    <% }) %>
+                </select>
             </div>
 
             <input type="hidden" id="businessPartnerID" name="businessPartnerID" value="<%= decryptedData %>">

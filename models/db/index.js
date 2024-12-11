@@ -105,6 +105,7 @@ db.ReferStudentmodel.belongsToMany(db.courses, {
     foreignKey: 'studentId', 
     otherKey: 'courseId', 
     // as: 'enrolledCourses',
+    onDelete:'SET NULL'
 });
 
 db.courses.belongsToMany(db.ReferStudentmodel, {
@@ -112,6 +113,7 @@ db.courses.belongsToMany(db.ReferStudentmodel, {
     foreignKey: 'courseId', 
     otherKey: 'studentId', 
     as: 'interestedStudents',
+     onDelete:'SET NULL'
 });
 db.bppUsers.belongsTo(db.Role, {
     foreignKey: 'roleId',
