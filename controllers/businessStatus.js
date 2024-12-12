@@ -493,7 +493,8 @@ const createBusinessStatus = async (req, res) => {
 
 const getAllbusiness = async (req, res) => {
   try {
-    const { id } = req.body;
+    let { userId } = req.query || '';
+    let id = userId;
     const { filter, search, page = 1, limit, pageSize } = req.query;
 
     let filterStatuses = null;
@@ -543,7 +544,7 @@ const getAllbusiness = async (req, res) => {
           ],
         }
       : {};
-
+      const referStudentFilter = id == 2 ? {} : id != null ? { bpbussiness: id } : {};
     const offset = (page - 1) * effectiveLimit;
 
     const fullStatuses = await statusModel.findAll({
@@ -569,15 +570,16 @@ const getAllbusiness = async (req, res) => {
             'source',
             'serviceRequired',
           ],
-          where: searchConditions,
+          where: {...searchConditions,
+          ...referStudentFilter},
         },
       ],
       offset,
       limit: effectiveLimit,
-      order: [
-        [Sequelize.literal("CASE WHEN currentStatus = 'lead' THEN 1 ELSE 2 END"), 'ASC'],
-        ['createdAt', 'DESC'],
-      ],
+      // order: [
+      //   [Sequelize.literal("CASE WHEN currentStatus = 'lead' THEN 1 ELSE 2 END"), 'ASC'],
+      //   ['createdAt', 'DESC'],
+      // ],
     });
 
     const totalRecords = await statusModel.count({
@@ -593,7 +595,8 @@ const getAllbusiness = async (req, res) => {
           model: referBusinessModel,
           as: 'referBusiness',
           attributes: [],
-          where: searchConditions,
+          where:{ ...searchConditions,
+          ...referStudentFilter}
         },
       ],
     });
@@ -617,7 +620,8 @@ const getAllbusiness = async (req, res) => {
           model: referBusinessModel,
           as: 'referBusiness',
           attributes: [],
-          where: searchConditions,
+          where:{ ...searchConditions,
+            ...referStudentFilter},
         },
       ],
       group: ['currentStatus'],
@@ -638,6 +642,7 @@ const getAllbusiness = async (req, res) => {
       pageSize: effectiveLimit,
     });
   } catch (error) {
+    console.log(error)
     console.error('Database Error:', error);
     return res.status(500).json({ error: 'Database error occurred.' });
   }

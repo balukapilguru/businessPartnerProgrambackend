@@ -39,7 +39,7 @@ const createStatus = async (req, res) => {
             time: now.format('HH:mm:ss'),
             action: 'Credit',
             status: 'Successful',
-            changedBy: id,
+            // changedBy: id,
             userId: user.dataValues.createdBy,
             reason: `Enrolled student - commision from ${id} `,
             studentId: referStudentId,
@@ -86,9 +86,12 @@ const createStatus = async (req, res) => {
  
 const getAll = async (req, res) => {
   try {
-		 const { id } = req.params;														   
+    // let id;
+		  //  id  = 9 || '';	
+      let {userId }= req.query || '';		
+      let id = userId	;										   
     const { filter, search, page = 1, limit, pageSize } = req.query;
-
+    console.log('filter is',id,search,filter,limit,pageSize)
     let filterStatuses = null;
     let startDate = null;
     let endDate = null;
@@ -137,8 +140,10 @@ const getAll = async (req, res) => {
           ],
         }
       : {};
-
-    const referStudentFilter = id ? { bpstudents: id } : {};																								
+      const referStudentFilter = id == 2 ? {} : id != null ? { bpstudents: id } : {};
+ 
+      // const referStudentFilter = id != null || id === 2 ? { bpstudents: id } : {}; 		
+      // const referStudentFilter = {}; 																					
     const offset = (page - 1) * effectiveLimit;
 
     const fullStatuses = await statusModel.findAll({
@@ -281,6 +286,12 @@ const isParentPartner = await credentialDetails.findOne({
     userId : id
   }
 })
+const createdByCount = await credentialDetails.count({
+  where: {
+    createdBy: id, 
+  },
+});
+const isparentPartner = createdByCount > 0 ? true : false;
     // Create an object indexed by userId
     const childrenObject = children.reduce((acc, child) => {
       const childData = child.toJSON();
@@ -363,7 +374,7 @@ const isParentPartner = await credentialDetails.findOne({
     const totalPages = Math.ceil(childrenArray.length / effectiveLimit);
 
     return res.status(200).json({
-      isParentPartner:isParentPartner.isParentPartner,
+      isParentPartner:isparentPartner,
       refferedBusinessPartners: childrenArray.length,
       Details: paginatedChildren,
       totalEnrollments: childrenArray.reduce((acc, child) => acc + child.enrollments, 0),

@@ -59,36 +59,53 @@ const getAllRequests = async (req, res) => {
 };
 
 
-
 const getUserRequests = async (req, res) => {
     try {
         const { userId } = req.params;
+        const { page = 1, pageSize = 10 } = req.query;
+
         if (!userId) {
             return res.status(400).json({
-                error: " User ID is required"
-            })
+                error: "User ID is required"
+            });
         }
+
+        const effectiveLimit = parseInt(pageSize);
+        const offset = (parseInt(page) - 1) * effectiveLimit;
+
         const requests = await request.findAll({
             where: { userId },
+            offset,
+            limit: effectiveLimit,
             include: [{
                 model: bppUsers,
                 as: 'user',
                 attributes: ['fullName', 'email']
             }]
         });
+
         if (!requests.length) {
-            return res.status(404).json({ message: "No requests found for the given Id" })
+            return res.status(404).json({ message: "No requests found for the given Id" });
         }
-        const totalAmount = requests.reduce((sum, req) => sum + req.amount, 0)
+
+        // const totalAmount = requests.reduce((sum, req) => sum + req.amount, 0);
+        
+        // Count the total number of requests for the userId
+        const totalRecords = await request.count({ where: { userId } });
+        const totalPages = Math.ceil(totalRecords / effectiveLimit);
+
         res.status(200).json({
-            totalAmount,
+            // totalAmount,
             requests,
-        })
+            currentPage: parseInt(page),
+            pageSize: effectiveLimit,
+            totalPages,
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "An error while retrieving the requests" })
+        res.status(500).json({ error: "An error while retrieving the requests" });
     }
-}
+};
 
 const createRequest = async (req, res) => {
     try {
@@ -101,13 +118,13 @@ const createRequest = async (req, res) => {
         }
         const newRequest = await request.create({
             amount,
-            userId,
+            userId, // who is requesting BPP
             status,
             // changedBy: id || null,
             commission: commission || null
         })
 
-        return res.status(201).json({
+        return res.status(200).json({
             message: " Request created successfully",
             data: newRequest
         })
@@ -166,7 +183,7 @@ const statusChange = async (req, res) => {
                     },
                 }
             );
-            res.status(201).json({
+            res.status(200).json({
                 message: 'Status changed successfully'
             });
         }
@@ -181,7 +198,7 @@ const statusChange = async (req, res) => {
                     },
                 }
             );
-            res.status(201).json({
+            res.status(200).json({
                 message: 'Status changed successfully'
             });
         }

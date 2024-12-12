@@ -121,11 +121,15 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 console.log('Referral Link 1:', link1);
                 console.log('Referral Link 2:', link2);
                 console.log('Link is', generateRefferal);
+                const roleDetails = await Role.findOne({
+                    where: { name: 'Business Partner' },
+                });
+                
                 const user = await bppUsers.create({
                     fullName,
                     email,
                     phonenumber,
-                    roleId: 1
+                    roleId: roleDetails.id || 1
                 }).catch(error => {
                     console.error('Error while saving user to the bppUsers table:', error.message || error);
                     throw new Error('Error while saving user to the bppUsers table');
@@ -790,7 +794,10 @@ const addBusinessPartner = async (req, res) => {
             // parentbusinessPartnerId,
             // status: studentStatus
         });
-
+        const roleDetails = await Role.findOne({
+            where: { name: 'Business Partner' },
+        });
+        
 
         const newUser = await bppUsers.create({
             fullName,
@@ -798,7 +805,7 @@ const addBusinessPartner = async (req, res) => {
             phonenumber,
             // password: hashedPassword,
             // status: 'active',
-            roleId: 1
+            roleId: roleDetails.id || 1
         });
 
 
@@ -1045,7 +1052,7 @@ const createUserlogin = async (req, res) => {
             phonenumber,
             roleId: roleDetails.id, 
         });
-if(roleDetails.id === 1){
+if(roleDetails.id === 1 || roleDetails.id === 3){
 
     const businessPartnerID = await generateBusinessPartnerID();
                 const generateRefferal = await generateReferralLink(businessPartnerID);
