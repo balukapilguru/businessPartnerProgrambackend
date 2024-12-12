@@ -531,7 +531,8 @@ const personaldetails = async (req, res) => {
                 holder_name,
                 account_no,
                 ifsc_code,
-                branch
+                branch,
+                phonenumber
             } = req.body;
             // if (!address || !contactNo || !whatapp_no) {
             //     return res.status(400).json({ error: 'Required fields are missing' });
@@ -544,7 +545,7 @@ const personaldetails = async (req, res) => {
             const newDetails = await Personaldetails.create({
                 address,
                 panCardNO,
-                contactNo,
+                contactNo: phonenumber || contactNo,
                 whatapp_no,
                 aadharNo,
                 businessName: businessName || null,
@@ -588,7 +589,6 @@ const updatePersonalAndBankDetails = async (req, res) => {
                 return res.status(400).json({ error: err.message });
             }
             const { id } = req.params;
-            
             console.log('Checking....',id)
             const {
                 address,

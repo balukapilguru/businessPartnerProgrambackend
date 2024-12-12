@@ -156,6 +156,31 @@ const statusChange = async (req, res) => {
                     commission: 'n'
                 })
             }
+            await request.update(
+                {
+                    status: status, 
+                },
+                {
+                    where: {
+                        id: reqId,
+                    },
+                }
+            );
+            res.status(201).json({
+                message: 'Status changed successfully'
+            });
+        }
+        else {
+            await request.update(
+                {
+                    status: status, 
+                },
+                {
+                    where: {
+                        id: reqId,
+                    },
+                }
+            );
             res.status(201).json({
                 message: 'Status changed successfully'
             });
