@@ -14,12 +14,17 @@ const createStatus = async (req, res) => {
       const { id, currentStatus, referStudentId, comment } = req.body;
  console.log(req.body)
       if (currentStatus === 'enroll') {
+        const referstudent = await referStudentmodel.findOne({
+          where :{id: referStudentId}
+        })
+        console.log(referstudent)
          const user = await credentialDetails.findOne({
           where :{
             userId: id
           }
          })
  console.log(user?.createdBy)
+ console.log(user)
          if(user?.createdBy){
           console.log('user.id',user.createdBy);
           await statements.create({
@@ -28,7 +33,7 @@ const createStatus = async (req, res) => {
             action: 'Credit',
             status: 'Successful',
             // changedBy: id,
-            userId: id,
+            userId: referstudent.bpstudents,
             reason: 'Enrolled student',
             studentId: referStudentId,
             amount: 1600, 
@@ -140,7 +145,8 @@ const getAll = async (req, res) => {
           ],
         }
       : {};
-      const referStudentFilter = id == 2 ? {} : id != null ? { bpstudents: id } : {};
+      console.log(id)
+      const referStudentFilter = id == 1 || 8  ? {} : id != null ? { bpstudents: id } : {};
  
       // const referStudentFilter = id != null || id === 2 ? { bpstudents: id } : {}; 		
       // const referStudentFilter = {}; 																					

@@ -24,46 +24,49 @@ const getUserStatements = async (req, res) => {
             include: [
                 {
                     model: bppUsers,
-                    as: 'user',
-                    attributes: ['fullName', 'email'],
+					as: 'user',		   
+                    attributes: ['fullName', 'email'], 
                 }
             ],
         });
-        if (!statementsData.length) {
-            return res.status(404).json({ message: "No statements found for the given user ID" });
-        }
-        const businessPartnerStatements = statementsData.filter(statement => statement.commission === 'n');
-        const parentPartnerStatements = statementsData.filter(statement => statement.commission === 'y');
 
-        let totalBusinessPartnerWalletAmount = 0; 
-        let totalParentPartnerWalletAmount = 0; 
+        let totalBusinessPartnerWalletAmount = 0;
+        let totalParentPartnerWalletAmount = 0;
 
         let totalBusinessPartnerAmount = 0;
         let totalParentPartnerAmount = 0;
 
-        businessPartnerStatements.forEach(statement => {
-            if (statement.action === 'Credit') {
-                totalBusinessPartnerAmount += statement.amount;
-            } else if (statement.action === 'Debit') {
-                totalBusinessPartnerAmount -= statement.amount;
-                totalBusinessPartnerWalletAmount += statement.amount; 
-            }
-        });
+        let businessPartnerStatements = [];																								  
+        let parentPartnerStatements = [];
 
-        parentPartnerStatements.forEach(statement => {
-            if (statement.action === 'Credit') {
-                totalParentPartnerAmount += statement.amount;
-            } else if (statement.action === 'Debit') {
-                totalParentPartnerAmount -= statement.amount;
-                totalParentPartnerWalletAmount += statement.amount; 
-            }
-        });
+        if (statementsData.length) {
+            businessPartnerStatements = statementsData.filter(statement => statement.commission === 'n');
+            parentPartnerStatements = statementsData.filter(statement => statement.commission === 'y');
 
-        res.status(200).json({
+            businessPartnerStatements.forEach(statement => {
+                if (statement.action === 'Credit') {
+                    totalBusinessPartnerAmount += statement.amount;
+                } else if (statement.action === 'Debit') {
+                    totalBusinessPartnerAmount -= statement.amount;
+                    totalBusinessPartnerWalletAmount += statement.amount;
+                }
+            });
+
+            parentPartnerStatements.forEach(statement => {
+                if (statement.action === 'Credit') {
+                    totalParentPartnerAmount += statement.amount;
+                } else if (statement.action === 'Debit') {
+                    totalParentPartnerAmount -= statement.amount;
+                    totalParentPartnerWalletAmount += statement.amount;
+                }
+            });
+        }
+
+        return res.status(200).json({
             totalBusinessPartnerAmount,
-            totalBusinessPartnerWalletAmount: Math.abs(totalBusinessPartnerWalletAmount), 
-            totalParentPartnerAmount, 
-            totalParentPartnerWalletAmount: Math.abs(totalParentPartnerWalletAmount), 
+            totalBusinessPartnerWalletAmount: Math.abs(totalBusinessPartnerWalletAmount),
+            totalParentPartnerAmount,
+            totalParentPartnerWalletAmount: Math.abs(totalParentPartnerWalletAmount),
             businessPartnerStatements,
             parentPartnerStatements,
         });

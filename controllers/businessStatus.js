@@ -544,7 +544,7 @@ const getAllbusiness = async (req, res) => {
           ],
         }
       : {};
-      const referStudentFilter = id == 2 ? {} : id != null ? { bpbussiness: id } : {};
+      const referStudentFilter = id == 1 || id == 8  ? {} : id != null ? { bpbussiness: id } : {};
     const offset = (page - 1) * effectiveLimit;
 
     const fullStatuses = await statusModel.findAll({

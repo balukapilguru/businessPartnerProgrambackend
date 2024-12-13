@@ -80,7 +80,7 @@ const getUserRequests = async (req, res) => {
             include: [{
                 model: bppUsers,
                 as: 'user',
-                attributes: ['fullName', 'email']
+                attributes: ['fullName', 'email','createdAt','updatedAt']
             }]
         });
 
@@ -97,6 +97,7 @@ const getUserRequests = async (req, res) => {
         res.status(200).json({
             // totalAmount,
             requests,
+            totalRecords,
             currentPage: parseInt(page),
             pageSize: effectiveLimit,
             totalPages,

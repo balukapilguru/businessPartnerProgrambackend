@@ -129,7 +129,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     fullName,
                     email,
                     phonenumber,
-                    roleId: roleDetails.id || 1
+                    roleId: roleDetails.id || 2
                 }).catch(error => {
                     console.error('Error while saving user to the bppUsers table:', error.message || error);
                     throw new Error('Error while saving user to the bppUsers table');
@@ -202,32 +202,45 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 // new function
 
 
-
 const generateBusinessPartnerID = async () => {
     try {
         const lastPartner = await credentialDetails.findOne({
             order: [['businessPartnerID', 'DESC']],
             attributes: ['businessPartnerID'],
         });
-        let newID = 'KKHBP511';
-        if (lastPartner) {
+
+        let newID;
+        if (!lastPartner || !lastPartner.businessPartnerID) {
+            // No records in the table, initialize with the default ID
+            newID = 'KKHBP511'; // Default starting ID for the first business partner
+        } else {
             const lastID = lastPartner.businessPartnerID;
-            if (lastID.startsWith('BP')) {
-                newID = 'KKHBP511'; 
-            } else if (lastID.startsWith('KKHBP5')) {
+
+            if (lastID.startsWith('KKHBP5')) {
+                // Extract the numeric part of the last ID
                 const numberPart = parseInt(lastID.replace('KKHBP5', ''), 10);
+
                 if (isNaN(numberPart)) {
                     throw new Error('Invalid business partner ID format');
                 }
-            newID = `KKHBP5${(numberPart + 1).toString()}`;
+
+                // Increment the numeric part and construct the new ID
+                newID = `KKHBP5${(numberPart + 1).toString()}`;
+            } else {
+                // If the last ID doesn't match the expected format, fall back to a default
+                throw new Error('Unexpected business partner ID format');
             }
         }
+
         return newID;
     } catch (error) {
-        console.error('Error generating Business Partner ID:', error);
-        throw new Error('Could not generate Business Partner ID');
+        console.error('Error generating business partner ID:', error);
+        throw new Error('Error generating business partner ID');
     }
-}
+};
+
+
+
 const generateReferralLink = async (businessPartnerID) => {
     const baseURL = 'http://localhost:3050/api/auth/decrypt';
     const baseURL2 = 'http://localhost:3050/api/auth/decryptFun';
@@ -1052,7 +1065,7 @@ const createUserlogin = async (req, res) => {
             phonenumber,
             roleId: roleDetails.id, 
         });
-if(roleDetails.id === 1 || roleDetails.id === 3){
+if(roleDetails.id === 2 ){
 
     const businessPartnerID = await generateBusinessPartnerID();
                 const generateRefferal = await generateReferralLink(businessPartnerID);
