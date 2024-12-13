@@ -9,6 +9,8 @@ const now = dayjs();
 const statements = require('../models/bpp/statements');
 const credentialDetails = require('../models/bpp/credentialDetails');
 const coursesModel = require('../models/bpp/courses')
+const db = require('../models/db/index')
+const Role = db.Role;
 const createStatus = async (req, res) => {
   try {
       const { id, currentStatus, referStudentId, comment } = req.body;
@@ -59,7 +61,7 @@ const createStatus = async (req, res) => {
               action: 'Credit',
               status: 'Successful',
               // changedBy: id,
-              userId: id,
+              userId:referstudent.bpstudents,
               reason: 'Enrolled student',
               studentId: referStudentId,
               amount: 2000,
@@ -103,7 +105,15 @@ const getAll = async (req, res) => {
 
     // pageSize
     const effectiveLimit = parseInt(pageSize || limit || 10);
-
+     const roleDetails = await Role.findAll({
+      attributes: ['id'],
+  });
+  const userDetails = await bppusers.findOne({
+    where:{
+      id:userId
+    }
+  })
+  console.log(userDetails)
     if (filter) {
       const parsedFilter = JSON.parse(filter);
       filterStatuses = parsedFilter.statuses
@@ -146,7 +156,12 @@ const getAll = async (req, res) => {
         }
       : {};
       console.log(id)
-      const referStudentFilter = id == 1 || 8  ? {} : id != null ? { bpstudents: id } : {};
+      console.log('Kavya check',roleDetails.dataValues);
+      console.log(roleDetails)
+      const roleIds = roleDetails.map((role) => role.dataValues.id);
+
+console.log('Role IDs:', roleIds);
+      const referStudentFilter = roleIds.includes(1) || roleIds.includes(4) ? {} : id != null ? { bpstudents: id } : {};
  
       // const referStudentFilter = id != null || id === 2 ? { bpstudents: id } : {}; 		
       // const referStudentFilter = {}; 																					

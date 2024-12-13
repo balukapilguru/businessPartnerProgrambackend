@@ -242,8 +242,8 @@ const generateBusinessPartnerID = async () => {
 
 
 const generateReferralLink = async (businessPartnerID) => {
-    const baseURL = 'http://localhost:3050/api/auth/decrypt';
-    const baseURL2 = 'http://localhost:3050/api/auth/decryptFun';
+    const baseURL = 'https://bpbeta.infozit.com/api/auth/decrypt';
+    const baseURL2 = 'https://bpbeta.infozit.com/api/auth/decryptFun';
     const encrypted = encrypt(businessPartnerID);
     const res = encrypted?.encryptedData;
     // const iv = encrypted?.iv;
