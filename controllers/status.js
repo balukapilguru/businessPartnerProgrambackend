@@ -161,7 +161,7 @@ const getAll = async (req, res) => {
       const roleIds = roleDetails.map((role) => role.dataValues.id);
 
 console.log('Role IDs:', roleIds);
-      const referStudentFilter = roleIds.includes(1) || roleIds.includes(4) ? {} : id != null ? { bpstudents: id } : {};
+      const referStudentFilter = userDetails.dataValues.roleId ===1 || userDetails.dataValues.roleId ===4 ? {} : id != null ? { bpstudents: id } : {};
  
       // const referStudentFilter = id != null || id === 2 ? { bpstudents: id } : {}; 		
       // const referStudentFilter = {}; 																					

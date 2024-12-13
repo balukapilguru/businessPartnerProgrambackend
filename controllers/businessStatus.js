@@ -502,7 +502,12 @@ const getAllbusiness = async (req, res) => {
     let endDate = null;
 
     const effectiveLimit = parseInt(pageSize || limit || 10);
-
+ const userDetails = await bppusers.findOne({
+    where:{
+      id:userId
+    }
+  })
+  console.log(userDetails)
     if (filter) {
       const parsedFilter = JSON.parse(filter);
       filterStatuses = parsedFilter.statuses
@@ -544,8 +549,8 @@ const getAllbusiness = async (req, res) => {
           ],
         }
       : {};
-      const referStudentFilter = id == 1 || id == 8  ? {} : id != null ? { bpbussiness: id } : {};
-    const offset = (page - 1) * effectiveLimit;
+      const referStudentFilter = userDetails.dataValues.roleId ===1 || userDetails.dataValues.roleId ===4 ? {} : id != null ? { bpbussiness: id } : {};
+      const offset = (page - 1) * effectiveLimit;
 
     const fullStatuses = await statusModel.findAll({
       where: {
