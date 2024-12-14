@@ -51,7 +51,7 @@
     <div class="form-container">
         <h1>Fill this Form</h1>
         <p>We will reach you shortly</p>
-        <form action="/api/business-p/refe-parent" method="POST">
+        <form action="/api/business-p/refeparent" method="POST">
             <div class="form-group">
                 <label for="fullName">Full Name:</label>
                 <input type="text" id="fullName" name="fullName" required>
@@ -64,8 +64,11 @@
 
             <div class="form-group">
                 <label for="phonenumber">Contact Number:</label>
-                <input type="text" id="phonenumber" name="phonenumber" required>
+                <input type="text" id="phonenumber" name="phonenumber" 
+                       pattern="\d{10}" title="Please enter exactly 10 digits" required>
             </div>
+            
+            
             <input type="hidden" id="ParentbusinessPartnerId" name="ParentbusinessPartnerId" value="<%= decryptedData %>">
             
 

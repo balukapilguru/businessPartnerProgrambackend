@@ -39,6 +39,15 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
 app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allowed methods
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allowed headers
+  if (req.method === 'OPTIONS') {
+      return res.sendStatus(200); // Handle preflight requests
+  }
+  next();
+});
 app.use(morgan('dev'));
 // morgan.token('ist-time', () => {
 //   return moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');

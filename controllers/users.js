@@ -279,7 +279,7 @@ const generateToken = (user) => {
 };
 
 const login = async (req, res) => {
-    const { email, password, } = req.body;
+    const { email, password,phoneNumber } = req.body;
      
     try {
         console.log("Received email:", email);
@@ -858,6 +858,88 @@ const addBusinessPartner = async (req, res) => {
     }
 };
 
+const addBusinessPartner1 = async (req, res) => {
+    try {
+        const { fullName, email, phonenumber, ParentbusinessPartnerId } = req.body;
+        console.log('Request body:', req.body, fullName, email, phonenumber, ParentbusinessPartnerId);
+
+        // Find the referring business partner
+        const referringBusinessPartner = await credentialDetails.findOne({
+            where: { businessPartnerID: ParentbusinessPartnerId }
+        });
+
+        if (!referringBusinessPartner) {
+            return res.status(400).json({ message: 'Invalid parent business partner ID.' });
+        }
+
+        console.log(referringBusinessPartner.dataValues.isParentPartner, 'opopop');
+
+        // Generate a default password
+        const generatePassword = () => crypto.randomBytes(8).toString('hex');
+        const defaultPassword = generatePassword();
+
+        // Hash the generated password
+        const hashPassword = async (password) => await bcrypt.hash(password, 10);
+        const hashedPassword = await hashPassword(defaultPassword);
+
+        // Generate a business partner ID and referral links
+        const businessPartnerID = await generateBusinessPartnerID();
+        const generateRefferal = await generateReferralLink(businessPartnerID);
+        const link1 = generateRefferal.link1;
+        const link2 = generateRefferal.link2;
+
+        console.log('Referral Link 1:', link1);
+        console.log('Referral Link 2:', link2);
+
+        // Find the role details for the business partner
+        const roleDetails = await Role.findOne({
+            where: { name: 'Business Partner' },
+        });
+
+        // Create the new user
+        const newUser = await bppUsers.create({
+            fullName,
+            email,
+            phonenumber,
+            roleId: roleDetails?.id || 1
+        });
+
+        // Create the credential details
+        await credentialDetails.create({
+            password: hashedPassword,
+            businessPartnerID,
+            userId: newUser.id,
+            createdBy: referringBusinessPartner.userId,
+            addedBy: ParentbusinessPartnerId,
+            noOfLogins: 0,
+            noOfLogouts: 0,
+            referralLink: link1,
+            businessReferralLink: link2,
+        });
+
+        // Send an email with the default password
+        await transporter.sendMail({
+            from: config.mailConfig.mailUser,
+            to: email,
+            subject: 'Your Default Password',
+            text: `Congratulations, your referral business account has been created successfully. Your default password is: ${defaultPassword}`
+        });
+
+        // Update the referring business partner to mark as parent
+        await credentialDetails.update(
+            { isParentPartner: true },
+            { where: { id: referringBusinessPartner.id || referringBusinessPartner.dataValues.id } }
+        );
+
+        // Render the ThankYou page
+        res.render('ThankYou2');
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred', error: error.message });
+    }
+};
+
 
 
 // const getAllBusinessPartners = async (req, res) => {
@@ -1339,7 +1421,7 @@ const getUserLogin = async (req, res) => {
         // Response
         return res.status(200).json({
             message: 'Users retrieved successfully!',
-            data: users.rows,
+            data: users.rows.reverse(),
             totalUsers: users.count,
             totalPages,
             currentPage: parseInt(page, 10),
@@ -1373,7 +1455,7 @@ module.exports = {
     addBusinessPartner,
     getPersonalDetailsById,
     getAllBusinessPartners,
-    createUserlogin,getUserLogin
+    createUserlogin,getUserLogin,addBusinessPartner1
 };
 
 

@@ -59,7 +59,7 @@
     <div class="form-container">
         <h1>Fill this Form</h1>
         <p>We will reach you shortly</p>
-        <form action="/api/student/refer-student" method="POST">
+        <form action="/api/student/referstudent" method="POST">
             <div class="form-group">
                 <label for="fullname">Full Name:</label>
                 <input type="text" id="fullname" name="fullname" required>
@@ -72,8 +72,11 @@
 
             <div class="form-group">
                 <label for="contactnumber">Contact Number:</label>
-                <input type="text" id="contactnumber" name="contactnumber" required>
+                <input type="text" id="contactnumber" name="contactnumber" 
+                       pattern="\d{10}" title="Please enter exactly 10 digits" required>
             </div>
+            
+            
 
             <div class="form-group">
                 <label for="city">City:</label>

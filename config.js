@@ -21,7 +21,7 @@ module.exports = {
   },
 
    config: {
-    frontendUrl: 'http://localhost:5173',  
+    frontendUrl: 'https://www.partners.teksacademy.com',  
     // other configuration settings
 },
 
