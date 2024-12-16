@@ -124,7 +124,8 @@ const createReferral1 = async (req, res) => {
         });
 
         await Status.create({
-            time: new Date(),
+            date:`${istDateTime.date}`,
+            time: `${istDateTime.time}`,
             changedBy: changedBy || null,
             currentStatus: 'new lead',
             referStudentId: newReferral.id,
