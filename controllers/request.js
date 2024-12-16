@@ -4,7 +4,8 @@ const { Op } = require("sequelize")
 const dayjs = require('dayjs');
 const now = dayjs();
 const statements = require('../models/bpp/statements');
-
+const {getFormattedISTDateTime} = require('../utiles/encryptAndDecrypt')
+const istDateTime = getFormattedISTDateTime();
 
 const getAllRequests = async (req, res) => {
     try {
@@ -122,7 +123,9 @@ const createRequest = async (req, res) => {
             userId, // who is requesting BPP
             status,
             // changedBy: id || null,
-            commission: commission || null
+            commission: commission || null,
+            date: `${istDateTime.date}`,
+            time: `${istDateTime.time}`,
         })
 
         return res.status(200).json({

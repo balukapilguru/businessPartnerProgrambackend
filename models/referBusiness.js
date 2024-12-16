@@ -64,6 +64,14 @@ const ReferBusinessModel = sequelize.define("referBusinessModel",{
         },
         onDelete: 'CASCADE',
       },
+      date: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    time: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
 },{
 
     freezeTableName: true,

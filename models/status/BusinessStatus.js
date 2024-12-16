@@ -2,8 +2,13 @@ const sequelize = require("../../config/db")
 const {DataTypes} = require("sequelize")
  
 const businessStatus = sequelize.define('businessStatus',{
-    time:{
-        type: DataTypes.DATE
+    date: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    time: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     changedBy:{
         type:DataTypes.INTEGER,

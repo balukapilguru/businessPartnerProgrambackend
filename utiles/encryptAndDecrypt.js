@@ -25,8 +25,23 @@ function encrypt(text) {
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return decrypted.toString();
  }
-
+ function getFormattedISTDateTime() {
+   const now = new Date();
+   const utcOffset = now.getTimezoneOffset();
+   const istOffset = 330; 
+   
+ 
+   const istDate = new Date(now.getTime() + (istOffset + utcOffset) * 60000);
+   
+   
+   const formattedDate = `${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')}-${istDate.getFullYear()}`;
+   
+   const formattedTime = `${String(istDate.getHours()).padStart(2, '0')}:${String(istDate.getMinutes()).padStart(2, '0')}`;
+   
+   return { date: formattedDate, time: formattedTime };
+}
  module.exports ={
     encrypt,
-    decrypt
+    decrypt,
+    getFormattedISTDateTime
  }

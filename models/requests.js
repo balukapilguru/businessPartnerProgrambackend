@@ -1,6 +1,14 @@
 const sequelize = require("../config/db")
 const {DataTypes} = require("sequelize")
 const request = sequelize.define('request',{
+    date: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    time: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     amount:{
         type: DataTypes.INTEGER
     },

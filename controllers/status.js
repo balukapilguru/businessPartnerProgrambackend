@@ -11,6 +11,8 @@ const credentialDetails = require('../models/bpp/credentialDetails');
 const coursesModel = require('../models/bpp/courses')
 const db = require('../models/db/index')
 const Role = db.Role;
+const {getFormattedISTDateTime} = require('../utiles/encryptAndDecrypt')
+const istDateTime = getFormattedISTDateTime();
 const createStatus = async (req, res) => {
   try {
       const { id, currentStatus, referStudentId, comment } = req.body;
@@ -30,8 +32,8 @@ const createStatus = async (req, res) => {
          if(user?.createdBy){
           console.log('user.id',user.createdBy);
           await statements.create({
-            date: now.format('YYYY-MM-DD'),
-            time: now.format('HH:mm:ss'),
+            date: `${istDateTime.date}`,
+            time: `${istDateTime.time}`,
             action: 'Credit',
             status: 'Successful',
             // changedBy: id,
@@ -42,8 +44,8 @@ const createStatus = async (req, res) => {
             commission: 'n'
           })
           await statements.create({
-            date: now.format('YYYY-MM-DD'),
-            time: now.format('HH:mm:ss'),
+            date: `${istDateTime.date}`,
+            time: `${istDateTime.time}`,
             action: 'Credit',
             status: 'Successful',
             // changedBy: id,
@@ -56,8 +58,8 @@ const createStatus = async (req, res) => {
          }
          else{
           await statements.create({
-              date: now.format('YYYY-MM-DD'),
-              time: now.format('HH:mm:ss'),
+            date: `${istDateTime.date}`,
+            time: `${istDateTime.time}`,
               action: 'Credit',
               status: 'Successful',
               // changedBy: id,
@@ -75,7 +77,8 @@ const createStatus = async (req, res) => {
           currentStatus,
           referStudentId,
           comment,
-          time: new Date()
+          date: `${istDateTime.date}`,
+            time: `${istDateTime.time}`,
       });
  
       res.status(201).json({
