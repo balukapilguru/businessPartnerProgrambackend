@@ -22,7 +22,7 @@ const createStatus = async (req, res) => {
         console.log(referstudent)
          const user = await credentialDetails.findOne({
           where :{
-            userId: id
+            userId: referstudent.bpstudents
           }
          })
  console.log(user?.createdBy)
