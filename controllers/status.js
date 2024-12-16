@@ -392,7 +392,7 @@ const getDashboardDetails = async (req, res) => {
     enrollmentCounts.filter(item => userIds.includes(parseInt(item.bpstudents))).forEach(item => {
       if (childrenObject[item.bpstudents]) {
         childrenObject[item.bpstudents].enrollments = parseInt(item.count);
-        childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 1000;
+        childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 2000;
         childrenObject[item.bpstudents].Income = childrenObject[item.bpstudents].Total * 0.8;
         childrenObject[item.bpstudents].Revenue = childrenObject[item.bpstudents].Total * 0.2;
       }
