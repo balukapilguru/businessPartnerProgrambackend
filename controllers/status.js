@@ -24,7 +24,7 @@ const createStatus = async (req, res) => {
         console.log(referstudent)
          const user = await credentialDetails.findOne({
           where :{
-            userId: id
+            userId: referstudent.bpstudents
           }
          })
  console.log(user?.createdBy)
@@ -288,48 +288,58 @@ const getDashboardDetails = async (req, res) => {
     let startDate = null;
     let endDate = null;
     const effectiveLimit = parseInt(pageSize);
-
+ 
     if (filter) {
       const parsedFilter = JSON.parse(filter);
       filterStatuses = parsedFilter.statuses ? parsedFilter.statuses.map(status => status.trim()) : null;
       startDate = parsedFilter.startDate ? new Date(parsedFilter.startDate) : null;
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
     }
-
-    // Fetch children records
+ 
+    // Fetch children records with search condition
     const children = await credentialDetails.findAll({
-      where: { createdBy: id },
+      where: {
+        createdBy: id,
+        ...(search && {
+          [Op.or]: [
+            { businessPartnerID: { [Op.like]: `%${search}%` } }, // Search by businessPartnerID
+            { '$bppUser.fullName$': { [Op.like]: `%${search}%` } } // Search by fullName
+          ]
+        }),
+      },
       attributes: ['userId', 'businessPartnerID'],
       include: [{
         model: bppusers,
         attributes: ['fullName', 'email', 'phoneNumber']
       }]
     });
-const isParentPartner = await credentialDetails.findOne({
-  where:{
-    userId : id
-  }
-})
-const createdByCount = await credentialDetails.count({
-  where: {
-    createdBy: id, 
-  },
-});
-const isparentPartner = createdByCount > 0 ? true : false;
+ 
+    const isParentPartner = await credentialDetails.findOne({
+      where: { userId: id }
+    });
+ 
+  
+    const createdByCount = await credentialDetails.count({
+      where: { createdBy: id },
+
+    });
+ 
+    const isparentPartner = createdByCount > 0 ? true : false;
+ 
     // Create an object indexed by userId
     const childrenObject = children.reduce((acc, child) => {
       const childData = child.toJSON();
       acc[childData.userId] = {
         ...childData,
-        enrollments: 0,  // Default to 0 enrollments
+        enrollments: 0, // Default to 0 enrollments
         Total: 0,
         Income: 0,
         Revenue: 0
       };
       return acc;
     }, {});
-
-    
+ 
+	
     const userIds = children.map(child => child.userId);
     const recentStatuses = await statusModel.findAll({
       attributes: [
@@ -348,11 +358,10 @@ const isparentPartner = createdByCount > 0 ? true : false;
       },
       raw: true,
     });
-
+ 
     const latestIds = recentStatuses.map(status => status.latestId);
-
+ 
     if (!latestIds.length) {
-      
       return res.status(200).json({
         statuses: [],
         uniqueBpStudentsCount: 0,
@@ -362,8 +371,8 @@ const isparentPartner = createdByCount > 0 ? true : false;
         pageSize: effectiveLimit
       });
     }
-
  
+
     const enrollmentCounts = await statusModel.findAll({
       attributes: [
         [fn('COUNT', col('status.id')), 'count'],
@@ -381,24 +390,24 @@ const isparentPartner = createdByCount > 0 ? true : false;
       group: ['referStudent.bpstudents'],
       raw: true,
     });
-
+ 
   
     enrollmentCounts.filter(item => userIds.includes(parseInt(item.bpstudents))).forEach(item => {
       if (childrenObject[item.bpstudents]) {
         childrenObject[item.bpstudents].enrollments = parseInt(item.count);
-        childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 1000;
+        childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 2000;
         childrenObject[item.bpstudents].Income = childrenObject[item.bpstudents].Total * 0.8;
         childrenObject[item.bpstudents].Revenue = childrenObject[item.bpstudents].Total * 0.2;
       }
     });
-
+ 
     // Convert object to array for pagination
     const childrenArray = Object.values(childrenObject);
     const paginatedChildren = childrenArray.slice((page - 1) * effectiveLimit, page * effectiveLimit);
     const totalPages = Math.ceil(childrenArray.length / effectiveLimit);
-
+ 
     return res.status(200).json({
-      isParentPartner:isparentPartner,
+      isParentPartner: isparentPartner,
       refferedBusinessPartners: childrenArray.length,
       Details: paginatedChildren,
       totalEnrollments: childrenArray.reduce((acc, child) => acc + child.enrollments, 0),
@@ -413,6 +422,8 @@ const isparentPartner = createdByCount > 0 ? true : false;
     return res.status(500).json({ error: 'An error occurred while fetching the records.' });
   }
 };
+
+ 
 const getStudentAllStatus = async (req, res) => {
     try {
         const { studentreferId } = req.params;
