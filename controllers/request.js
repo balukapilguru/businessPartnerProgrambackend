@@ -151,8 +151,8 @@ const statusChange = async (req, res) => {
         if (status === 'Paid') {
             if (requestDetails.commission === 'y') {
                 await statements.create({
-                    date: now.format('YYYY-MM-DD'),
-                    time: now.format('HH:mm:ss'),
+                    date:`${istDateTime.date}` ,
+                    time: `${istDateTime.time}`,
                     action: 'Debit',
                     status: 'Successful',
                     changedBy: id,//id sales vallu
@@ -165,8 +165,8 @@ const statusChange = async (req, res) => {
             }
             if (requestDetails.commission === 'n') {
                 await statements.create({
-                    date: now.format('YYYY-MM-DD'),
-                    time: now.format('HH:mm:ss'),
+                    date:`${istDateTime.date}` ,
+                    time: `${istDateTime.time}`,
                     action: 'Debit',
                     status: 'Successful',
                     changedBy: id,//changed by debits are of acounts
@@ -179,6 +179,8 @@ const statusChange = async (req, res) => {
             }
             await request.update(
                 {
+                     updatedDate:`${istDateTime.date}` ,
+                updatedTime: `${istDateTime.time}`,
                     status: status, 
                 },
                 {
@@ -194,6 +196,8 @@ const statusChange = async (req, res) => {
         else {
             await request.update(
                 {
+                    updatedDate:`${istDateTime.date}` ,
+                    updatedTime: `${istDateTime.time}`,
                     status: status, 
                 },
                 {

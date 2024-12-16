@@ -3,7 +3,8 @@ const referBusinessModel = require('../models/referBusiness');
 const businessStatus = require('../models/status/BusinessStatus')
 const Sequelize = require("sequelize")
 
-
+const {getFormattedISTDateTime} = require('../utiles/encryptAndDecrypt')
+const istDateTime = getFormattedISTDateTime();
 const credentialDetails = require("../models/bpp/credentialDetails");
 
 const createBusiness = async (req, res) => {
@@ -30,7 +31,8 @@ const createBusiness = async (req, res) => {
         });
  
        const newStatus = await businessStatus.create({
-            time: new Date(),
+        date:`${istDateTime.date}`,
+        time: `${istDateTime.time}`,
             changedBy: changedBy || null,
             currentStatus: 'new lead',
             // referId: newReferral.id,

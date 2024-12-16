@@ -63,14 +63,6 @@ const ReferStudentmodel = sequelize.define("referStudentmodel", {
         },
         onDelete: 'CASCADE',
       },
-      date: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    time: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
 }, {
 
     freezeTableName: true,

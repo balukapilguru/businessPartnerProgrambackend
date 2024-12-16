@@ -9,6 +9,14 @@ const request = sequelize.define('request',{
         type: DataTypes.STRING,
         allowNull: true,
     },
+    updatedDate: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    updatedTime: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     amount:{
         type: DataTypes.INTEGER
     },

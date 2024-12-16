@@ -7,7 +7,8 @@ const credentialDetails = require("../models/bpp/credentialDetails");
 const course = require("../models/bpp/courses")
 const studentCourses = require("../models/bpp/studentcourses")
 // console.log(statuses)
-
+const {getFormattedISTDateTime} = require('../utiles/encryptAndDecrypt')
+const istDateTime = getFormattedISTDateTime();
 
 
 const createReferral = async (req, res) => {
@@ -52,7 +53,8 @@ const createReferral = async (req, res) => {
         });
         // await newReferral.addCourse(courseFound);
         const newStatus = await Status.create({
-            time: new Date(),
+            date:`${istDateTime.date}`,
+            time: `${istDateTime.time}`,
             changedBy: changedBy || null,
             currentStatus: 'new lead',
             referStudentId: newReferral.id,

@@ -6,11 +6,11 @@ const statements = sequelize.define(
     {
         date: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         time: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         action: {
             type: DataTypes.STRING,

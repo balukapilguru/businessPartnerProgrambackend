@@ -30,7 +30,9 @@ const createBusinessStatus = async (req, res) => {
           currentStatus,
           referbusinessId,
           comment,
-          time: new Date()
+          date: `${istDateTime.date}`,
+          time: `${istDateTime.time}`,
+
       });
 
       res.status(200).json({
