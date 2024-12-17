@@ -127,9 +127,10 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 const encryptedID = encrypt(businessPartnerID).encryptedData;
                 const generateRefferal = await generateReferralLink(businessPartnerID);
                 
-                const link1 = generateRefferal.link1;
-                const link2 = generateRefferal.link2;
-
+                // const link1 = generateRefferal.link1;
+                // const link2 = generateRefferal.link2;
+                const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
+                const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
                 console.log('Referral Link 1:', link1);
                 console.log('Referral Link 2:', link2);
                 console.log('Link is', generateRefferal);
@@ -848,9 +849,11 @@ const addBusinessPartner = async (req, res) => {
         const encryptedID = encrypt(businessPartnerID).encryptedData;
         const generateRefferal = await generateReferralLink(businessPartnerID);
         console.log(generateRefferal)
-        const link1 = generateRefferal.link1;
-        const link2 = generateRefferal.link2;
+        // const link1 = generateRefferal.link1;
+        // const link2 = generateRefferal.link2;
 
+        const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
+        const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
         console.log('Referral Link 1:', link1);
         console.log('Referral Link 2:', link2);
         // const studentStatus = [{
@@ -887,7 +890,7 @@ const addBusinessPartner = async (req, res) => {
             businessPartnerID: businessPartnerID,
             userId: newUser.id,
             createdBy: referringBusinessPartner.userId,
-            addedBy: ParentbusinessPartnerId,
+            addedBy: referringBusinessPartner.businessPartnerID,
             noOfLogins: 0,
             noOfLogouts: 0,
             referralLink: link1,
@@ -913,16 +916,16 @@ const addBusinessPartner = async (req, res) => {
                     <p>Thank you,</p>
    <p><b>Teks Academy</b></p>`
         });
-        await credentialDetails.update({
-            // businessPartnerID: ParentbusinessPartnerId,
-            isParentPartner: true
-        }, {
-            where: { id: referringBusinessPartner.id || referringBusinessPartner.dataValues.id}
-        });
+        // await credentialDetails.update({
+        //     // businessPartnerID: ParentbusinessPartnerId,
+        //     isParentPartner: true
+        // }, {
+        //     where: { id: referringBusinessPartner.id || referringBusinessPartner.dataValues.id}
+        // });
         res.status(201).json({
             message: 'Referral business created successfully and email with default password sent.',
             data: newUser,
-            isParentPartner:true
+            // isParentPartner:true
         });
     } catch (error) {
         console.error(error);
@@ -1244,9 +1247,11 @@ if(roleDetails.id === 2 ){
     
     const encryptedID = encrypt(businessPartnerID).encryptedData;
                 const generateRefferal = await generateReferralLink(businessPartnerID);
-                const link1 = generateRefferal.link1;
-                const link2 = generateRefferal.link2;
+                // const link1 = generateRefferal.link1;
+                // const link2 = generateRefferal.link2;
 
+                const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
+                const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
                 console.log('Referral Link 1:', link1);
                 console.log('Referral Link 2:', link2);
                 console.log('Link is', generateRefferal);

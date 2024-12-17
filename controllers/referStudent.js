@@ -13,7 +13,8 @@ const istDateTime = getFormattedISTDateTime();
 
 const createReferral = async (req, res) => {
     try {
-        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID, encryptedBPID } = req.body;
+        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID, encryptedParentPartnerId } = req.body;
+        console.log(fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID, encryptedParentPartnerId)
         const courseFound = await course.findOne({
             where: {
                 courseName: courseRequired  // Fixed the typo from courseNmae to courseName
@@ -73,12 +74,12 @@ console.log(businessPartnerID)
         });																		 
     }
         else{																								
-            const user = await credentialDetails. findOne({
+            const user = await credentialDetails.findOne({
                 where :{
-                    referralLink: encryptedBPID
+                    encryptedBPID: encryptedParentPartnerId
                 }
             })
-            
+            console.log('userr',user)
 				
         const newReferral = await ReferStudentmodel.create({
             fullname,
