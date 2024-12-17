@@ -809,7 +809,7 @@ const addBusinessPartner = async (req, res) => {
             whereCondition[Op.or].push({ businessPartnerID: ParentbusinessPartnerId });
         }
         if (encryptedParentPartnerId) {
-            whereCondition[Op.or].push({ encryptedParentPartnerId: encryptedParentPartnerId });
+            whereCondition[Op.or].push({ encryptedBPID: encryptedParentPartnerId });
         }
         
         // Check if we have valid conditions to query
