@@ -18,7 +18,7 @@ const credentialDetails = sequelize.define(
                 model: 'bppUsers',
                 key: 'id',
             },
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
         },
         createdBy: {
             type: DataTypes.INTEGER,
@@ -27,6 +27,7 @@ const credentialDetails = sequelize.define(
                 model: 'bppUsers',
                 key: 'id',
             },
+            onDelete: 'SET NULL',
         },
         addedBy: {
             type: DataTypes.STRING,
@@ -50,6 +51,9 @@ const credentialDetails = sequelize.define(
         },
         isParentPartner:{
             type: DataTypes.BOOLEAN
+        },
+        encryptedBPID:{
+            type: DataTypes.STRING
         }
     },
     {

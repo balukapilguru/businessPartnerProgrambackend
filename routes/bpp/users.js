@@ -21,6 +21,7 @@ router.post('/refeparent', usersControllers. addBusinessPartner1);
 router.get('/getallbecomeparents/:businessPartnerID', usersControllers. getAllBusinessPartners);
 router.post('/userform', usersControllers.createUserlogin);
 router.get('/getuserform', usersControllers.getUserLogin);
+router.delete('/deleteuser/:userId',usersControllers.deleteUser)
 
 // router.post('/refe-bp', referaBusinessPartnerController.createBusiness);
 module.exports = router;

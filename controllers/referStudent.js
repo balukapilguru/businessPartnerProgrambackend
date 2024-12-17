@@ -13,13 +13,7 @@ const istDateTime = getFormattedISTDateTime();
 
 const createReferral = async (req, res) => {
     try {
-        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID } = req.body;
-        const user = await credentialDetails. findOne({
-            where :{
-                businessPartnerID: businessPartnerID
-            }
-        })
-
+        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID, encryptedBPID } = req.body;
         const courseFound = await course.findOne({
             where: {
                 courseName: courseRequired  // Fixed the typo from courseNmae to courseName
@@ -28,20 +22,71 @@ const createReferral = async (req, res) => {
         if (!courseFound) {
             return res.status(400).json({ message: 'Course not found.' });
         }
-
-        // const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
-        // if (existingReferralByEmail) {
-        //     return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
-        // }
-
-     
+        if(businessPartnerID){
+console.log(businessPartnerID)
+        const user = await credentialDetails. findOne({
+            where :{
+                businessPartnerID: businessPartnerID
+            }
+        })
+    
         const newReferral = await ReferStudentmodel.create({
             fullname,
             email,
             phonenumber:contactnumber,
             city,
               courseRequired: courseFound.id, 
-            businessPartnerId:businessPartnerID,
+            businessPartnerId:businessPartnerID || user.businessPartnerID,
+            bpstudents: user.dataValues.userId
+        });
+    await studentCourses.create({
+            studentId: newReferral.id,
+            courseId: courseFound.id  // Linking the course ID here
+        });
+        // await newReferral.addCourse(courseFound);
+        const newStatus = await Status.create({
+            date:`${istDateTime.date}`,
+            time: `${istDateTime.time}`,
+            changedBy: changedBy || null,
+            currentStatus: 'new lead',
+            referStudentId: newReferral.id,
+            comment:'just created lead',
+        });
+
+        // Fetch the referral with associated statuses
+        // const referralWithStatus = await referStudentmodel.findOne({
+        //     where: { id: newReferral.id },
+        //     include: [{
+        //         model: statusModel,
+        //         as: 'statuses',
+        //     }],
+        // });
+
+       
+        res.status(201).json({
+            message: 'Referral created successfully',
+            referal :newReferral
+            // data: {
+            //     referral: referralWithStatus,
+            //     // status: referralWithStatus.statuses
+            // }
+        });																		 
+    }
+        else{																								
+            const user = await credentialDetails. findOne({
+                where :{
+                    referralLink: encryptedBPID
+                }
+            })
+            
+				
+        const newReferral = await ReferStudentmodel.create({
+            fullname,
+            email,
+            phonenumber:contactnumber,
+            city,
+              courseRequired: courseFound.id, 
+            businessPartnerId:user.businessPartnerID || businessPartnerID,
             bpstudents: user.dataValues.userId
         });
 
@@ -78,7 +123,17 @@ const createReferral = async (req, res) => {
             //     referral: referralWithStatus,
             //     // status: referralWithStatus.statuses
             // }
-        });
+        }); 
+        }
+
+       
+
+        // const existingReferralByEmail = await ReferStudentmodel.findOne({ where: { email } });
+        // if (existingReferralByEmail) {
+        //     return res.status(400).json({ message: 'Email is already taken. Please use a different one.' });
+        // }
+
+     
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred', error: error.message });
@@ -143,21 +198,35 @@ const createReferral1 = async (req, res) => {
 const getReferralsByStudentId = async (req, res) => {
     try {
         const { id } = req.params;
-        const referrals = await ReferStudentmodel.findOne({
-            where: { id: id },  
-            attributes: { exclude: ['status'] } 
+
+        // Find referral by primary key and include course details
+        const referral = await ReferStudentmodel.findByPk(id, {
+            include: [
+                {
+                    model: course,
+                    attributes: ['courseName', 'coursePackage'] // Include relevant course attributes
+                }
+            ],
+            attributes: { exclude: ['status'] } // Exclude the `status` field from the main table
         });
 
-        if (referrals) {  
-            res.status(200).json({ message: 'Referrals retrieved successfully', data: referrals });
+        if (referral) {
+            res.status(200).json({
+                message: 'Referrals retrieved successfully',
+                data: referral
+            });
         } else {
             res.status(404).json({ message: 'No referrals found for the given studentId' });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred', error });
+        console.error('Error retrieving referrals:', error);
+        res.status(500).json({
+            message: 'An error occurred while retrieving referrals',
+            error: error.message
+        });
     }
 };
+
 
 
 
