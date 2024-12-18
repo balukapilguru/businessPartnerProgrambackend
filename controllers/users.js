@@ -172,7 +172,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
-                           <p>Below are the personalised Referal links to Refer Students and to Add Business Partnerd</p>
+                           <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
                                 <li>Student Referral Link:<b>${link1}</b></li>
                                 <li>Add Business Partner Link:<b>${link2}</b>  </li>
@@ -1282,7 +1282,7 @@ if(roleDetails.id === 2 ){
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
-                           <p>Below are the personalised Referal links to Refer Students and to Add Business Partnerd</p>
+                           <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
                                 <li>Student Referral Link:<b>${link1}</b></li>
                                 <li>Add Business Partner Link:<b>${link2}</b>  </li>
