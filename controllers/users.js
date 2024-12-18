@@ -172,6 +172,11 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
+                           <p>Below are the personalised Referal links to Refer Students and to Add Business Partnerd</p>
+                           <ul>
+                                <li>Student Referral Link:<b>${link1}</b></li>
+                                <li>Add Business Partner Link:<b>${link2}</b>  </li>
+                           </ul>
                            <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                            <p>Please feel free to contact us with any questions or need help.</p>
                            <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
@@ -1266,6 +1271,28 @@ if(roleDetails.id === 2 ){
                     businessReferralLink: link2,
                     encryptedBPID: encryptedID
                 })
+                await transporter.sendMail({
+                    from: config.mailConfig.mailUser,
+                    to: email,
+                    subject: 'Welcome to Teks Academy Business Partner Account',
+                    html: `<p>Dear <b>${fullName}</b>,</p>
+                           <p>Congratulations! Your Business Partner Account has been successfully created.</p>
+                           <p>Below are your account credentials:</p>
+                           <ul>
+                               <li>Email: <b>${email}</b></li>
+                               <li>Default Password: <b>${defaultPassword}</b></li>
+                           </ul>
+                           <p>Below are the personalised Referal links to Refer Students and to Add Business Partnerd</p>
+                           <ul>
+                                <li>Student Referral Link:<b>${link1}</b></li>
+                                <li>Add Business Partner Link:<b>${link2}</b>  </li>
+                           </ul>
+                           <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
+                           <p>Please feel free to contact us with any questions or need help.</p>
+                           <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                            <p>Thank you,</p>
+            <p><b>Teks Academy</b></p>`
+                });
 }
 else{
         await credentialDetails.create({
@@ -1275,24 +1302,25 @@ else{
             noOfLogins: 0,
             noOfLogouts: 0,
         });
+        await transporter.sendMail({
+            from: config.mailConfig.mailUser,
+            to: email,
+            subject: 'Welcome to Teks Academy Business Partner Account',
+            html: `<p>Dear <b>${fullName}</b>,</p>
+                   <p>Congratulations! Your Business Partner Account has been successfully created.</p>
+                   <p>Below are your account credentials:</p>
+                   <ul>
+                       <li>Email: <b>${email}</b></li>
+                       <li>Default Password: <b>${defaultPassword}</b></li>
+                   </ul>
+                   <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
+                   <p>Please feel free to contact us with any questions or need help.</p>
+                   <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                    <p>Thank you,</p>
+    <p><b>Teks Academy</b></p>`
+        });
     }
-    await transporter.sendMail({
-        from: config.mailConfig.mailUser,
-        to: email,
-        subject: 'Welcome to Teks Academy Business Partner Account',
-        html: `<p>Dear <b>${fullName}</b>,</p>
-               <p>Congratulations! Your Business Partner Account has been successfully created.</p>
-               <p>Below are your account credentials:</p>
-               <ul>
-                   <li>Email: <b>${email}</b></li>
-                   <li>Default Password: <b>${defaultPassword}</b></li>
-               </ul>
-               <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
-               <p>Please feel free to contact us with any questions or need help.</p>
-               <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
-                <p>Thank you,</p>
-<p><b>Teks Academy</b></p>`
-    });
+    
 
         return res.status(201).json({
             message: 'User created successfully!',
