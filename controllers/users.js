@@ -246,24 +246,21 @@ const generateBusinessPartnerID = async () => {
         let newID;
         if (!lastPartner || !lastPartner.businessPartnerID) {
             // No records in the table, initialize with the default ID
-            newID = 'KKHBP511'; // Default starting ID for the first business partner
+            newID = 'KKHBP001'; // Default starting ID for the first business partner
         } else {
             const lastID = lastPartner.businessPartnerID;
 
-            if (lastID.startsWith('KKHBP5')) {
+            
                 // Extract the numeric part of the last ID
-                const numberPart = parseInt(lastID.replace('KKHBP5', ''), 10);
+                const numberPart = parseInt(lastID.replace('KKHBP', ''), 10);
 
                 if (isNaN(numberPart)) {
                     throw new Error('Invalid business partner ID format');
                 }
 
                 // Increment the numeric part and construct the new ID
-                newID = `KKHBP5${(numberPart + 1).toString()}`;
-            } else {
-                // If the last ID doesn't match the expected format, fall back to a default
-                throw new Error('Unexpected business partner ID format');
-            }
+                newID = `KKHBP${(numberPart + 1).toString()}`;
+            
         }
 
         return newID;
