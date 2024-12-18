@@ -37,7 +37,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendOtp = async (req, res) => {
-    const { email, fullName, phonenumber } = req.body;
+    const { email, fullName, phonenumber,contactnumber } = req.body;
     try {
         const user = await bppUsers.findOne({ where: { email } });
 
@@ -48,7 +48,8 @@ const sendOtp = async (req, res) => {
                 user: {
                     fullName,
                     email,
-                    phonenumber
+                    phonenumber,
+                    contactnumber
                 }
             });
         }
@@ -82,7 +83,8 @@ await transporter.sendMail({
             user: {
                 fullName,
                 email,
-                 phonenumber
+                 phonenumber,
+                 contactnumber
             }
         });
     } catch (error) {
@@ -92,7 +94,7 @@ await transporter.sendMail({
 };
 
 const verifyOtpAndRegisterUser = async (req, res) => {
-    const { email, emailOtp, fullName, phonenumber } = req.body;
+    const { email, emailOtp, fullName, phonenumber,contactnumber } = req.body;
     try {
         const user = await bppUsers.findOne({ where: { email } });
 
@@ -103,7 +105,8 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 user: {
                     fullName,
                     email,
-                    phonenumber
+                    phonenumber,
+                    contactnumber
                 }
             });
         }
@@ -141,7 +144,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 const user = await bppUsers.create({
                     fullName,
                     email,
-                    phonenumber,
+                    phonenumber:phonenumber||contactnumber,
                     roleId: roleDetails.id || 2
                 }).catch(error => {
                     console.error('Error while saving user to the bppUsers table:', error.message || error);
@@ -187,7 +190,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
 
                 return res.status(200).json({
                     message: 'User registered and verified successfully. Check your email for the default password.',
-                    user: { email, fullName, businessPartnerID, phonenumber },
+                    user: { email, fullName, businessPartnerID, phonenumber, contactnumber },
                     redirectUrl: '/login',
                     // console.log("userdeatils",user)
                 });
@@ -316,7 +319,7 @@ const login = async (req, res) => {
         console.log("Received email:", email);
         console.log("Received password:", password);
         const user = await bppUsers.findOne({ where: { email } });
-
+        console.log('Userrr',user)
        console.log(user?.dataValues?.roleId)
        const roleDetails = await Role.findOne({
         where:{
@@ -374,7 +377,7 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 fullName: user.dataValues.fullName,
-                phonenumber: user.phonenumber,
+                phonenumber: user.phonenumber || user.contactnumber,
                
                 businessPartnerID: updatedCredential.dataValues.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
@@ -392,7 +395,7 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 fullName:user.dataValues.fullName,
-                phonenumber: user.phonenumber,
+                phonenumber: user.phonenumber || user.contactnumber,
                 // businessPartnerID: updatedCredential.dataValues.businessPartnerID,
                 businessPartnerID: updatedCredential.businessPartnerID,
                 referralLink: updatedCredential.referralLink,
