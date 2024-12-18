@@ -73,7 +73,7 @@ await transporter.sendMail({
            <p><b>OTP: ${emailGeneratedOtp}</b></p>
            <p>This OTP is valid for the next 1 minute. Please complete the verification process promptly.</p>
            <p>If you did not request this, please contact our support team immediately.</p>
-           <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+           <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
            <p>Thank you,</p>
            <p><b>Teks Academy</b></p>`
 });
@@ -132,6 +132,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 
                 // const link1 = generateRefferal.link1;
                 // const link2 = generateRefferal.link2;
+                const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`
                 const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
                 const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
                 console.log('Referral Link 1:', link1);
@@ -175,6 +176,8 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
+                               <p>You can log in to your account using the link below:</p>
+         <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                            <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
                                 <li>Student Referral Link:<b>${link1}</b></li>
@@ -182,7 +185,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                            </ul>
                            <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                            <p>Please feel free to contact us with any questions or need help.</p>
-                           <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                           <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
                             <p>Thank you,</p>
            <p><b>Teks Academy</b></p>`
                 });
@@ -518,7 +521,7 @@ const sendlinkforForgotPassword = async (req, res) => {
                 <p>We received a request to reset your Teks Academy business partner account password. Use the link below to reset your password securely:</p>
                 <p><a href="${resetLink}">Click Here to Reset Password</a></p>
                 <p>If you didn’t make this request, please contact our support team immediately.</p>
-                <p>Support Team: 6305469541 / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                <p>Support Team:  9133308351  / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
                 
                 <p>Thank you,</p>
                 <p>Teks Academy Team</p>
@@ -856,7 +859,7 @@ const addBusinessPartner = async (req, res) => {
         console.log(generateRefferal)
         // const link1 = generateRefferal.link1;
         // const link2 = generateRefferal.link2;
-
+       const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`
         const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
         const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
         console.log('Referral Link 1:', link1);
@@ -915,9 +918,16 @@ const addBusinessPartner = async (req, res) => {
                        <li>Email: <b>${email}</b></li>
                        <li>Default Password: <b>${defaultPassword}</b></li>
                    </ul>
-                   <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
+                       <p>You can log in to your account using the link below:</p>
+         <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
+         <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
+                           <ul>
+                                <li>Student Referral Link:<b>${link1}</b></li>
+                                <li>Add Business Partner Link:<b>${link2}</b>  </li>
+                           </ul>          
+         <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                    <p>Please feel free to contact us with any questions or need help.</p>
-                   <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                   <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
                     <p>Thank you,</p>
    <p><b>Teks Academy</b></p>`
         });
@@ -1017,7 +1027,7 @@ const addBusinessPartner1 = async (req, res) => {
                    </ul>
                    <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                    <p>Please feel free to contact us with any questions or need help.</p>
-                   <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                   <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
                     <p>Thank you,</p>
    <p><b>Teks Academy</b></p>`
         });
@@ -1254,7 +1264,7 @@ if(roleDetails.id === 2 ){
                 const generateRefferal = await generateReferralLink(businessPartnerID);
                 // const link1 = generateRefferal.link1;
                 // const link2 = generateRefferal.link2;
-
+       const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`
                 const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
                 const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
                 console.log('Referral Link 1:', link1);
@@ -1282,6 +1292,8 @@ if(roleDetails.id === 2 ){
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
+                               <p>You can log in to your account using the link below:</p>
+         <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                            <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
                                 <li>Student Referral Link:<b>${link1}</b></li>
@@ -1289,7 +1301,7 @@ if(roleDetails.id === 2 ){
                            </ul>
                            <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                            <p>Please feel free to contact us with any questions or need help.</p>
-                           <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                           <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
                             <p>Thank you,</p>
             <p><b>Teks Academy</b></p>`
                 });
@@ -1313,11 +1325,13 @@ else{
                        <li>Email: <b>${email}</b></li>
                        <li>Default Password: <b>${defaultPassword}</b></li>
                    </ul>
+                       <p>You can log in to your account using the link below:</p>
+                       <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                    <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                    <p>Please feel free to contact us with any questions or need help.</p>
-                   <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                   <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
                     <p>Thank you,</p>
-    <p><b>Teks Academy</b></p>`
+                     <p><b>Teks Academy</b></p>`
         });
     }
     
