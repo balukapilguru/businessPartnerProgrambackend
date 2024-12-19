@@ -44,7 +44,7 @@ const sendOtp = async (req, res) => {
         const user = await bppUsers.findOne({ where: { email } });
 
         if (user) {
-            return res.status(200).json({
+            return res.status(400).json({
                 message: 'Email is already in use.',
                 user: {
                     fullName,
@@ -215,32 +215,6 @@ const verifyOtpAndRegisterUser = async (req, res) => {
         });
     }
 };
-
-// const generateBusinessPartnerID = async () => {
-//     try {
-//         const lastPartner = await credentialDetails.findOne({
-//             order: [['businessPartnerID', 'DESC']],
-//             attributes: ['businessPartnerID'],
-//         });
-
-//         if (!lastPartner) {
-//             return 'BP001';
-//         }
-//         const lastID = lastPartner.businessPartnerID;
-//         const numberPart = parseInt(lastID.replace('BP', ''), 10);
-
-//         if (isNaN(numberPart)) {
-//             throw new Error('Invalid business partner ID format');
-//         }
-//         const newID = `BP${(numberPart + 1).toString().padStart(3, '0')}`;
-//         return newID;
-//         } catch (error) {
-//         console.error('Error generating Business Partner ID:', error);
-//         throw new Error('Could not generate Business Partner ID');
-//     }
-// };
-
-// new function
 
 
 const generateBusinessPartnerID = async () => {
@@ -875,79 +849,22 @@ const addBusinessPartner = async (req, res) => {
     }
 };
 
-
-
-
-
-// const getAllBusinessPartners = async (req, res) => {
-//     try {
-//         const { businessPartnerID } = req.params;  
-
-
-//         if (!businessPartnerID) {
-//             return res.status(400).json({ message: 'businessPartnerID is required.' });
-//         }
-
-
-//         const totalEnrollments = await credentialDetails.count({
-//             where: { addedBy: businessPartnerID }  
-//         });
-
-//         if (totalEnrollments === 0) {
-//             return res.status(404).json({ message: 'No enrollments found for this business partner.' });
-//         }
-
-//         const enrollmentAmount = 1000;  
-//         const totalIncome = totalEnrollments * enrollmentAmount;
-
-//         const revenueSharePercentage = 0.2;  
-//         const revenueShare = totalIncome * revenueSharePercentage;
-
-
-
-//         res.status(200).json({
-//             message: 'Total enrollments retrieved successfully.',
-//             businessPartnerID,
-//             totalEnrollments, 
-//             totalIncome,
-//             revenueShare
-//         });
-//     } catch (error) {
-//         console.error('Error in getTotalEnrollments:', error);  
-//         res.status(500).json({
-//             message: 'An error occurred',
-//             error: error.message || error,  
-//         });
-//     }
-// };
-
-
-
-const getAllBusinessPartners = async (req, res) => {
+const getAllBusinessPartnersall = async (req, res) => {
     try {
-        const { businessPartnerID } = req.params;
-        if (!businessPartnerID) {
-            return res.status(400).json({ message: 'businessPartnerID is required.' });
+        // Fetch all business partners with roleId 2 from bppUsers model
+        const businessPartners = await bppUsers.findAll({
+            where: { roleId: 2 },
+            attributes: ['id', 'fullName', 'email'], // Include necessary fields
+        });
+
+        if (!businessPartners || businessPartners.length === 0) {
+            return res.status(404).json({ message: 'No business partners found.' });
         }
 
-        const totalReferrals = await referStudentsModel.count({
-            where: { bpstudents: businessPartnerID }
+        res.status(200).json({
+            message: 'Business partners retrieved successfully.',
+            businessPartners,
         });
-        if (totalReferrals === 0) {
-            return res.status(404).json({ message: 'No students referred by this business partner.' });
-        }
-        const enrollmentAmount = 1000;
-        const totalIncome = totalReferrals * enrollmentAmount;
-        const revenueSharePercentage = 0.2;
-        const revenueShare = totalIncome * revenueSharePercentage;
-        const existingCredentials = await credentialDetails.findOne({ where: { userId: businessPartnerID }})
-            res.status(200).json({
-                message: 'Total referrals retrieved successfully.',
-                businessPartnerID: existingCredentials.businessPartnerID,
-                totalReferrals,
-                totalIncome,
-                revenueShare
-            });
     } catch (error) {
         console.error('Error in getAllBusinessPartners:', error);
         res.status(500).json({
@@ -956,103 +873,6 @@ const getAllBusinessPartners = async (req, res) => {
         });
     }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-// users api  for sales 
-
-
-//   createUserlogin = async (req, res) => {
-//     try {
-//       const { fullName, emailId, phoneNumber, roleId } = req.body;
-  
-  
-
-//       const rolersDetails = await Role.findOne({
-//         where :{
-//           name: roleId
-//         }
-//       })
-
-//       const roleuser = await bppUsers.create({
-//          fullName,
-//           emailId,
-//            phoneNumber,
-//            roleId:rolersDetails.id
-//          });
-
-
-// const rolesusers = await credentialDetails.create({
-//     fullName,
-//     emailId,
-//      phoneNumber,
-//      roleId:rolersDetails.id
-// })
-
-//       res.status(201).json({ message: 'User created successfully!', data: user });
-//     } catch (error) {
-//       res.status(500).json({ message: 'Error creating user', error: error.message });
-//     }
-//   };
-
-// const createUserlogin = async (req, res) => {
-//     try {
-//         const { fullName, emailId, phoneNumber, rolename } = req.body;
-
-//         // Ensure Role.findOne works
-//         const roleDetails = await Role.findOne({
-//             where: { name: rolename },
-//         });
-
-//         if (!roleDetails) {
-//             return res.status(400).json({ message: 'Invalid role provided' });
-//         }
-
-//         // const existingUser = await bppUsers.findOne({ where: { emailId } });
-//         // if (existingUser) {
-//         //     return res.status(400).json({ message: 'User already exists with this email' });
-//         // }
-
-//         const defaultPassword = crypto.randomBytes(8).toString('hex');
-//         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-//         const user = await bppUsers.create({
-//             fullName,
-//             emailId,
-//             phoneNumber,
-//             roleId: roleDetails.id,
-//         });
-
-//         await credentialDetails.create({
-//             password: hashedPassword,
-//             emailId,
-//             userId: user.id,
-//             noOfLogins: 0,
-//             noOfLogouts: 0,
-//         });
-
-//         await transporter.sendMail({
-//             from: config.mailConfig.mailUser,
-//             to: emailId,
-//             subject: 'Welcome! Your Account Has Been Created',
-//             text: `Hi ${fullName},\n\nYour account has been created successfully. Your default password is: ${defaultPassword}.\n\nPlease log in and change your password immediately.\n\nBest regards,\nTeam`,
-//         });
-
-//         return res.status(201).json({ message: 'User created successfully!', user });
-//     } catch (error) {
-//         console.error('Error creating user:', error.message || error);
-//         return res.status(500).json({ message: 'Error creating user', error: error.message });
-//     }
-// };
 
 const createUserlogin = async (req, res) => {
     try {
@@ -1181,165 +1001,6 @@ else{
     }
 };
 
-
-// const getUserLogin = async (req, res) => {
-//     try {
-//       console.log()
-//      const users = await bppUsers.findAndCountAll({
-//             include: [
-//                 {
-//                     model: Role,
-//                     as: 'Role', 
-//                     // attributes: ['id', 'name'], 
-//                 },
-//             ],
-       
-//         });
-       
-//         return res.status(200).json({
-//             message: 'Users retrieved successfully!',
-//             data: users.rows,
-//             // totalUsers: users.count,
-//             // currentPage,
-//             // totalPages: Math.ceil(users.count / limit),
-//         });
-//     } catch (error) {
-//         console.error('Error retrieving users:', error.message || error);
-//         return res.status(500).json({ message: 'Error retrieving users', error: error.message });
-//     }
-// };
-
-
-
-
-
-// const getUserLogin = async (req, res) => {
-//     try {
-//         const { page = 1, limit , search = '' } = req.query;
-        
-//         // Parse pagination values
-//         const pageInt = parseInt(page, 10);
-//         const limitInt = parseInt(limit, 50);
-//         const offset = (pageInt - 1) * limitInt;
-
-//         // Define search conditions
-//         const whereConditions = {};
-//         if (search) {
-//             whereConditions[Op.or] = [
-//                 { fullname: { [Op.like]: `%${search}%` } },
-//                 { email: { [Op.like]: `%${search}%` } },
-//                 { '$Role.name$': { [Op.like]: `%${search}%` } },
-//             ];
-//         }
-
-//         // Fetch users with pagination and search
-//         const users = await bppUsers.findAndCountAll({
-//             where: whereConditions,
-//             include: [
-//                 {
-//                     model: Role,
-//                     as: 'Role', 
-//                 },
-//             ],
-//             limit: limitInt,
-//             offset,
-//             distinct: true, 
-//         });
-
-//         // Calculate total pages
-//         const totalPages = Math.ceil(users.count / limitInt);
-
-//         // Respond with the results
-//         return res.status(200).json({
-//             message: 'Users retrieved successfully!',
-//             data: users.rows,
-//             totalUsers: users.count,
-//             currentPage: pageInt,
-//             totalPages,
-//             pageSize: limitInt,
-//         });
-//     } catch (error) {
-//         console.error('Error retrieving users:', error.message || error);
-//         return res.status(500).json({ message: 'Error retrieving users', error: error.message });
-//     }
-// };
-
-
-// the old code 
-
-// const getUserLogin = async (req, res) => {
-//     try {
-//         const { page = 1, pageSize , search = '', filter = null } = req.query;
-
-       
-//         const effectiveLimit = parseInt(pageSize, 10);
-//         const offset = (parseInt(page, 10) - 1) * effectiveLimit;
-
-       
-//         let filterConditions = {};
-//         if (filter) {
-//             const parsedFilter = JSON.parse(filter);
-//             if (parsedFilter.roles) {
-//                 filterConditions['$Role.name$'] = { [Op.in]: parsedFilter.roles };
-//             }
-//             if (parsedFilter.startDate && parsedFilter.endDate) {
-//                 filterConditions.createdAt = {
-//                     [Op.between]: [new Date(parsedFilter.startDate), new Date(parsedFilter.endDate)],
-//                 };
-//             }
-//         }
-
-        
-//         const searchConditions = search
-//             ? {
-//                   [Op.or]: [
-//                       { fullname: { [Op.like]: `%${search}%` } },
-//                       { email: { [Op.like]: `%${search}%` } },
-//                       { '$Role.name$': { [Op.like]: `%${search}%` } },
-//                   ],
-//               }
-//             : {};
-
-      
-//         const whereConditions = {
-//             ...searchConditions,
-//             ...filterConditions,
-//         };
-
-        
-//         const users = await bppUsers.findAndCountAll({
-//             where: whereConditions,
-//             include: [
-//                 {
-//                     model: Role,
-//                     as: 'Role',
-//                 },
-//             ],
-//             limit: effectiveLimit,
-//             offset,
-//             distinct: true, 
-//         });
-
-        
-//         const totalPages = Math.ceil(users.count / effectiveLimit);
-
-      
-//         return res.status(200).json({
-//             message: 'Users retrieved successfully!',
-//             data: users.rows,
-//             totalUsers: users.count,
-//             totalPages,
-//             currentPage: parseInt(page, 10),
-//             pageSize: effectiveLimit,
-//         });
-//     } catch (error) {
-//         console.error('Error retrieving users:', error.message || error);
-//         return res.status(500).json({
-//             message: 'Error retrieving users',
-//             error: error.message,
-//         });
-//     }
-// };
 
 const deleteUser = async (req, res) => {
 
@@ -1490,158 +1151,6 @@ module.exports = {
     updatePersonalAndBankDetails,
     addBusinessPartner,
     getPersonalDetailsById,
-    getAllBusinessPartners,
+    getAllBusinessPartnersall,
     createUserlogin,getUserLogin, deleteUser
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

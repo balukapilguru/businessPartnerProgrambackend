@@ -8,50 +8,6 @@ const Module = db.Module;
 const Permission = db.Permission;
 const Users = db.users;
  
- 
-// const createRoleWithPermissions = async (req, res) => {
-//   try {
-//     const { role, description,selectedDashboard, permissions, createdBy } = req.body;
-//     // Create the role entry
-//     console.log(req.body, "body")
-//     const existingUser = await db.Role.findOne({ where: { name: role } });
-//     if (existingUser) {
-//       console.error("name already exists.");
-//       return res.status(400).json({exist: "Name Already Exists"});
-//     }
-//     const newRole = await Role.create({
-//       name: role,
-//       description: description,
-//       selectedDashboard: selectedDashboard,
-//       createdBy: createdBy
-//     });
-   
-//     for (const permissionData of permissions) {
-//       const { module, all, canCreate, canRead, canUpdate, canDelete: del } = permissionData;
-   
-//       const [newModule, created] = await Module.findOrCreate({
-//         where: { name: module }
-//       });
- 
-//       const newPermission = await Permission.create({
-//         all,
-//         canCreate,
-//         canRead,
-//         canUpdate,
-//         canDelete: del
-//       });
-   
-//       await newPermission.addModule(newModule);
-   
-//       await newRole.addPermission(newPermission);
-//     }
-//     return res.status(201).json({ message: 'Role created successfully' });
-//   } catch (error) {
-//     console.error('Error creating role:', error);
-//     return res.status(500).json({ error: 'Internal server error' });
-//   }
-// };
-// createRoleWithPermissions function
 const createRoleWithPermissions = async (req, res) => {
   try {
       const { role, description, selectedDashboard, permissions, createdBy } = req.body;
@@ -445,81 +401,6 @@ console.log(existingRole.permissions)
   }
 };
  
- 
- 
- 
-// const updateRoleWithPermissions = async (req, res) => {
-//   try {
-//     const { roleId } = req.params;
-//     const { role, description,selectedDashboard, permissions } = req.body;
- 
-//     // Find the role to update
-//     const existingRole = await Role.findOne({
-//       where: { id: roleId },
-//       include: [{
-//         model: Permission,
-//         as: 'permissions', // Specify the alias explicitly
-//         include: [{
-//           model: Module,
-//           as: 'modules', // Specify the alias explicitly
-//           attributes: ['name']
-//         }],
-//         attributes: ['id', 'all', 'canCreate', 'canRead', 'canUpdate', 'canDelete']
-//       }]
-//     });
- 
-//     if (!existingRole) {
-//       return res.status(200).json({ error: 'Role not found' });
-//     }
- 
-//     // Update role details
-//     existingRole.name = role;
-//     existingRole.description = description;
-//     existingRole.selectedDashboard = selectedDashboard;
-//     await existingRole.save();
- 
-//     // Process permissions
-//     for (const permissionData of permissions) {
-//       const { module, all, canCreate, canRead, canUpdate, canDelete: del } = permissionData;
- 
-//       // Find or create the module
-//       const [newModule] = await Module.findOrCreate({
-//         where: { name: module }
-//       });
- 
-//       // Check if permission exists
-//       const existingPermission = existingRole.permissions.find(
-//         permission => permission.modules[0]?.name === module
-//       );
- 
-//       if (existingPermission) {
-//         // Update existing permission
-//         existingPermission.all = all;
-//         existingPermission.canCreate = canCreate;
-//         existingPermission.canRead = canRead;
-//         existingPermission.canUpdate = canUpdate;
-//         existingPermission.canDelete = del;
-//         await existingPermission.save();
-//       } else {
-//         // Create new permission and associate it
-//         const newPermission = await Permission.create({
-//           all,
-//           canCreate,
-//           canRead,
-//           canUpdate,
-//           canDelete: del
-//         });
-//         await newPermission.addModule(newModule);
-//         await existingRole.addPermission(newPermission);
-//       }
-//     }
- 
-//     res.status(200).json({ message: 'Role updated successfully' });
-//   } catch (error) {
-//     console.error('Error updating role:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// };
  
  
 const deleteRoleById = async (req, res) => {
