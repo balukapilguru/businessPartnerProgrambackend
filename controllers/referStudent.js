@@ -23,6 +23,15 @@ const createReferral = async (req, res) => {
         if (!courseFound) {
             return res.status(400).json({ message: 'Course not found.' });
         }
+        const existingContact = await ReferStudentmodel.findOne({
+            where: { phonenumber: contactnumber }
+        });
+
+        if (existingContact) {
+            return res.status(400).json({
+                message: 'The contact number is already taken. Please use a different one.'
+            });
+        }
         if(businessPartnerID){
 console.log(businessPartnerID)
         const user = await credentialDetails. findOne({

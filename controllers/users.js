@@ -56,7 +56,8 @@ const sendOtp = async (req, res) => {
         }
 
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiresAt = new Date(Date.now() + 60 * 1000);  
+        const otpExpiresAt = new Date(Date.now() + 3 * 60 * 1000);  
+
 
         
         const [otpEntry, created] = await OTP.findOrCreate({
@@ -132,7 +133,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 const hashedPassword = await hashPassword(defaultPassword);
                 const businessPartnerID = await generateBusinessPartnerID();
                 const encryptedID = encrypt(businessPartnerID).encryptedData;
-                const generateRefferal = await generateReferralLink(businessPartnerID);
+                // const generateRefferal = await generateReferralLink(businessPartnerID);
                 
                 // const link1 = generateRefferal.link1;
                 // const link2 = generateRefferal.link2;
@@ -179,7 +180,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
-                               <p>You can log in to your account using the link below:</p>
+                               <p>You can log in to your account using the below link:</p>
          <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                            <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
@@ -444,7 +445,7 @@ const sendlinkforForgotPassword = async (req, res) => {
             to: email,
             subject: 'Reset Your Teks Academy Business Partner Account Password',
             html: `
-                <p>We received a request to reset your Teks Academy business partner account password. Use the link below to reset your password securely:</p>
+                <p>We received a request to reset your Teks Academy business partner account password. Use the below link to reset your password securely:</p>
                 <p><a href="${resetLink}">Click Here to Reset Password</a></p>
                 <p>If you didn’t make this request, please contact our support team immediately.</p>
                 <p>Support Team:  9133308351  / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
@@ -781,8 +782,8 @@ const addBusinessPartner = async (req, res) => {
         const businessPartnerID = await generateBusinessPartnerID();
         
         const encryptedID = encrypt(businessPartnerID).encryptedData;
-        const generateRefferal = await generateReferralLink(businessPartnerID);
-        console.log(generateRefferal)
+        // const generateRefferal = await generateReferralLink(businessPartnerID);
+        // console.log(generateRefferal)
         // const link1 = generateRefferal.link1;
         // const link2 = generateRefferal.link2;
        const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`
@@ -844,7 +845,7 @@ const addBusinessPartner = async (req, res) => {
                        <li>Email: <b>${email}</b></li>
                        <li>Default Password: <b>${defaultPassword}</b></li>
                    </ul>
-                       <p>You can log in to your account using the link below:</p>
+                       <p>You can log in to your account using the below link:</p>
          <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
          <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
@@ -1090,7 +1091,7 @@ if(roleDetails.id === 2 ){
     const businessPartnerID = await generateBusinessPartnerID();
     
     const encryptedID = encrypt(businessPartnerID).encryptedData;
-                const generateRefferal = await generateReferralLink(businessPartnerID);
+                // const generateRefferal = await generateReferralLink(businessPartnerID);
                 // const link1 = generateRefferal.link1;
                 // const link2 = generateRefferal.link2;
        const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`
@@ -1120,7 +1121,7 @@ if(roleDetails.id === 2 ){
                                <li>Email: <b>${email}</b></li>
                                <li>Default Password: <b>${defaultPassword}</b></li>
                            </ul>
-                               <p>You can log in to your account using the link below:</p>
+                               <p>You can log in to your account using the below link:</p>
          <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                            <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
@@ -1153,7 +1154,7 @@ else{
                        <li>Email: <b>${email}</b></li>
                        <li>Default Password: <b>${defaultPassword}</b></li>
                    </ul>
-                       <p>You can log in to your account using the link below:</p>
+                       <p>You can log in to your account using the below link:</p>
                        <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                    <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                    <p>Please feel free to contact us with any questions or need help.</p>
