@@ -23,6 +23,7 @@ const { sequelize, fn } = require('sequelize');
 const Role = db.Role;
 const Module = db.Module;
 const Permission = db.Permission;
+const OTP = db.otp
 const coursesModel = require('../models/bpp/courses')
 let tempOtpStorage = [];
 
@@ -38,11 +39,11 @@ const transporter = nodemailer.createTransport({
 
 const sendOtp = async (req, res) => {
     const { email, fullName, phonenumber,contactnumber } = req.body;
+    
     try {
         const user = await bppUsers.findOne({ where: { email } });
 
         if (user) {
-         
             return res.status(200).json({
                 message: 'Email is already in use.',
                 user: {
@@ -54,16 +55,19 @@ const sendOtp = async (req, res) => {
             });
         }
 
-
-
-
         const emailGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        tempOtpStorage.push({
-            email,
-            otp: emailGeneratedOtp,
-            expiresAt: Date.now() + 9 * 60 * 1000
+        const otpExpiresAt = new Date(Date.now() + 60 * 1000);  
+
+        
+        const [otpEntry, created] = await OTP.findOrCreate({
+            where: { email: email },
+            defaults: { otp: emailGeneratedOtp, expiresAt: otpExpiresAt }
         });
-await transporter.sendMail({
+
+        if (!created) {
+           await otpEntry.update({ otp: emailGeneratedOtp, expiresAt: otpExpiresAt });
+        }
+    await transporter.sendMail({
     from: config.mailConfig.mailUser,
     to: email,
     subject: 'OTP for Teks Academy Business Partner Account',
@@ -110,7 +114,7 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 }
             });
         }
-        const storedOtpData = tempOtpStorage.find(otpData => otpData.email === email);
+        const storedOtpData = await OTP.findOne({ where: { email: email } });
         if (storedOtpData) {
             if (storedOtpData.otp === emailOtp && Date.now() < storedOtpData.expiresAt) {
 

@@ -13,7 +13,7 @@ db.Module = require('../rolesAndPermissions/Module')(sequelize, DataTypes);
 db.Permission = require('../rolesAndPermissions/Permission')(sequelize, DataTypes);
 db.RoleModule = require('../rolesAndPermissions/RolePermission')(sequelize, DataTypes);
 db.PermissionModule = require('../rolesAndPermissions/PermissionModule')(sequelize, DataTypes);
-
+db.otp = require('../otp')
 db.ReferStudentmodel = require('../referStudent'); // Refer Student model
 db.Status = require('../status/status'); // Status model
 db.ReferBusinessmodel = require('../referBusiness'),
