@@ -141,74 +141,18 @@ console.log(businessPartnerID)
     }
 };
 
-const createReferral1 = async (req, res) => {
-    try {
-        const { fullname, email, contactnumber, city, courseRequired, changedBy, businessPartnerID } = req.body;
-        const user = await credentialDetails.findOne({
-            where: {
-                businessPartnerID: businessPartnerID
-            }
-        });
-
-        if (!user) {
-            return res.status(400).json({ message: 'Business Partner not found.' });
-        }
-
-        const courseFound = await course.findOne({
-            where: {
-                courseName: courseRequired
-            }
-        });
-
-        if (!courseFound) {
-            return res.status(400).json({ message: 'Course not found.' });
-        }
-
-        const newReferral = await ReferStudentmodel.create({
-            fullname,
-            email,
-            phonenumber: contactnumber,
-            city,
-            courseRequired: courseFound.id,
-            businessPartnerId: businessPartnerID,
-            bpstudents: user.dataValues.userId
-        });
-
-        await studentCourses.create({
-            studentId: newReferral.id,
-            courseId: courseFound.id
-        });
-
-        await Status.create({
-            date:`${istDateTime.date}`,
-            time: `${istDateTime.time}`,
-            changedBy: changedBy || null,
-            currentStatus: 'new lead',
-            referStudentId: newReferral.id,
-            comment: 'just created lead',
-        });
-
-        res.render('thankYou');
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred', error: error.message });
-    }
-};
-
 const getReferralsByStudentId = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Find referral by primary key and include course details
         const referral = await ReferStudentmodel.findByPk(id, {
             include: [
                 {
                     model: course,
-                    attributes: ['courseName', 'coursePackage'] // Include relevant course attributes
+                    attributes: ['courseName', 'coursePackage'] 
                 }
             ],
-            attributes: { exclude: ['status'] } // Exclude the `status` field from the main table
+            attributes: { exclude: ['status'] } 
         });
 
         if (referral) {
@@ -233,4 +177,4 @@ const getReferralsByStudentId = async (req, res) => {
 
 
 
-module.exports = { createReferral, getReferralsByStudentId,createReferral1 }
+module.exports = { createReferral, getReferralsByStudentId }

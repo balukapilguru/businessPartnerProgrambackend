@@ -4,7 +4,6 @@ const router = express.Router();
 const referStudentController = require('../controllers/referStudent');
 const {getReferralsByStudentId} = require('../controllers/referStudent');
 router.post('/refer-student', referStudentController.createReferral);
-router.post('/referstudent', referStudentController.createReferral1);
 // router.put('/updatedstatus/:id', referStudentController.updateReferralStatus);
 // router.get('/get-refer-student', referStudentController.getReferrals);
 // router.get('/dashboard', referStudentController. getDashboardStats );

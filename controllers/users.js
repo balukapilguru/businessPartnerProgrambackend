@@ -132,15 +132,10 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                 const hashedPassword = await hashPassword(defaultPassword);
                 const businessPartnerID = await generateBusinessPartnerID();
                 const encryptedID = encrypt(businessPartnerID).encryptedData;
-                const generateRefferal = await generateReferralLink(businessPartnerID);
-                
-                // const link1 = generateRefferal.link1;
-                // const link2 = generateRefferal.link2;
                 const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
                 const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
                 console.log('Referral Link 1:', link1);
                 console.log('Referral Link 2:', link2);
-                console.log('Link is', generateRefferal);
                 const roleDetails = await Role.findOne({
                     where: { name: 'Business Partner' },
                 });
@@ -246,27 +241,17 @@ const generateBusinessPartnerID = async () => {
             order: [['businessPartnerID', 'DESC']],
             attributes: ['businessPartnerID'],
         });
-
         let newID;
         if (!lastPartner || !lastPartner.businessPartnerID) {
-            // No records in the table, initialize with the default ID
-            newID = 'KKHBP001'; // Default starting ID for the first business partner
+            newID = 'KKHBP001';
         } else {
             const lastID = lastPartner.businessPartnerID;
-
-            
-                // Extract the numeric part of the last ID
-                const numberPart = parseInt(lastID.replace('KKHBP', ''), 10);
-
-                if (isNaN(numberPart)) {
-                    throw new Error('Invalid business partner ID format');
-                }
-
-                // Increment the numeric part and construct the new ID
-                newID = `KKHBP${(numberPart + 1).toString()}`;
-            
+            const numberPart = parseInt(lastID.replace('KKHBP', ''), 10);
+            if (isNaN(numberPart)) {
+                throw new Error('Invalid business partner ID format');
+            }
+            newID = `KKHBP${(numberPart + 1).toString()}`;
         }
-
         return newID;
     } catch (error) {
         console.error('Error generating business partner ID:', error);
@@ -276,26 +261,7 @@ const generateBusinessPartnerID = async () => {
 
 
 
-const generateReferralLink = async (businessPartnerID) => {
-    const baseURL = 'https://bpbeta.infozit.com/api/auth/decrypt';
-    const baseURL2 = 'https://bpbeta.infozit.com/api/auth/decryptFun';
-    const encrypted = encrypt(businessPartnerID);
-    const res = encrypted?.encryptedData;
-    // const iv = encrypted?.iv;
-    // const encodedKey = encrypted?.key; 
 
-    // console.log('iv is ', iv);
-    // console.log('key is', encodedKey);
-
-    // return `${baseURL}/${iv}/${res}/${encodedKey}`; 
-    const link1 = `${baseURL}/?search=${res}`;
-    const link2 = `${baseURL2}/?search=${res}`;
-
-    return {
-        link1,
-        link2
-    };
-};
 
 // const generateToken = (userId) => {
 //     const secretKey = process.env.JWT_SECRET || 'your-secret-key';  
@@ -441,54 +407,6 @@ const changePassword = async (req, res) => {
     }
 };
 
-const decryptfun = async (req, res) => {
-    try {
-        // const { url } = req.body;
-        // console.log('url is', url);
-
-        // const parts = url.split('/');
-        // const iv = parts[3];
-        const encryptedData = req.query.search;
-        // const encodedKey = parts[5];
-
-        // console.log('iv is', iv);
-        console.log('encryptedData is', encryptedData);
-        // console.log('encodedKey is', encodedKey);
-
-        // const decryptionKey = Buffer.from(encodedKey, 'hex');
-
-        const decryptedData = decrypt({
-            // iv,
-            encryptedData,
-            // key: decryptionKey,
-        });
-        console.log('Decrypted Data:', decryptedData);
-        const courses = await coursesModel.findAll({ attributes: ['courseName'] });
-        
-        res.render('referStudent', { decryptedData,courses },);
-
-    } catch (error) {
-        console.error('Error during decryption:', error.message);
-        return res.status(500).json({ error: 'Decryption failed' });
-    }
-};
-
-const decryptfunction = async (req, res) => {
-    try {
-       
-        const encryptedData = req.query.search;
-        console.log('encryptedData is', encryptedData);
-        const decryptedData = decrypt({
-            encryptedData,
-        });
-        console.log('Decrypted Data:', decryptedData);
-        res.render('referBusiness', { decryptedData });
-
-    } catch (error) {
-        console.error('Error during decryption:', error.message);
-        return res.status(500).json({ error: 'Decryption failed' });
-    }
-};
 const sendMail = require('../utiles/sendmailer');
 
 // const credentialDetails = require('../models/bpp/credentialDetails');
@@ -856,10 +774,6 @@ const addBusinessPartner = async (req, res) => {
         const businessPartnerID = await generateBusinessPartnerID();
         
         const encryptedID = encrypt(businessPartnerID).encryptedData;
-        const generateRefferal = await generateReferralLink(businessPartnerID);
-        console.log(generateRefferal)
-        // const link1 = generateRefferal.link1;
-        // const link2 = generateRefferal.link2;
 
         const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
         const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
@@ -942,104 +856,7 @@ const addBusinessPartner = async (req, res) => {
     }
 };
 
-const addBusinessPartner1 = async (req, res) => {
-    try {
-        const { fullName, email, phonenumber, ParentbusinessPartnerId } = req.body;
-        console.log('Request body:', req.body, fullName, email, phonenumber, ParentbusinessPartnerId);
 
-        // Find the referring business partner
-        const referringBusinessPartner = await credentialDetails.findOne({
-            where: { businessPartnerID: ParentbusinessPartnerId }
-        });
-
-        if (!referringBusinessPartner) {
-            return res.status(400).json({ message: 'Invalid parent business partner ID.' });
-        }
-
-        console.log(referringBusinessPartner.dataValues.isParentPartner, 'opopop');
-
-        // Generate a default password
-        const generatePassword = () => crypto.randomBytes(8).toString('hex');
-        // const defaultPassword = generatePassword();
-        
-        const defaultPassword = email.split('@')[0];
-
-        // Hash the generated password
-        const hashPassword = async (password) => await bcrypt.hash(password, 10);
-        const hashedPassword = await hashPassword(defaultPassword);
-
-        // Generate a business partner ID and referral links
-        const businessPartnerID = await generateBusinessPartnerID();
-        
-        const encryptedID = encrypt(businessPartnerID).encryptedData;
-        const generateRefferal = await generateReferralLink(businessPartnerID);
-        const link1 = generateRefferal.link1;
-        const link2 = generateRefferal.link2;
-
-        console.log('Referral Link 1:', link1);
-        console.log('Referral Link 2:', link2);
-
-        // Find the role details for the business partner
-        const roleDetails = await Role.findOne({
-            where: { name: 'Business Partner' },
-        });
-
-        // Create the new user
-        const newUser = await bppUsers.create({
-            fullName,
-            email,
-            phonenumber,
-            roleId: roleDetails?.id || 1
-        });
-
-        // Create the credential details
-        await credentialDetails.create({
-            password: hashedPassword,
-            businessPartnerID,
-            userId: newUser.id,
-            createdBy: referringBusinessPartner.userId,
-            addedBy: ParentbusinessPartnerId,
-            noOfLogins: 0,
-            noOfLogouts: 0,
-            referralLink: link1,
-            businessReferralLink: link2,
-            encryptedBPID: encryptedID
-
-        });
-
-        // Send an email with the default password
-        await transporter.sendMail({
-            from: config.mailConfig.mailUser,
-            to: email,
-            subject: 'Welcome to Teks Academy Business Partner Account',
-            html: `<p>Dear <b>${fullName}</b>,</p>
-                   <p>Congratulations! Your Business Partner Account has been successfully created.</p>
-                   <p>Below are your account credentials:</p>
-                   <ul>
-                       <li>Email: <b>${email}</b></li>
-                       <li>Default Password: <b>${defaultPassword}</b></li>
-                   </ul>
-                   <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
-                   <p>Please feel free to contact us with any questions or need help.</p>
-                   <p>Support Team: <b>6305469541</b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
-                    <p>Thank you,</p>
-   <p><b>Teks Academy</b></p>`
-        });
-
-        // Update the referring business partner to mark as parent
-        await credentialDetails.update(
-            { isParentPartner: true },
-            { where: { id: referringBusinessPartner.id || referringBusinessPartner.dataValues.id } }
-        );
-
-        // Render the ThankYou page
-        res.render('ThankYou2');
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred', error: error.message });
-    }
-};
 
 
 
@@ -1255,15 +1072,11 @@ if(roleDetails.id === 2 ){
     const businessPartnerID = await generateBusinessPartnerID();
     
     const encryptedID = encrypt(businessPartnerID).encryptedData;
-                const generateRefferal = await generateReferralLink(businessPartnerID);
-                // const link1 = generateRefferal.link1;
-                // const link2 = generateRefferal.link2;
 
                 const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
                 const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
                 console.log('Referral Link 1:', link1);
                 console.log('Referral Link 2:', link2);
-                console.log('Link is', generateRefferal);
                 await credentialDetails.create({
                     password: hashedPassword,
                     businessPartnerID,
@@ -1649,12 +1462,10 @@ module.exports = {
     sendPasswordResetToken,
     personaldetails,
     updatePersonalAndBankDetails,
-    decryptfun,
-    decryptfunction,
     addBusinessPartner,
     getPersonalDetailsById,
     getAllBusinessPartners,
-    createUserlogin,getUserLogin,addBusinessPartner1, deleteUser
+    createUserlogin,getUserLogin, deleteUser
 };
 
 

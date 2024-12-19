@@ -40,7 +40,7 @@ const createStatus = async (req, res) => {
             userId: referstudent.bpstudents,
             reason: 'Enrolled student',
             studentId: referStudentId,
-            amount: 1600, 
+            amount: 2000, 
             commission: 'n'
           })
           await statements.create({
@@ -396,7 +396,7 @@ const getDashboardDetails = async (req, res) => {
       if (childrenObject[item.bpstudents]) {
         childrenObject[item.bpstudents].enrollments = parseInt(item.count);
         childrenObject[item.bpstudents].Total = childrenObject[item.bpstudents].enrollments * 2000;
-        childrenObject[item.bpstudents].Income = childrenObject[item.bpstudents].Total * 0.8;
+        childrenObject[item.bpstudents].Income = childrenObject[item.bpstudents].Total * 1;
         childrenObject[item.bpstudents].Revenue = childrenObject[item.bpstudents].Total * 0.2;
       }
     });
