@@ -11,6 +11,8 @@ const credentialDetails = require('../models/bpp/credentialDetails');
 const coursesModel = require('../models/bpp/courses')
 const db = require('../models/db/index')
 const Role = db.Role;
+const Module = db.Module;
+const Permission = db.Permission;
 const {getFormattedISTDateTime} = require('../utiles/encryptAndDecrypt')
 const istDateTime = getFormattedISTDateTime();
 const createStatus = async (req, res) => {
@@ -96,8 +98,7 @@ const createStatus = async (req, res) => {
  
 const getAll = async (req, res) => {
   try {
-    // let id;
-		  //  id  = 9 || '';	
+    
       let {userId }= req.query || '';		
       let id = userId	;										   
     const { filter, search, page = 1, limit, pageSize } = req.query;
@@ -105,17 +106,49 @@ const getAll = async (req, res) => {
     let filterStatuses = null;
     let startDate = null;
     let endDate = null;
-
-    // pageSize
     const effectiveLimit = parseInt(pageSize || limit || 10);
      const roleDetails = await Role.findAll({
       attributes: ['id'],
   });
+
   const userDetails = await bppusers.findOne({
-    where:{
-      id:userId
+      where:{
+        id:userId
+      },
+    })
+    const role = await Role.findOne({
+      where: { id: userDetails.roleId },
+      include: [{
+        model: Permission,
+        as: 'permissions',
+        include: [{
+          model: Module,
+          as: 'modules',
+          attributes: ['name']
+        }],
+        attributes: ['all', 'canCreate', 'canRead', 'canUpdate', 'canDelete']
+      }]
+    });
+ 
+    if (!role) {
+      return res.status(404).json({ error: "Role not found." });
     }
-  })
+ 
+    const rolePermissions = {
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      selectedDashboard: role.selectedDashboard,
+      Permissions: role.permissions.map(permission => ({
+        module: permission.modules.length ? permission.modules[0].name : null,
+        all: permission.all,
+        canCreate: permission.canCreate,
+        canRead: permission.canRead,
+        canUpdate: permission.canUpdate,
+        canDelete: permission.canDelete,
+      }))
+    };
+ 
   console.log(userDetails)
     if (filter) {
       const parsedFilter = JSON.parse(filter);
@@ -164,7 +197,7 @@ const getAll = async (req, res) => {
       const roleIds = roleDetails.map((role) => role.dataValues.id);
 
 console.log('Role IDs:', roleIds);
-      const referStudentFilter = userDetails.dataValues.roleId ===1 || userDetails.dataValues.roleId ===4 ? {} : id != null ? { bpstudents: id } : {};
+      const referStudentFilter = rolePermissions.Permissions.some(permission => permission.module === 'Refer Students' && permission.canUpdate) ? {} : id != null ? { bpstudents: id } : {};
  
       // const referStudentFilter = id != null || id === 2 ? { bpstudents: id } : {}; 		
       // const referStudentFilter = {}; 																					
@@ -296,14 +329,14 @@ const getDashboardDetails = async (req, res) => {
       endDate = parsedFilter.endDate ? new Date(parsedFilter.endDate) : null;
     }
  
-    // Fetch children records with search condition
+    
     const children = await credentialDetails.findAll({
       where: {
         createdBy: id,
         ...(search && {
           [Op.or]: [
-            { businessPartnerID: { [Op.like]: `%${search}%` } }, // Search by businessPartnerID
-            { '$bppUser.fullName$': { [Op.like]: `%${search}%` } } // Search by fullName
+            { businessPartnerID: { [Op.like]: `%${search}%` } }, 
+            { '$bppUser.fullName$': { [Op.like]: `%${search}%` } } 
           ]
         }),
       },
@@ -326,12 +359,12 @@ const getDashboardDetails = async (req, res) => {
  
     const isparentPartner = createdByCount > 0 ? true : false;
  
-    // Create an object indexed by userId
+   
     const childrenObject = children.reduce((acc, child) => {
       const childData = child.toJSON();
       acc[childData.userId] = {
         ...childData,
-        enrollments: 0, // Default to 0 enrollments
+        enrollments: 0,
         Total: 0,
         Income: 0,
         Revenue: 0
@@ -401,7 +434,7 @@ const getDashboardDetails = async (req, res) => {
       }
     });
  
-    // Convert object to array for pagination
+    
     const childrenArray = Object.values(childrenObject);
     const paginatedChildren = childrenArray.slice((page - 1) * effectiveLimit, page * effectiveLimit);
     const totalPages = Math.ceil(childrenArray.length / effectiveLimit);
