@@ -242,6 +242,7 @@ console.log('Role IDs:', roleIds);
       ],
       offset,
       limit: effectiveLimit,
+      order: [['id', 'DESC']],
     });
 
     const totalRecords = await statusModel.count({
