@@ -3,7 +3,10 @@ const { DataTypes } = require("sequelize");
 
 const statements = sequelize.define(
     'statements',
-    {
+    {reqId:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
         date: {
             type: DataTypes.STRING,
             allowNull: true,

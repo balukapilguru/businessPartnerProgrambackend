@@ -34,8 +34,8 @@ const createStatus = async (req, res) => {
          if(user?.createdBy){
           console.log('user.id',user.createdBy);
           await statements.create({
-            date: `${istDateTime.date}`,
-            time: `${istDateTime.time}`,
+            date: `${getFormattedISTDateTime().date}`,
+            time: `${getFormattedISTDateTime().time}`,
             action: 'Credit',
             status: 'Successful',
             // changedBy: id,
@@ -46,8 +46,8 @@ const createStatus = async (req, res) => {
             commission: 'n'
           })
           await statements.create({
-            date: `${istDateTime.date}`,
-            time: `${istDateTime.time}`,
+            date: `${getFormattedISTDateTime().date}`,
+            time: `${getFormattedISTDateTime().time}`,
             action: 'Credit',
             status: 'Successful',
             // changedBy: id,
@@ -60,8 +60,8 @@ const createStatus = async (req, res) => {
          }
          else{
           await statements.create({
-            date: `${istDateTime.date}`,
-            time: `${istDateTime.time}`,
+            date: `${getFormattedISTDateTime().date}`,
+            time: `${getFormattedISTDateTime().time}`,
               action: 'Credit',
               status: 'Successful',
               // changedBy: id,
@@ -79,8 +79,8 @@ const createStatus = async (req, res) => {
           currentStatus,
           referStudentId,
           comment,
-          date: `${istDateTime.date}`,
-            time: `${istDateTime.time}`,
+          date: `${getFormattedISTDateTime().date}`,
+            time: `${getFormattedISTDateTime().time}`,
       });
  
       res.status(201).json({

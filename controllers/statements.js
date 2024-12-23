@@ -35,7 +35,8 @@ const getUserStatements = async (req, res) => {
 
         let totalBusinessPartnerAmount = 0;
         let totalParentPartnerAmount = 0;
-
+        let requestedAmountBusinessP =0;
+        let requestedAmountParentP = 0;
         let businessPartnerStatements = [];																								  
         let parentPartnerStatements = [];
 
@@ -48,6 +49,11 @@ const getUserStatements = async (req, res) => {
                     totalBusinessPartnerAmount += statement.amount;
                 } else if (statement.action === 'Debit') {
                     totalBusinessPartnerAmount -= statement.amount;
+                    requestedAmountBusinessP += statement.amount; 
+                    
+                }
+                if(statement.action === 'Debit' && statement.status === 'Paid'){
+                    requestedAmountBusinessP -= statement.amount;
                     totalBusinessPartnerWalletAmount += statement.amount;
                 }
             });
@@ -57,12 +63,19 @@ const getUserStatements = async (req, res) => {
                     totalParentPartnerAmount += statement.amount;
                 } else if (statement.action === 'Debit') {
                     totalParentPartnerAmount -= statement.amount;
+                    requestedAmountParentP += statement.amount;
+                    
+                }
+                if(statement.action === 'Debit' && statement.status === 'Paid'){
+                    requestedAmountParentP -= statement.amount;
                     totalParentPartnerWalletAmount += statement.amount;
                 }
             });
         }
 
         return res.status(200).json({
+            requestedAmountBusinessP,
+            requestedAmountParentP,
             totalBusinessPartnerAmount,
             totalBusinessPartnerWalletAmount: Math.abs(totalBusinessPartnerWalletAmount),
             totalParentPartnerAmount,

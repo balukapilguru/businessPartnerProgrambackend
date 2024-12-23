@@ -124,10 +124,21 @@ const createRequest = async (req, res) => {
             status,
             // changedBy: id || null,
             commission: commission || null,
-            date: `${istDateTime.date}`,
-            time: `${istDateTime.time}`,
+            date: `${getFormattedISTDateTime().date}`,
+            time: `${getFormattedISTDateTime().time}`,
         })
-
+        await statements.create({
+            date:`${getFormattedISTDateTime().date}` ,
+            time: `${getFormattedISTDateTime().time}`,
+            action: 'Debit',
+            status: 'Requested',
+            // changedBy: id,//id sales vallu
+            userId: userId,
+            reason: `Debit from ${commission}==='n' ? business partner wallet : parent partner wallet`,
+            reqId: newRequest.id,
+            amount: amount,
+            commission: commission
+        })
         return res.status(200).json({
             message: " Request created successfully",
             data: newRequest
@@ -148,39 +159,19 @@ const statusChange = async (req, res) => {
                 id: reqId
             }
         })
-        if (status === 'Paid') {
-            if (requestDetails.commission === 'y') {
-                await statements.create({
-                    date:`${istDateTime.date}` ,
-                    time: `${istDateTime.time}`,
-                    action: 'Debit',
-                    status: 'Successful',
-                    changedBy: id,//id sales vallu
-                    userId: requestDetails.userId,
-                    reason: 'Debit from parent patner wallet',
-
-                    amount: requestDetails.amount,
-                    commission: 'y'
-                })
-            }
-            if (requestDetails.commission === 'n') {
-                await statements.create({
-                    date:`${istDateTime.date}` ,
-                    time: `${istDateTime.time}`,
-                    action: 'Debit',
-                    status: 'Successful',
-                    changedBy: id,//changed by debits are of acounts
-                    userId: requestDetails.userId,
-                    reason: 'Debit from Business Partner wallet',
-
-                    amount: requestDetails.amount,
-                    commission: 'n'
-                })
-            }
+        if (status) {
+           await statements.update({
+            status:status
+           },{
+        where:{
+            reqId: reqId
+        }}) 
+            
+           
             await request.update(
                 {
-                     updatedDate:`${istDateTime.date}` ,
-                updatedTime: `${istDateTime.time}`,
+                     updatedDate:`${getFormattedISTDateTime().date}` ,
+                updatedTime: `${getFormattedISTDateTime().time}`,
                     status: status, 
                 },
                 {
@@ -196,8 +187,8 @@ const statusChange = async (req, res) => {
         else {
             await request.update(
                 {
-                    updatedDate:`${istDateTime.date}` ,
-                    updatedTime: `${istDateTime.time}`,
+                    updatedDate:`${getFormattedISTDateTime().date}` ,
+                    updatedTime: `${getFormattedISTDateTime().time}`,
                     status: status, 
                 },
                 {
