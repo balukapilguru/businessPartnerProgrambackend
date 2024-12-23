@@ -34,7 +34,8 @@ const getAllRequests = async (req, res) => {
                     where: searchCondition,
                     attributes: ['id', 'fullName', 'email', 'phoneNumber']
                 }
-            ]
+            ],
+            order:[['id','DESC']]
         });
         const totalRecords = await request.count({
             where: {}
