@@ -164,7 +164,8 @@ const verifyOtpAndRegisterUser = async (req, res) => {
                     noOfLogouts: 0,
                     referralLink: link1,
                     businessReferralLink: link2,
-                    encryptedBPID: encryptedID
+                    encryptedBPID: encryptedID,
+                    BpStatus: "New Business Partner"
                 }).catch(error => {
                     console.error('Error while saving business partner ID to credentialDetails:', error.message || error);
                     throw new Error('Error while saving business partner ID to credentialDetails');
@@ -851,19 +852,58 @@ const addBusinessPartner = async (req, res) => {
 
 const getAllBusinessPartnersall = async (req, res) => {
     try {
-        // Fetch all business partners with roleId 2 from bppUsers model
-        const businessPartners = await bppUsers.findAll({
-            where: { roleId: 2 },
-            attributes: ['id', 'fullName', 'email'], // Include necessary fields
+        
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const offset = (page - 1) * pageSize;
+        const limit = pageSize;
+        const { search } = req.query;
+
+     
+        const searchCondition = search
+            ? {
+                  [Op.or]: [
+                      { fullName: { [Op.like]: `%${search}%` } },
+                      { email: { [Op.like]: `%${search}%` } },
+                      { phoneNumber: { [Op.like]: `%${search}%` } },
+                      { '$credentialDetail.businessPartnerID$': { [Op.like]: `%${search}%` } }, 
+                  ],
+              }
+            : {};
+
+       
+        const { count: totalRecords, rows: businessPartners } = await bppUsers.findAndCountAll({
+            where: {
+                roleId: 2,
+                ...searchCondition,
+            },
+            attributes: ['id', 'fullName', 'email','phoneNumber'], 
+            include: [
+                {
+                    model: credentialDetails,
+                    attributes: ['businessPartnerID', "BpStatus"], 
+                },
+            ],
+            offset,
+            limit,
+            order: [['id', 'DESC']],
         });
 
         if (!businessPartners || businessPartners.length === 0) {
             return res.status(404).json({ message: 'No business partners found.' });
         }
 
+        const totalPages = Math.ceil(totalRecords / pageSize);
+
         res.status(200).json({
             message: 'Business partners retrieved successfully.',
             businessPartners,
+            pagination: {
+                totalRecords,
+                currentPage: page,
+                pageSize,
+                totalPages,
+            },
         });
     } catch (error) {
         console.error('Error in getAllBusinessPartners:', error);
@@ -873,75 +913,71 @@ const getAllBusinessPartnersall = async (req, res) => {
         });
     }
 };
-
 const createUserlogin = async (req, res) => {
     try {
         const { fullName, email, phonenumber, rolename } = req.body;
 
-       
         if (!fullName || !email || !phonenumber || !rolename) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
-        
         const roleDetails = await Role.findOne({
             where: { name: rolename },
         });
-        console.log(roleDetails.id)
+
         if (!roleDetails) {
             return res.status(400).json({ message: 'Invalid role name provided.' });
         }
 
-       
         const existingUser = await bppUsers.findOne({ where: { email } });
         if (existingUser) {
             return res.status(200).json({ message: 'User already exists with this email.' });
         }
-        // const defaultPassword = crypto.randomBytes(8).toString('hex');
-        
         const defaultPassword = email.split('@')[0];
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
         const user = await bppUsers.create({
             fullName,
             email,
             phonenumber,
-            roleId: roleDetails.id, 
+            roleId: roleDetails.id,
         });
-if(roleDetails.id === 2 ){
 
-    const businessPartnerID = await generateBusinessPartnerID();
-    
-    const encryptedID = encrypt(businessPartnerID).encryptedData;
-                // const generateRefferal = await generateReferralLink(businessPartnerID);
-                // const link1 = generateRefferal.link1;
-                // const link2 = generateRefferal.link2;
-       const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`
-                const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`
-                const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`
-                console.log('Referral Link 1:', link1);
-                console.log('Referral Link 2:', link2);
-                await credentialDetails.create({
-                    password: hashedPassword,
-                    businessPartnerID,
-                    userId: user.id,
-                    createdBy: null,
-                    noOfLogins: 0,
-                    noOfLogouts: 0,
-                    referralLink: link1,
-                    businessReferralLink: link2,
-                    encryptedBPID: encryptedID
-                })
-                await transporter.sendMail({
-                    from: config.mailConfig.mailUser,
-                    to: email,
-                    subject: 'Welcome to Teks Academy Business Partner Account',
-                    html: `<p>Dear <b>${fullName}</b>,</p>
-                           <p>Congratulations! Your Business Partner Account has been successfully created.</p>
-                           <p>Below are your account credentials:</p>
-                           <ul>
-                               <li>Email: <b>${email}</b></li>
-                               <li>Default Password: <b>${defaultPassword}</b></li>
-                           </ul>
-                               <p>You can log in to your account using the below link:</p>
+        let BpStatus = null; 
+        const loginPageUrl = `https://www.partners.teksacademy.com/auth/login`;
+
+        if (roleDetails.id === 2) { 
+            BpStatus = "New Business Partner"; 
+            const businessPartnerID = await generateBusinessPartnerID();
+            const encryptedID = encrypt(businessPartnerID).encryptedData;
+
+            const link1 = `https://www.partners.teksacademy.com/auth/studentForm/${encryptedID}`;
+            const link2 = `https://www.partners.teksacademy.com/auth/businessForm/${encryptedID}`;
+
+            await credentialDetails.create({
+                password: hashedPassword,
+                businessPartnerID,
+                userId: user.id,
+                createdBy: null,
+                noOfLogins: 0,
+                noOfLogouts: 0,
+                referralLink: link1,
+                businessReferralLink: link2,
+                encryptedBPID: encryptedID,
+                BpStatus, 
+            });
+
+            await transporter.sendMail({
+                from: config.mailConfig.mailUser,
+                to: email,
+                subject: 'Welcome to Teks Academy Business Partner Account',
+                html: `<p>Dear <b>${fullName}</b>,</p>
+                       <p>Congratulations! Your Business Partner Account has been successfully created.</p>
+                       <p>Below are your account credentials:</p>
+                       <ul>
+                           <li>Email: <b>${email}</b></li>
+                           <li>Default Password: <b>${defaultPassword}</b></li>
+                       </ul>
+                    <p>You can log in to your account using the below link:</p>
          <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
                            <p>Below are the personalised Referal links to Refer Students and to Add Business Partner</p>
                            <ul>
@@ -951,39 +987,40 @@ if(roleDetails.id === 2 ){
                            <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
                            <p>Please feel free to contact us with any questions or need help.</p>
                            <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
-                            <p>Thank you,</p>
-            <p><b>Teks Academy</b></p>`
-                });
-}
-else{
-        await credentialDetails.create({
-            password: hashedPassword,
-            email,
-            userId: user.id,
-            noOfLogins: 0,
-            noOfLogouts: 0,
-        });
-        await transporter.sendMail({
-            from: config.mailConfig.mailUser,
-            to: email,
-            subject: 'Welcome to Teks Academy Business Partner Account',
-            html: `<p>Dear <b>${fullName}</b>,</p>
-                   <p>Congratulations! Your Business Partner Account has been successfully created.</p>
-                   <p>Below are your account credentials:</p>
-                   <ul>
-                       <li>Email: <b>${email}</b></li>
-                       <li>Default Password: <b>${defaultPassword}</b></li>
-                   </ul>
-                       <p>You can log in to your account using the below link:</p>
-                       <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
-                   <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
-                   <p>Please feel free to contact us with any questions or need help.</p>
-                   <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
-                    <p>Thank you,</p>
-                     <p><b>Teks Academy</b></p>`
-        });
-    }
-    
+                       <p>Thank you,</p>
+                       <p><b>Teks Academy</b></p>`
+            });
+        } else {
+             
+            await credentialDetails.create({
+                password: hashedPassword,
+                email,
+                userId: user.id,
+                noOfLogins: 0,
+                noOfLogouts: 0,
+                
+            });
+
+            await transporter.sendMail({
+                from: config.mailConfig.mailUser,
+                to: email,
+                subject: 'Welcome to Teks Academy Business Partner Account',
+                html: `<p>Dear <b>${fullName}</b>,</p>
+                       <p>Congratulations! Your Business Partner Account has been successfully created.</p>
+                       <p>Below are your account credentials:</p>
+                       <ul>
+                           <li>Email: <b>${email}</b></li>
+                           <li>Default Password: <b>${defaultPassword}</b></li>
+                       </ul>
+                           <p>You can log in to your account using the below link:</p>
+                           <p><b><a href="${loginPageUrl}" target="_blank">${loginPageUrl}</a></b></p>
+                       <p>For security reasons, we recommend updating your password and personal details when you first log in.</p>
+                       <p>Please feel free to contact us with any questions or need help.</p>
+                       <p>Support Team: <b> 9133308351 </b> / <a href='mailto:support@teksacademy.com'>support@teksacademy.com</a></p>
+                        <p>Thank you,</p>
+                         <p><b>Teks Academy</b></p>`
+            });
+        }
 
         return res.status(201).json({
             message: 'User created successfully!',
@@ -993,6 +1030,7 @@ else{
                 email: user.email,
                 phoneNumber: user.phoneNumber,
                 roleId: roleDetails.id,
+                BpStatus, 
             },
         });
     } catch (error) {
@@ -1135,7 +1173,39 @@ const getUserLogin = async (req, res) => {
     }
 };
 
+const updateBppUserStatus = async (req, res) => {
+    try {
+        const { userId, BpStatus ,comment} = req.body;
+        if (!userId || !BpStatus) {
+            return res.status(400).json({ message: 'User ID and status are required.' });
+        }
+        const user = await bppUsers.findOne({ where: { id: userId } });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
 
+        const updatedCredential = await credentialDetails.update(
+            { BpStatus , comment},
+            { where: { userId } }
+        );
+
+        if (updatedCredential[0] === 0) {
+            return res.status(400).json({ message: 'Status update failed. Please check the user ID and try again.' });
+        }
+
+        return res.status(200).json({
+            message: 'Status updated successfully!',
+            user: {
+                id: userId,
+                BpStatus,
+                comment
+            },
+        });
+    } catch (error) {
+        console.error('Error updating status:', error.message || error);
+        return res.status(500).json({ message: 'Error updating status', error: error.message });
+    }
+};
 
 
 
@@ -1152,5 +1222,5 @@ module.exports = {
     addBusinessPartner,
     getPersonalDetailsById,
     getAllBusinessPartnersall,
-    createUserlogin,getUserLogin, deleteUser
+    createUserlogin,getUserLogin, deleteUser,updateBppUserStatus
 };

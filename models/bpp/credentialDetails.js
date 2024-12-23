@@ -54,6 +54,14 @@ const credentialDetails = sequelize.define(
         },
         encryptedBPID:{
             type: DataTypes.STRING
+        },
+        BpStatus:{
+            type:DataTypes.STRING,
+            allowNull:true,
+        },
+        comment:{
+            type:DataTypes.STRING,
+            allowNull:true
         }
     },
     {
