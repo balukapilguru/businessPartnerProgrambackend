@@ -182,19 +182,24 @@ const getAll = async (req, res) => {
     }
 
     const searchConditions = search
-      ? {
-          [Op.or]: [
-            { fullname: { [Op.like]: `%${search}%` } },
-            { phoneNumber: { [Op.like]: `%${search}%` } },
-            { email: { [Op.like]: `%${search}%` } },
-            { '$referStudent.fullname$': { [Op.like]: `%${search}%` } },
-          ],
-        }
-      : {};
+    ? {
+        [Op.or]: [
+          { fullname: { [Op.like]: `%${search}%` } },
+          { phoneNumber: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { '$referStudent.fullname$': { [Op.like]: `%${search}%` } },
+          { '$referStudent.businessPartnerId$': { [Op.like]: `%${search}%` } },
+       
+          
+        ],
+      }
+    : {};
+  
       console.log(id)
       console.log('Kavya check',roleDetails.dataValues);
       console.log(roleDetails)
       const roleIds = roleDetails.map((role) => role.dataValues.id);
+      
 
 console.log('Role IDs:', roleIds);
       const referStudentFilter = rolePermissions.Permissions.some(permission => permission.module === 'Refer Students' && permission.canUpdate) ? {} : id != null ? { bpstudents: id } : {};
@@ -236,6 +241,13 @@ console.log('Role IDs:', roleIds);
               // as: 'enrolledCourses', // Use the alias defined in the association
               // attributes: ['courseName'], // Include the course name
               // through: { attributes: [] }, // Exclude junction table details
+            },
+            {
+              model: bppusers,
+              as: 'bpStudentsUser',
+             
+              attributes: [ 'fullName', 'email','phonenumber','roleId'], 
+              // Assuming the name field is in bppusers
             },
           ],
         },
@@ -313,7 +325,8 @@ console.log('Role IDs:', roleIds);
     return res.status(500).json({ error: 'An error occurred while fetching the records.' });
   }
 };
- 
+
+
 const getDashboardDetails = async (req, res) => {
   try {
     const { filter, search, page = 1, limit, pageSize = 10 } = req.query; // Set a default pageSize
