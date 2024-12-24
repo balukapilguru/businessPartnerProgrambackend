@@ -122,4 +122,20 @@ db.Role.hasMany(db.bppUsers,{
     foreignKey:'roleId',
     });
 // Export the database object with models and Sequelize instance
+db.ReferStudentmodel.belongsTo(db.bppUsers, {
+        foreignKey: 'assignedTo',
+        as: 'assignedUser'
+    }),
+ db.ReferStudentmodel.belongsTo(db.bppUsers, {
+            foreignKey: 'bpstudents',
+            as: 'bpStudentsUser',
+            onDelete: 'CASCADE',
+          });
+          db.bppUsers.hasMany(db.ReferStudentmodel, {
+            foreignKey: 'bpstudents',
+            as: 'bpStudentReferences',
+            onDelete: 'CASCADE',
+          });
+    
 module.exports = db;
+ 

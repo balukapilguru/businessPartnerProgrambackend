@@ -36,11 +36,11 @@ const { Role } = require("../rolesAndPermissions/Role");
         onDelete: 'CASCADE',
       });
   
-      bppUsers.hasMany(models.ReferStudentmodel, {
-        foreignKey: 'bpstudents',
-        as: 'bpStudentReferences',
-        onDelete: 'CASCADE',
-      });
+      // bppUsers.hasMany(models.ReferStudentmodel, {
+      //   foreignKey: 'bpstudents',
+      //   as: 'bpStudentReferences',
+      //   onDelete: 'CASCADE',
+      // });
 
 
 

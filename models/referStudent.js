@@ -69,29 +69,29 @@ const ReferStudentmodel = sequelize.define("referStudentmodel", {
     timestamps: true,
 }
 );
-ReferStudentmodel.associate = (models) => {
-    ReferStudentmodel.belongsTo(models.bppUsers, {
-        foreignKey: 'assignedTo',
-        as: 'assignedUser'
-    }),
-
-
-        console.log(models)
-
-        ReferStudentmodel.belongsTo(models.bppUsers, {
-            foreignKey: 'bpstudents',
-            as: 'bpStudentsUser',
-            onDelete: 'CASCADE',
-          });
-
-
-    // ReferStudentmodel.hasMany(models.status, {
-    //     foreignKey: 'referStudentId',
+// ReferStudentmodel.associate = (models) => {
+//     ReferStudentmodel.belongsTo(models.bppUsers, {
+//         foreignKey: 'assignedTo',
+//         as: 'assignedUser'
+    // }),
+ 
+ 
+        // console.log(models,'are models')
+ 
+//         ReferStudentmodel.belongsTo(models.bppUsers, {
+//             foreignKey: 'bpstudents',
+//             as: 'bpStudentsUser',
+//             onDelete: 'CASCADE',
+//           });
+ 
+ 
+//     // ReferStudentmodel.hasMany(models.status, {
+//     //     foreignKey: 'referStudentId',
        
-    // })
-
-}
-
-
-
+//     // })
+ 
+// }
+ 
+ 
+ 
 module.exports = ReferStudentmodel

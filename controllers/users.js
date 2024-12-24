@@ -1,6 +1,7 @@
 const bppUsers = require('../models/bpp/users');
 const db = require('../models/db/index')
-const { Op, where, DataTypes } = require('sequelize');
+const { Op, where, DataTypes,literal, models, query,QueryTypes } = require('sequelize');
+const seq = require('../config/db');
 const crypto = require('crypto');
 const credentialDetails = require('../models/bpp/credentialDetails');
 const Personaldetails = require('../models/bpp/personaldetails')
@@ -391,8 +392,6 @@ const changePassword = async (req, res) => {
 };
 
 const sendMail = require('../utiles/sendmailer');
-
-// const credentialDetails = require('../models/bpp/credentialDetails');
 
 const sendlinkforForgotPassword = async (req, res) => {
     const { email } = req.body;
@@ -852,7 +851,6 @@ const addBusinessPartner = async (req, res) => {
 
 const getAllBusinessPartnersall = async (req, res) => {
     try {
-        
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
         const offset = (page - 1) * pageSize;
@@ -871,24 +869,69 @@ const getAllBusinessPartnersall = async (req, res) => {
               }
             : {};
 
-       
-        const { count: totalRecords, rows: businessPartners } = await bppUsers.findAndCountAll({
-            where: {
-                roleId: 2,
-                ...searchCondition,
-            },
-            attributes: ['id', 'fullName', 'email','phoneNumber'], 
-            include: [
-                {
-                    model: credentialDetails,
-                    attributes: ['businessPartnerID', "BpStatus"], 
+            const { count: totalRecords, rows: businessPartners } = await bppUsers.findAndCountAll({
+                distinct: true,
+            col: 'id',
+                where: {
+                    roleId: 2,
+                    ...searchCondition,
                 },
-            ],
-            offset,
-            limit,
-            order: [['id', 'DESC']],
-        });
-
+                attributes: [
+                    'id',
+                    'fullName',
+                    'email',
+                    'phoneNumber',
+                    [literal(`(
+                        SELECT COUNT(*)
+                        FROM referStudentmodel AS students
+                        WHERE students.bpstudents = bppUsers.id
+                        AND (
+                            SELECT statuses.currentStatus
+                            FROM statuses
+                            WHERE statuses.referStudentId = students.id
+                            ORDER BY statuses.id DESC
+                            LIMIT 1
+                        ) = 'enroll'
+                    )`), 'enrolledCount'],
+                    [literal(`(
+                        SELECT COUNT(*)
+                        FROM referStudentmodel AS students
+                        WHERE students.bpstudents = bppUsers.id
+                        
+                    )`), 'referredCount'],
+                ],
+                include: [
+                    {
+                        model: credentialDetails,
+                        attributes: ['businessPartnerID', 'BpStatus','userId', [literal(`(
+                            SELECT COUNT(*)
+                            FROM credentialDetails AS credentials
+                            WHERE credentials.createdBy = bppUsers.id
+    
+                        )`), 'addedPartners'],
+                      ],
+                    },
+                    {
+                        model: referStudentsModel,
+                        as: 'bpStudentReferences',
+                        attributes: { exclude: ['status'] },
+                        include: [
+                            {
+                                model: statusesModel,
+                                as: 'statuses',
+                                order: [['id','DESC']],
+                                separate: true,
+                                limit: 1
+                            },
+                        ],
+                    },
+                ],
+                offset,
+                limit,
+                order: [['id', 'DESC']], 
+                
+            });
+                   
         if (!businessPartners || businessPartners.length === 0) {
             return res.status(404).json({ message: 'No business partners found.' });
         }
