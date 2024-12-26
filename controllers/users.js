@@ -899,11 +899,43 @@ const getAllBusinessPartnersall = async (req, res) => {
                         WHERE students.bpstudents = bppUsers.id
                         
                     )`), 'referredCount'],
-                ],
+                    [literal(`(
+                        SELECT GROUP_CONCAT(userId)
+                        FROM credentialdetails
+                        WHERE createdBy = bppUsers.id
+                    )`), 'childUserIds'],
+                    [literal(`(
+                        SELECT COUNT(*)
+    FROM referStudentmodel AS students
+    WHERE students.bpstudents = bppUsers.id
+    AND (
+      SELECT statuses.currentStatus
+      FROM statuses
+      WHERE statuses.referStudentId = students.id
+      ORDER BY statuses.id DESC
+      LIMIT 1
+    ) IN ('invalid', 'Not_Answering','Not_Interested')
+                    )`), 'disqualifiedCount'],
+                    [literal(`(
+                        SELECT COUNT(*)
+    FROM referStudentmodel AS students
+    WHERE students.bpstudents = bppUsers.id
+    AND (
+      SELECT statuses.currentStatus
+      FROM statuses
+      WHERE statuses.referStudentId = students.id
+      ORDER BY statuses.id DESC
+      LIMIT 1
+    ) IN ('Demo_Scheduled', 'Demo_Completed', 'follow_up_one', 'follow_up_two', 'Prospect', 'Call_Back')
+  
+                    )`), 'pipelineCount']],
+                
                 include: [
                     {
                         model: credentialDetails,
-                        attributes: ['businessPartnerID', 'BpStatus','userId', [literal(`(
+                        attributes: ['businessPartnerID', 'BpStatus',
+                            // 'userId',
+                             [literal(`(
                             SELECT COUNT(*)
                             FROM credentialDetails AS credentials
                             WHERE credentials.createdBy = bppUsers.id
@@ -911,20 +943,20 @@ const getAllBusinessPartnersall = async (req, res) => {
                         )`), 'addedPartners'],
                       ],
                     },
-                    {
-                        model: referStudentsModel,
-                        as: 'bpStudentReferences',
-                        attributes: { exclude: ['status'] },
-                        include: [
-                            {
-                                model: statusesModel,
-                                as: 'statuses',
-                                order: [['id','DESC']],
-                                separate: true,
-                                limit: 1
-                            },
-                        ],
-                    },
+                    // {
+                    //     model: referStudentsModel,
+                    //     as: 'bpStudentReferences',
+                    //     attributes: { exclude: ['status'] },
+                    //     include: [
+                    //         {
+                    //             model: statusesModel,
+                    //             as: 'statuses',
+                    //             order: [['id','DESC']],
+                    //             separate: true,
+                    //             limit: 1
+                    //         },
+                    //     ],
+                    // },
                 ],
                 offset,
                 limit,
