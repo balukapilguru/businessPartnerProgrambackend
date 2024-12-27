@@ -1,4 +1,3 @@
-
 // const referStudentmodel = require('../models/db/index');
 const { Op } = require("sequelize")
 // const statuses = require('../models/db/index'); 
@@ -6,6 +5,7 @@ const { ReferStudentmodel, Status, Sequelize } = require('../models/db/index');
 const credentialDetails = require("../models/bpp/credentialDetails");
 const course = require("../models/bpp/courses")
 const studentCourses = require("../models/bpp/studentcourses")
+const bppUsers = require("../models/bpp/users")
 // console.log(statuses)
 const {getFormattedISTDateTime} = require('../utiles/encryptAndDecrypt')
 const istDateTime = getFormattedISTDateTime();
@@ -39,7 +39,13 @@ console.log(businessPartnerID)
                 businessPartnerID: businessPartnerID
             }
         })
-    
+		console.log('checking',user.userId)
+    const bpuserdetails = await bppUsers.findOne({
+            where :{
+                id: user.userId
+            }
+        })
+        console.log( bpuserdetails.fullName,'vcheck')
         const newReferral = await ReferStudentmodel.create({
             fullname,
             email,
@@ -47,7 +53,8 @@ console.log(businessPartnerID)
             city,
               courseRequired: courseFound.id, 
             businessPartnerId:businessPartnerID || user.businessPartnerID,
-            bpstudents: user.dataValues.userId
+            bpstudents: user.dataValues.userId,
+			businessPartnerName : bpuserdetails.fullName
         });
     await studentCourses.create({
             studentId: newReferral.id,
@@ -88,6 +95,13 @@ console.log(businessPartnerID)
                     encryptedBPID: encryptedParentPartnerId
                 }
             })
+			console.log('checking2',user.userId)
+    const bpuserdetails = await bppUsers.findOne({
+            where :{
+                id: user.userId
+            }
+        })
+		
             console.log('userr',user)
 				
         const newReferral = await ReferStudentmodel.create({
@@ -97,9 +111,10 @@ console.log(businessPartnerID)
             city,
               courseRequired: courseFound.id, 
             businessPartnerId:user.businessPartnerID || businessPartnerID,
-            bpstudents: user.dataValues.userId
+            bpstudents: user.dataValues.userId,
+			
+			businessPartnerName : bpuserdetails.fullName
         });
-
 
 
         await studentCourses.create({

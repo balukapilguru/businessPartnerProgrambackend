@@ -41,6 +41,10 @@ const ReferStudentmodel = sequelize.define("referStudentmodel", {
         type: DataTypes.JSON,
         defaultValue: []
     },
+    businessPartnerName:{
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     businessPartnerId: {
         type: DataTypes.STRING,
         allowNull: false,

@@ -195,7 +195,7 @@ const getAll = async (req, res) => {
           { email: { [Op.like]: `%${search}%` } },
           { '$referStudent.fullname$': { [Op.like]: `%${search}%` } },
           { '$referStudent.businessPartnerId$': { [Op.like]: `%${search}%` } },
-       
+          { '$referStudent.businessPartnerName$': { [Op.like]: `%${search}%` } },
           
         ],
       }
@@ -236,6 +236,7 @@ console.log('Role IDs:', roleIds);
             'source',
             'city',
             'bpstudents',
+            'businessPartnerName'
           ],
           where: {
             ...searchConditions,
@@ -380,11 +381,24 @@ const getDashboardDetails = async (req, res) => {
         referrals: 0,
         Total: 0,
         Income: 0,
-        Revenue: 0
+        Revenue: 0,
+		childUserCount: 0,
+        childuserIds: []
       };
       return acc;
     }, {});
- 
+  const childUsers = await credentialDetails.findAll({
+      where: { createdBy: { [Op.in]: Object.keys(childrenObject) } },
+      attributes: ['createdBy', 'userId'],
+      raw: true
+    });
+
+    childUsers.forEach(child => {
+      if (childrenObject[child.createdBy]) {
+        childrenObject[child.createdBy].childUserCount++;
+        childrenObject[child.createdBy].childuserIds.push(child.userId);
+      }
+    });
     const userIds = children.map(child => child.userId);
     const recentStatuses = await statusModel.findAll({
       attributes: [
@@ -416,11 +430,6 @@ const getDashboardDetails = async (req, res) => {
         pageSize: effectiveLimit
       });
     }
- 
- 
-
-
-
     const enrollmentCounts = await statusModel.findAll({
       attributes: [
         [fn('COUNT', col('status.id')), 'count'],
@@ -508,10 +517,12 @@ const getStudentAllStatus = async (req, res) => {
     }
 };
  
+
 const getAllBpAndStudents = async (req, res) => {
   const { userId } = req.params;
-
- 
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+ const {search} = req.query
   if (!userId) {
     return res.status(400).json({
       success: false,
@@ -520,139 +531,90 @@ const getAllBpAndStudents = async (req, res) => {
   }
 
   try {
-  
-    const parentpartnerbp = await credentialDetails.findOne({
-      where: { userId },
-      attributes: ["businessPartnerID", "userId", "createdBy"],
+    const { rows: credentialDetailsList, count: totalCredentialDetails } = await credentialDetails.findAndCountAll({
+      where: {
+        createdBy: userId
+      },
+      attributes: ['userId'] 
     });
 
-    if (!parentpartnerbp) {
+    if (!credentialDetailsList.length) {
       return res.status(404).json({
         success: false,
-        message: "Primary business partner not found",
+        message: "No child business partners found for this user"
       });
     }
 
-  
-    const childBps = await credentialDetails.findAll({
-      where: { createdBy: userId },
-      attributes: ["businessPartnerID","addedBy","createdBy","userId"],
+
+
+
+    const searchConditions = search
+    ? {
+        [Op.or]: [
+          { fullname: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          {businessPartnerId :{[Op.like]: `%${search}%`}},
+          {businessPartnerName :{[Op.like]: `%${search}%`}}
+        ],
+      }
+    : {};
+
+    const userIds = credentialDetailsList.map(row => row.userId);
+
+    const offset = (page - 1) * pageSize;
+    const { rows: studentList, count: totalStudentCount } = await referStudentmodel.findAndCountAll({
+      attributes: ["id", "fullname", "email", "phonenumber", "city","businessPartnerId","businessPartnerName"],
+      where: {
+        bpstudents: {
+          [Op.in]: userIds
+        },
+        ...searchConditions
+      },
       include: [
         {
-          model: bppusers,
-          attributes: ["id", "fullName", "email", "phonenumber", "roleId"],
-          include: [
-            {
-              model: referStudentmodel,
-              as: "bpStudentReferences",
-              attributes: ["id", "fullname", "email", "phonenumber", "city"], 
-              include: [
-                {
-                  model: statusModel,
-                  as: "statuses",
-                  attributes: ["currentStatus", "updatedAt"], 
-                  separate: true,
-                  order: [["id", "DESC"]],
-                  limit: 1, 
-                },
-              ],
-            },
-          ],
-        },
+          model: statusModel,
+          as: "statuses",
+          attributes: ["currentStatus", "updatedAt"],
+          separate: true,
+          order: [["updatedAt", "DESC"]],
+          limit: 1
+        }
       ],
+      order: [['id', 'DESC']],
+      limit: pageSize,
+      offset: offset
     });
 
-    if (!childBps || childBps.length === 0) {
+    if (!studentList.length) {
       return res.status(404).json({
         success: false,
-        message: "No child business partners found",
+        message: "No students found for these business partners"
       });
     }
 
-  
-    const bpDetails = await Promise.all(
-      childBps.map(async (childBp) => {
-        const bpId = childBp.userId;
+    const totalPages = Math.ceil(totalStudentCount / pageSize);
 
-        const students = await referStudentmodel.findAll({
-          where: { bpstudents: bpId },
-          attributes: ["id", "fullname", "email", "phonenumber", "city"], 
-          include: [
-            {
-              model: statusModel,
-              as: "statuses",
-              attributes: ["currentStatus", "updatedAt"],
-              separate: true,
-              order: [["id", "DESC"]],
-              limit: 1,
-            },
-          ],
-        });
-
-      
-        const enrolledCount = students.filter((s) =>
-          s.statuses.some((status) => status.currentStatus === "enroll")
-        ).length;
-
-        const disqualifiedCount = students.filter((s) =>
-          s.statuses.some((status) =>
-            ["invalid", "Not_Interested"].includes(
-              status.currentStatus
-            )
-          )
-        ).length;
-
-        const pipelineCount = students.filter((s) =>
-          s.statuses.some((status) =>
-            [
-              "Demo_Scheduled",
-              "Demo_Completed",
-              "follow_up_one",
-              "follow_up_two",
-              "Prospect",
-              "Call_Back",
-              "Not_Answering",
-            ].includes(status.currentStatus)
-          )
-        ).length;
-
-        
-        return {
-          bpId,
-          bpDetails: childBp.toJSON(),
-          totalStudentCount: students.length, 
-          enrolledCount,
-          disqualifiedCount,
-          pipelineCount,
-          students, 
-        };
-      })
-    );
-
- 
-    const primaryStudentCount = await referStudentmodel.count({
-      where: { bpstudents: userId },
-    });
-
-   
-    const response = {
+    return res.status(200).json({
       success: true,
-      parentpartnerbp: {
-        ...parentpartnerbp.toJSON(),
-        totalStudentCount: primaryStudentCount, 
-      },
-      childBpDetails: bpDetails, 
-    };
-
-    res.status(200).json(response);
+      students: studentList,
+      totalRecords: totalStudentCount,
+      pageSize: pageSize,
+      totalPages: totalPages,
+      currentPage: page
+    });
   } catch (error) {
     console.error("Error fetching business partners and students:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "An error occurred while fetching business partners and students",
+      message: "An error occurred while fetching details",
+      error: error.message
     });
   }
-}; 
+};
+
+
+
+
 module.exports = {
     createStatus,
     getStudentAllStatus,

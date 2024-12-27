@@ -709,6 +709,11 @@ const getPersonalDetailsById = async (req, res) => {
 const addBusinessPartner = async (req, res) => {
     try {
         const { fullName, email, phonenumber, ParentbusinessPartnerId,encryptedParentPartnerId } = req.body;
+        const existingUser = await bppUsers.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(404).json({ message: 'User already exists with this email.' });
+        }
+
         console.log('Request body:', req.body, fullName, email, phonenumber, ParentbusinessPartnerId,encryptedParentPartnerId);
         const whereCondition = {
             [Op.or]: []
@@ -901,7 +906,7 @@ const getAllBusinessPartnersall = async (req, res) => {
                     )`), 'referredCount'],
                     [literal(`(
                         SELECT GROUP_CONCAT(userId)
-                        FROM credentialdetails
+                        FROM credentialDetails
                         WHERE createdBy = bppUsers.id
                     )`), 'childUserIds'],
                     [literal(`(
@@ -914,7 +919,7 @@ const getAllBusinessPartnersall = async (req, res) => {
       WHERE statuses.referStudentId = students.id
       ORDER BY statuses.id DESC
       LIMIT 1
-    ) IN ('invalid', 'Not_Answering','Not_Interested')
+    ) IN ('invalid','Not_Interested')
                     )`), 'disqualifiedCount'],
                     [literal(`(
                         SELECT COUNT(*)
@@ -926,7 +931,7 @@ const getAllBusinessPartnersall = async (req, res) => {
       WHERE statuses.referStudentId = students.id
       ORDER BY statuses.id DESC
       LIMIT 1
-    ) IN ('Demo_Scheduled', 'Demo_Completed', 'follow_up_one', 'follow_up_two', 'Prospect', 'Call_Back')
+    ) IN ('Demo_Scheduled', 'Demo_Completed', 'follow_up_one', 'follow_up_two', 'Prospect', 'Call_Back', 'Not_Answering')
   
                     )`), 'pipelineCount']],
                 
@@ -1005,7 +1010,7 @@ const createUserlogin = async (req, res) => {
 
         const existingUser = await bppUsers.findOne({ where: { email } });
         if (existingUser) {
-            return res.status(200).json({ message: 'User already exists with this email.' });
+            return res.status(404).json({ message: 'User already exists with this email.' });
         }
         const defaultPassword = email.split('@')[0];
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
