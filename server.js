@@ -72,7 +72,7 @@ app.use('/businessstatus',businessstatus)
 app.use('/courses',courses)
 
 app.get('/', (req, res) => {
-  return res.status(200).send('Hello, Connected with BPP..');
+  return res.status(200).send('Hello, Connected with BPP 12-27-2024..');
 });
 sequelize.sync().then(() => {
   console.log("Database synced, tables created.");
