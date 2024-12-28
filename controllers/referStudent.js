@@ -1,5 +1,9 @@
 // const referStudentmodel = require('../models/db/index');
 const { Op } = require("sequelize")
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser');
+const courses = require("../models/bpp/courses")
 // const statuses = require('../models/db/index'); 
 const { ReferStudentmodel, Status, Sequelize } = require('../models/db/index'); 
 const credentialDetails = require("../models/bpp/credentialDetails");
@@ -198,7 +202,157 @@ const getReferralsByStudentId = async (req, res) => {
 
 
 
+const addCSV = async (req, res) => {
+    const { businessPartnerID } = req.body;
+    const filePath = req.file?.path;
+
+    if (!businessPartnerID) {
+        return res.status(400).json({ error: 'Business Partner ID is required.' });
+    }
+
+    try {
+        if (!filePath) {
+            return res.status(400).json({ error: 'File is required.' });
+        }
+
+        const resolvedPath = path.resolve(filePath);
+        console.log('Resolved file path:', resolvedPath);
+
+        const results = [];
+        const errors = [];
+
+        fs.createReadStream(resolvedPath)
+            .pipe(csv())
+            .on('data', (row) => {
+                console.log('Processing row:', row);
+                results.push(row);
+            })
+            .on('end', async () => {
+                console.log('Finished reading file.');
+
+                const promises = results.map(async (row) => {
+                    try {
+                        // Fetch the user details based on businessPartnerID
+                        const user = await credentialDetails.findOne({
+                            where: {
+                                businessPartnerID: businessPartnerID,
+                            },
+                        });
+
+                        if (!user) {
+                            throw new Error(`No user found with businessPartnerID: ${businessPartnerID}`);
+                        }
+
+                        console.log(row.courseName)
+                        const course = await courses.findOne({
+                            where: { courseName: row.courseRequired }, // Adjust the condition to match your course structure
+                        });
+                
+                        if (!course) {
+                            throw new Error(`No course found with name: ${row.courseName}`);
+                        }
+
+
+                        const bpuserdetails = await bppUsers.findOne({
+                            where :{
+                                id: user.userId
+                            }
+                        })
+                        // Prepare the fields to save
+                        const newReferral = await ReferStudentmodel.create({
+                            fullname: row.fullname,
+                            email: row.email,
+                            phonenumber: row.phonenumber,
+                            city: row.city,
+                            courseRequired: course.id, // Assuming courseFound is part of the row
+                            businessPartnerId: businessPartnerID || user.businessPartnerID,
+                            bpstudents: user.dataValues.userId,
+                            businessPartnerName: bpuserdetails.fullName, // Assuming `fullName` exists in `credentialDetails`
+                        });
 
 
 
-module.exports = { createReferral, getReferralsByStudentId }
+
+                        await studentCourses.create({
+                            studentId: newReferral.id,
+                            courseId: course.id  // Linking the course ID here
+                        });
+                        // await newReferral.addCourse(courseFound);
+                        const newStatus = await Status.create({
+                            date:`${istDateTime.date}`,
+                            time: `${istDateTime.time}`,
+                            changedBy:  null,
+                            currentStatus: 'new lead',
+                            referStudentId: newReferral.id,
+                            comment:'just created lead',
+                        });
+                
+                   
+                
+                       
+                        // res.status(201).json({
+                        //     message: 'Referral created successfully',
+                        //     referal :newReferral
+                        //     // data: {
+                        //     //     referral: referralWithStatus,
+                        //     //     // status: referralWithStatus.statuses
+                        //     // }
+                        // }); 
+                        
+                
+
+                        console.log(`Saved record: ${JSON.stringify(newReferral)}`);
+                    } catch (err) {
+                        console.error(`Error saving row: ${JSON.stringify(row)}`, err.message);
+                        errors.push({ row, error: err.message });
+                    }
+                });
+
+                await Promise.all(promises);
+
+                // fs.unlink(resolvedPath, (unlinkErr) => {
+                //     if (unlinkErr) {
+                //         console.error('Error deleting file:', unlinkErr.message);
+                //     } else {
+                //         console.log('File deleted successfully.');
+                //     }
+                // });
+                // Assuming `resolvedPath` is the path to the file you want to delete
+
+    fs.unlink(resolvedPath, (unlinkErr) => { 
+        if (unlinkErr) {
+            console.error('Error deleting file:', unlinkErr.message);
+        } else {
+            console.log('File deleted successfully.');
+        }
+    });
+
+
+
+                res.status(200).json({
+                    message: 'CSV processed successfully.',
+                    processedRows: results.length,
+                    // errors: errors.length > 0 ? errors : null,
+                });
+            })
+            .on('error', (err) => {
+                console.error('Error reading CSV file:', err.message);
+                res.status(500).json({ error: 'Error reading the CSV file.' });
+            });
+    } catch (error) {
+        console.error('Error processing file:', error.message, error.stack);
+        res.status(500).json({
+            error: 'An error occurred while processing the file.',
+            details: error.message,
+        });
+    }
+};
+
+
+
+
+
+
+
+
+module.exports = { createReferral, getReferralsByStudentId , addCSV}
