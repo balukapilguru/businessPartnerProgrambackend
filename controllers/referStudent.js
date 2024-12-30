@@ -220,7 +220,7 @@ const addCSV = async (req, res) => {
 
         const results = [];
         const errors = [];
-
+        let responseSent = false;
         fs.createReadStream(resolvedPath)
             .pipe(csv())
             .on('data', (row) => {
@@ -231,6 +231,7 @@ const addCSV = async (req, res) => {
                 console.log('Finished reading file.');
 
                 const promises = results.map(async (row) => {
+                    if (responseSent) return;
                     try {
                         // Fetch the user details based on businessPartnerID
                         const user = await credentialDetails.findOne({
@@ -258,6 +259,15 @@ const addCSV = async (req, res) => {
                                 id: user.userId
                             }
                         })
+                        const studentdetails = await ReferStudentmodel.findOne({
+                            where:{
+                                phonenumber: row.phonenumber
+                            }
+                        })
+                        if(studentdetails) {
+                            res.status(404).json({message:"Student  Already exists" });
+                            responseSent = true;
+                        }
                         // Prepare the fields to save
                         const newReferral = await ReferStudentmodel.create({
                             fullname: row.fullname,
@@ -305,6 +315,10 @@ const addCSV = async (req, res) => {
                     } catch (err) {
                         console.error(`Error saving row: ${JSON.stringify(row)}`, err.message);
                         errors.push({ row, error: err.message });
+                        if (!responseSent) {
+                        res.status(404).json({ error:err.message });
+                        responseSent = true;
+                        }
                     }
                 });
 
@@ -318,7 +332,14 @@ const addCSV = async (req, res) => {
                 //     }
                 // });
                 // Assuming `resolvedPath` is the path to the file you want to delete
-
+                if (!responseSent) { // Only send a response if not already sent
+                    res.status(200).json({
+                        message: 'CSV processed successfully.',
+                        processedRows: results.length,
+                        errors: errors.length > 0 ? errors : null,
+                        
+                    });
+                }
     fs.unlink(resolvedPath, (unlinkErr) => { 
         if (unlinkErr) {
             console.error('Error deleting file:', unlinkErr.message);
@@ -329,22 +350,17 @@ const addCSV = async (req, res) => {
 
 
 
-                res.status(200).json({
-                    message: 'CSV processed successfully.',
-                    processedRows: results.length,
-                    // errors: errors.length > 0 ? errors : null,
-                });
             })
             .on('error', (err) => {
-                console.error('Error reading CSV file:', err.message);
-                res.status(500).json({ error: 'Error reading the CSV file.' });
-            });
+                if (!responseSent) {
+                    res.status(500).json({ error: 'Error reading the CSV file.' });
+                    responseSent = true;
+                }});
     } catch (error) {
         console.error('Error processing file:', error.message, error.stack);
-        res.status(500).json({
-            error: 'An error occurred while processing the file.',
-            details: error.message,
-        });
+        if (!responseSent) {
+            res.status(500).json({ error: 'An error occurred while processing the file.', details: error.message });
+        }
     }
 };
 
