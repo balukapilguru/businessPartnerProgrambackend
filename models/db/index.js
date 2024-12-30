@@ -98,6 +98,21 @@ db.bppUsers.hasOne(db.credentials, {
     onDelete: 'CASCADE',
 });
 
+// Assuming db.bppUsers and db.credentials are your Sequelize model instances
+
+// This adds a one-to-many relationship where a single bppUser can create many credentials
+db.bppUsers.hasMany(db.credentials, {
+    foreignKey: 'createdBy',
+    as: 'CreatedCredentials',  // This alias is used to differentiate from credentials linked by userId
+    onDelete: 'CASCADE'
+});
+
+// This adds a counterpart belongsTo relationship, indicating that each credential is created by one bppUser
+db.credentials.belongsTo(db.bppUsers, {
+    foreignKey: 'createdBy',
+    as: 'Creator',  // Alias to reference the user who created the credential
+    onDelete: 'CASCADE'
+});
 
 db.ReferStudentmodel.belongsToMany(db.courses, {
     through: 'StudentCourses', 

@@ -19,6 +19,8 @@ router.post('/userform', usersControllers.createUserlogin);
 router.get('/getuserform', usersControllers.getUserLogin);
 router.delete('/deleteuser/:userId',usersControllers.deleteUser)
 router.get('/getpartners', usersControllers. getAllBusinessPartnersall);
+
+router.get('/getpartners2', usersControllers. getAllBusinessPartnersall2);
 router.put('/bppupdate',usersControllers.updateBppUserStatus);
  
 
