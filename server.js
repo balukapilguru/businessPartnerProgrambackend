@@ -6,24 +6,25 @@ const path = require('path');
 const morgan = require('morgan');
 
 
-const moment = require('moment-timezone'); 
+										   
 const sequelize = require('./config/db');
-// const signuprouter = require('./routes/signuprouter');
+
 const referStudentroute = require('./routes/referStudent');
 const referBusinessroute = require('./routes/referBusiness');
-const status = require('./routes/status')
-const statements = require('./routes/statements')
-const request = require('./routes/request')
+const status = require('./routes/status');
+const statements = require('./routes/statements');
+const request = require('./routes/request');
 const userSignup = require('./routes/bpp/users');
-const businessstatus = require('./routes/businessStatus')
-const courses = require('./routes/bpp/courses')
+const businessstatus = require('./routes/businessStatus');
+const courses = require('./routes/bpp/courses');
 
-const role = require('./routes/rolesAndPermissions/Role')
-require ('./models/bpp/studentcourses')
+const role = require('./routes/rolesAndPermissions/Role');
+
+require('./models/bpp/studentcourses');
 require('./models/bpp/credentialDetails'); 
 require('./models/bpp/bankdetails'); 
-// require('./models/referbusinessPartnerModel');
-require('./models/bpp/courses')
+												 
+require('./models/bpp/courses');
 require('./models/bpp/statements'); 
 require('./models/bpp/users'); 
 require('./models/status/BusinessStatus'); 
@@ -33,53 +34,72 @@ require('./models/rolesAndPermissions/Permission');
 require('./models/rolesAndPermissions/PermissionModule'); 
 require('./models/rolesAndPermissions/Role');
 require('./models/rolesAndPermissions/RolePermission');
+
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:4200',
+    'https://www.partners.teksacademy.com',
+    'http://localhost:5174'
+  ],
+  default: 'http://localhost:3000',
+  credentials: true,
+};
+
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
-app.use(cors());
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allowed methods
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allowed headers
-  if (req.method === 'OPTIONS') {
-      return res.sendStatus(200); // Handle preflight requests
+app.use(cors(corsOptions));
+app.use(cors({ credentials: true }))
+app.all('*', (req, res, next) => {
+  if (req.headers.origin) {
+    const origin = corsOptions.origin.includes(req.headers.origin.toLowerCase())
+      ? req.headers.origin
+      : corsOptions.default;
+
+    res.setHeader('Access-Control-Allow-Origin', origin);
+								 
+															  
   }
   next();
 });
-app.use(morgan('dev'));
-// morgan.token('ist-time', () => {
-//   return moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
-// });
+					   
+								   
+																	  
+	  
 
-// app.use(morgan(':method :url :status :response-time ms - :res[content-length] - :ist-time'));
+app.use(morgan('dev'));
 
 const PORT = process.env.PORT || 3050;
 
 app.use(bodyParser.json());
 
 
-app.use('/api/auth', userSignup )
-app.use('/api/role', role )
+app.use('/api/auth', userSignup);
+app.use('/api/role', role);
 app.use('/api/student', referStudentroute);
 app.use('/business', referBusinessroute);
 app.use('/api/business-p', userSignup);
-app.use('/status',status)
-app.use('/statements',statements)
-app.use('/request',request)
-app.use('/businessstatus',businessstatus)
-app.use('/courses',courses)
+app.use('/status', status);
+app.use('/statements', statements);
+app.use('/request', request);
+app.use('/businessstatus', businessstatus);
+app.use('/courses', courses);
 
 app.get('/', (req, res) => {
-  return res.status(200).send('Hello, Connected with BPP 12-27-2024..');
+  return res.status(200).send('Hello, Connected with BPP 12302024..');
 });
+
 sequelize.sync().then(() => {
   console.log("Database synced, tables created.");
 }).catch(error => {
   console.error("Error syncing the database:", error);
 });
 
-app.listen(PORT,"0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
