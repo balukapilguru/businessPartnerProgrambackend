@@ -972,7 +972,7 @@ const getAllBusinessPartnersall2 = async (req, res) => {
                     where:{roleID:2}
                 }
             ],
-            attributes:['businessPartnerID'],
+            attributes:['businessPartnerID','BpStatus'],
             where: searchCondition,
             order: [['id', 'DESC']],
             limit: pageSize,
