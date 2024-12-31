@@ -906,72 +906,91 @@ const getAllBusinessPartnersall2 = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
         const offset = (page - 1) * pageSize;
-        const limit = pageSize;
         const { search } = req.query;
+        const searchCondition = search ? {
+            [Op.or]: [
+                { businessPartnerID: { [Op.like]: `%${search}%` } },
+                { '$Creator.fullName$': { [Op.like]: `%${search}%` } },
+                { '$bppUser.fullName$': { [Op.like]: `%${search}%` } },
+                { '$bppUser.email$': { [Op.like]: `%${search}%` } },
+                { '$bppUser.phoneNumber$': { [Op.like]: `%${search}%` } }
+            ],
+        } : {};
+
         const { count: totalRecords, rows: businessPartners } = await credentialDetails.findAndCountAll({
             include: [
                 {
                     model: bppUsers,
                     as: 'Creator',
-                    required: true,
-                    where: {
-                        roleId: 2  
-                    },
+                    required: false,
                     attributes: [
-                        'id',
-                        'fullName',
-                        'email',
-                        'phoneNumber',
-                        [literal(`(
-                            SELECT COUNT(*)
-                            FROM referStudentmodel AS students
-                            WHERE students.bpstudents = credentialDetails.userId
-                            AND (
-                                SELECT statuses.currentStatus
-                                FROM statuses
-                                WHERE statuses.referStudentId = students.id
-                                ORDER BY statuses.id DESC
-                                LIMIT 1
-                            ) = 'enroll'
-                        )`), 'enrolledCount'],
-                        [literal(`(
-                            SELECT COUNT(*)
-                            FROM referStudentmodel AS students
-                            WHERE students.bpstudents = credentialDetails.userId
-                        )`), 'referredCount'],
-                        [literal(`(
-                            SELECT GROUP_CONCAT(userId)
-                            FROM credentialDetails
-                            WHERE createdBy = credentialDetails.userId
-                        )`), 'childUserIds'],
-                    ],
+                        'id', 'fullName', 'email', 'phoneNumber',
+                        // [literal(`(
+                        //     SELECT COUNT(*)
+                        //     FROM referStudentmodel
+                        //     WHERE bpstudents = credentialDetails.userId AND
+                        //     (SELECT currentStatus FROM statuses WHERE referStudentId = referStudentmodel.id ORDER BY id DESC LIMIT 1) = 'enroll'
+                        // )`), 'enrolledCount'],
+                        // [literal(`(
+                        //     SELECT COUNT(*)
+                        //     FROM referStudentmodel
+                        //     WHERE bpstudents = credentialDetails.userId
+                        // )`), 'referredCount'],
+                        // [literal(`(
+                        //     SELECT GROUP_CONCAT(userId)
+                        //     FROM credentialDetails AS subCred
+                        //     WHERE subCred.createdBy = credentialDetails.userId
+                        // )`), 'childUserIds'],
+                    ]
                 },
                 {
-                                        model: bppUsers,
-                                        
-                    //                 }
+                    model: bppUsers,
+                    as: 'bppUser',
+                    attributes: ['id', 'fullName', 'email', 'phoneNumber', 'roleId',[literal(`(
+                        SELECT COUNT(*)
+                        FROM referStudentmodel
+                        WHERE bpstudents = credentialDetails.userId AND
+                        (SELECT currentStatus FROM statuses WHERE referStudentId = referStudentmodel.id ORDER BY id DESC LIMIT 1) = 'enroll'
+                    )`), 'enrolledCount'],
+                    [literal(`(
+                        SELECT COUNT(*)
+                        FROM referStudentmodel
+                        WHERE bpstudents = credentialDetails.userId
+                    )`), 'referredCount'],
+                    [literal(`(
+                        SELECT GROUP_CONCAT(DISTINCT userId)
+                        FROM credentialDetails AS subCred
+                        WHERE subCred.createdBy = credentialDetails.userId
+                    )`), 'childUserIds'],
+                    
+                    [literal(`(
+                        SELECT COUNT(DISTINCT userId)
+                        FROM credentialDetails AS subCred
+                        WHERE subCred.createdBy = credentialDetails.userId
+                    )`), 'childUserCount']
+                ],
+                    where:{roleID:2}
                 }
             ],
-            attributes: ['businessPartnerID', 'userId'],
+            attributes:['businessPartnerID'],
+            where: searchCondition,
             order: [['id', 'DESC']],
-            limit: req.query.limit ? parseInt(req.query.limit) : 10,
-            offset: req.query.offset ? parseInt(req.query.offset) : 0
+            limit: pageSize,
+            offset: offset
         });
 
-        // Check if any records were found
-        if (!businessPartners.length) {
+        if (businessPartners.length === 0) {
             return res.status(404).json({ message: 'No business partners found.' });
         }
 
-        // Responding with the business partners and pagination details
         res.status(200).json({
             message: 'Business partners retrieved successfully.',
             data: businessPartners,
             pagination: {
                 totalRecords,
-                currentPage: req.query.page ? parseInt(req.query.page) : 1,
-                pageSize: req.query.limit ? parseInt(req.query.limit) : 20,
-                totalPages: Math.ceil(totalRecords / (req.query.limit ? parseInt(req.query.limit) : 10))
+                currentPage: page,
+                pageSize: pageSize,
+                totalPages: Math.ceil(totalRecords / pageSize)
             }
         });
     } catch (error) {
