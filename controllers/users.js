@@ -967,7 +967,7 @@ const getAllBusinessPartnersall2 = async (req, res) => {
                         SELECT COUNT(DISTINCT userId)
                         FROM credentialDetails AS subCred
                         WHERE subCred.createdBy = credentialDetails.userId
-                    )`), 'childUserCount']
+                    )`), 'addedPartners']
                 ],
                     where:{roleID:2}
                 }
