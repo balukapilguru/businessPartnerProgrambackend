@@ -1,6 +1,6 @@
 // status.js
 const referStudentmodel = require('../models/referStudent');
-const { Op , fn, col} = require("sequelize")
+const { Op , fn, col,literal} = require("sequelize")
 const statusModel = require('../models/status/status');
 const sequelize = require('../config/db');
 const bppusers = require('../models/bpp/users');
@@ -613,13 +613,50 @@ const getAllBpAndStudents = async (req, res) => {
 };
 
 
+const getBusinessPartnersCount = async (req, res) => {
+  try {
+    const { count: totalRecords, rows: businessPartners, parentCount } = await credentialDetails.findAndCountAll({
+      include: [
+        {
+          model: bppusers,
+          where: { roleId: 2 }
+        }
+      ],
+      attributes: [
+        [literal(`(
+          SELECT COUNT(DISTINCT createdBy)
+          FROM credentialDetails
+          WHERE createdBy IS NOT NULL
+        )`), 'parentCount'],
+      ],
+      order: [['id', 'DESC']],
+    });
 
+    return res.status(200).json({
+      success: true,
+      message: 'Business partners count and details retrieved successfully',
+      data: {
+        count: totalRecords,
+        parentCount,
+        details: businessPartners,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching business partners:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve business partners count and details',
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
     createStatus,
     getStudentAllStatus,
     getAll,
     getDashboardDetails,
-    getAllBpAndStudents
+    getAllBpAndStudents,
+    getBusinessPartnersCount
 }
  
