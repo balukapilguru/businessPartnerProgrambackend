@@ -45,7 +45,8 @@ const corsOptions = {
     'http://localhost:5173',
     'http://localhost:4200',
     'https://www.partners.teksacademy.com',
-    'http://localhost:5174'
+    'http://localhost:5174',
+    'https://www.partners.teksacademy.com/auth/login'
   ],
   default: 'http://localhost:3000',
   credentials: true,
@@ -91,7 +92,7 @@ app.use('/businessstatus', businessstatus);
 app.use('/courses', courses);
 
 app.get('/', (req, res) => {
-  return res.status(200).send('Hello, Connected with BPP 12302024..');
+  return res.status(200).send('Hello, Connected with BPP 112025..');
 });
 
 sequelize.sync().then(() => {
