@@ -205,164 +205,137 @@ const getReferralsByStudentId = async (req, res) => {
 const addCSV = async (req, res) => {
     const { businessPartnerID } = req.body;
     const filePath = req.file?.path;
-
+ 
     if (!businessPartnerID) {
         return res.status(400).json({ error: 'Business Partner ID is required.' });
     }
-
+ 
     try {
         if (!filePath) {
             return res.status(400).json({ error: 'File is required.' });
         }
-
+ 
         const resolvedPath = path.resolve(filePath);
         console.log('Resolved file path:', resolvedPath);
-
+ 
         const results = [];
         const errors = [];
-        let responseSent = false;
+        let successfulRecords = 0;
+ 
         fs.createReadStream(resolvedPath)
             .pipe(csv())
             .on('data', (row) => {
-                console.log('Processing row:', row);
                 results.push(row);
             })
             .on('end', async () => {
                 console.log('Finished reading file.');
-
-                const promises = results.map(async (row) => {
-                    if (responseSent) return;
+ 
+                for (const row of results) {
                     try {
-                        // Fetch the user details based on businessPartnerID
-                        const user = await credentialDetails.findOne({
-                            where: {
-                                businessPartnerID: businessPartnerID,
-                            },
+                        // Check if the student already exists
+                        const existingStudent = await ReferStudentmodel.findOne({
+                            where: { phonenumber: row.phonenumber },
                         });
-
+ 
+                        if (existingStudent) {
+                            errors.push({
+                                row,
+                                error: `Duplicate record: Student with phone number ${row.phonenumber} already exists.`,
+                            });
+                            continue; // Skip duplicate record
+                        }
+ 
+                        // Process the row as a new referral
+                        const user = await credentialDetails.findOne({
+                            where: { businessPartnerID: businessPartnerID },
+                        });
                         if (!user) {
                             throw new Error(`No user found with businessPartnerID: ${businessPartnerID}`);
                         }
-
-                        console.log(row.courseName)
+ 
                         const course = await courses.findOne({
-                            where: { courseName: row.courseRequired }, // Adjust the condition to match your course structure
+                            where: { courseName: row.courseRequired },
                         });
-                
                         if (!course) {
-                            throw new Error(`No course found with name: ${row.courseName}`);
+                            throw new Error(`No course found with name: ${row.courseRequired}`)
                         }
-
-
+ 
                         const bpuserdetails = await bppUsers.findOne({
-                            where :{
-                                id: user.userId
-                            }
-                        })
-                        const studentdetails = await ReferStudentmodel.findOne({
-                            where:{
-                                phonenumber: row.phonenumber
-                            }
-                        })
-                        if(studentdetails) {
-                            res.status(404).json({message:"Student  Already exists" });
-                            responseSent = true;
-                        }
-                        // Prepare the fields to save
+                            where: { id: user.userId },
+                        });
+ 
                         const newReferral = await ReferStudentmodel.create({
                             fullname: row.fullname,
                             email: row.email,
                             phonenumber: row.phonenumber,
                             city: row.city,
-                            courseRequired: course.id, // Assuming courseFound is part of the row
+                            courseRequired: course.id,
                             businessPartnerId: businessPartnerID || user.businessPartnerID,
                             bpstudents: user.dataValues.userId,
-                            businessPartnerName: bpuserdetails.fullName, // Assuming `fullName` exists in `credentialDetails`
+                            businessPartnerName: bpuserdetails.fullName,
                         });
-
-
-
-
+ 
                         await studentCourses.create({
                             studentId: newReferral.id,
-                            courseId: course.id  // Linking the course ID here
+                            courseId: course.id,
                         });
-                        // await newReferral.addCourse(courseFound);
-                        const newStatus = await Status.create({
-                            date:`${istDateTime.date}`,
+ 
+                        await Status.create({
+                            date: `${istDateTime.date}`,
                             time: `${istDateTime.time}`,
-                            changedBy:  null,
+                            changedBy: null,
                             currentStatus: 'new lead',
                             referStudentId: newReferral.id,
-                            comment:'just created lead',
+                            comment: 'just created lead',
                         });
-                
-                   
-                
-                       
-                        // res.status(201).json({
-                        //     message: 'Referral created successfully',
-                        //     referal :newReferral
-                        //     // data: {
-                        //     //     referral: referralWithStatus,
-                        //     //     // status: referralWithStatus.statuses
-                        //     // }
-                        // }); 
-                        
-                
-
+ 
                         console.log(`Saved record: ${JSON.stringify(newReferral)}`);
+                        successfulRecords++;
                     } catch (err) {
-                        console.error(`Error saving row: ${JSON.stringify(row)}`, err.message);
+                        console.error(`Error processing row: ${JSON.stringify(row)}`, err.message);
                         errors.push({ row, error: err.message });
-                        if (!responseSent) {
-                        res.status(404).json({ error:err.message });
-                        responseSent = true;
-                        }
+                    }
+                }
+ 
+                fs.unlink(resolvedPath, (unlinkErr) => {
+                    if (unlinkErr) {
+                        console.error('Error deleting file:', unlinkErr.message);
+                    } else {
+                        console.log('File deleted successfully.');
                     }
                 });
-
-                await Promise.all(promises);
-
-                // fs.unlink(resolvedPath, (unlinkErr) => {
-                //     if (unlinkErr) {
-                //         console.error('Error deleting file:', unlinkErr.message);
-                //     } else {
-                //         console.log('File deleted successfully.');
-                //     }
-                // });
-                // Assuming `resolvedPath` is the path to the file you want to delete
-                if (!responseSent) { // Only send a response if not already sent
+ 
+                if (successfulRecords === 0 && errors.length > 0) {
+                    // If no records were successfully saved and there are errors
+                    res.status(404).json({
+                        message: 'All records in the CSV were duplicates or invalid.',
+                        errors,
+                    });
+                } else if (errors.length > 0) {
+                    // If some records were saved but some failed
+                    res.status(200).json({
+                        message: 'CSV processed with some errors.',
+                        successfulRecords,
+                        errors,
+                    });
+                } else {
+                    // If all records were successfully saved
                     res.status(200).json({
                         message: 'CSV processed successfully.',
-                        processedRows: results.length,
-                        errors: errors.length > 0 ? errors : null,
-                        
+                        successfulRecords,
                     });
                 }
-    fs.unlink(resolvedPath, (unlinkErr) => { 
-        if (unlinkErr) {
-            console.error('Error deleting file:', unlinkErr.message);
-        } else {
-            console.log('File deleted successfully.');
-        }
-    });
-
-
-
             })
             .on('error', (err) => {
-                if (!responseSent) {
-                    res.status(500).json({ error: 'Error reading the CSV file.' });
-                    responseSent = true;
-                }});
+                res.status(500).json({ error: 'Error reading the CSV file.', details: err.message });
+            });
     } catch (error) {
-        console.error('Error processing file:', error.message, error.stack);
-        if (!responseSent) {
-            res.status(500).json({ error: 'An error occurred while processing the file.', details: error.message });
-        }
+        res.status(500).json({
+            error: 'An error occurred while processing the file.',
+            details: error.message,
+        });
     }
-};
+}; 
 
 
 
