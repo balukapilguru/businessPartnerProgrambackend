@@ -56,7 +56,16 @@ const ReferStudentmodel = sequelize.define("referStudentmodel", {
             model: 'bppUsers',
             key: 'id'
         },
-        onDelete: 'CASCADE'
+        onDelete: 'SET NULL'
+    },
+    assignedBy:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'bppUsers',
+            key: 'id'
+        },
+        onDelete: 'SET NULL'
     },
     bpstudents: {
         type: DataTypes.INTEGER, 

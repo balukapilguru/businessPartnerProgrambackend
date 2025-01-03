@@ -208,7 +208,7 @@ const getAll = async (req, res) => {
       
 
 console.log('Role IDs:', roleIds);
-      const referStudentFilter = rolePermissions.Permissions.some(permission => permission.module === 'Refer Students' && permission.canUpdate) ? {} : id != null ? { bpstudents: id } : {};
+      const referStudentFilter = userDetails.roleId === 10 || userDetails.roleId === 9 ? {assignedTo:id}  : rolePermissions.Permissions.some(permission => permission.module === 'Refer Students' && permission.canUpdate) ? {} : id != null ? { bpstudents: id } : {};
  
       // const referStudentFilter = id != null || id === 2 ? { bpstudents: id } : {}; 		
       // const referStudentFilter = {}; 																					
@@ -236,7 +236,8 @@ console.log('Role IDs:', roleIds);
             'source',
             'city',
             'bpstudents',
-            'businessPartnerName'
+            'businessPartnerName',
+            'assignedBy'
           ],
           where: {
             ...searchConditions,
@@ -256,6 +257,14 @@ console.log('Role IDs:', roleIds);
               attributes: [ 'fullName', 'email','phonenumber','roleId'], 
               // Assuming the name field is in bppusers
             },
+            {
+              model: bppusers,
+              as: 'assignedUser'
+            },
+            {
+              model: bppusers,
+              as: 'assignedUserBy'
+            }
           ],
         },
       ],

@@ -141,6 +141,16 @@ db.ReferStudentmodel.belongsTo(db.bppUsers, {
         foreignKey: 'assignedTo',
         as: 'assignedUser'
     }),
+    db.bppUsers.hasMany(db.ReferStudentmodel,{
+        foreignKey: 'assignedTo',
+    })
+    db.ReferStudentmodel.belongsTo(db.bppUsers, {
+        foreignKey: 'assignedBy',
+        as: 'assignedUserBy'
+    }),
+    db.bppUsers.hasMany(db.ReferStudentmodel,{
+    foreignKey: 'assignedBy',
+    })
  db.ReferStudentmodel.belongsTo(db.bppUsers, {
             foreignKey: 'bpstudents',
             as: 'bpStudentsUser',

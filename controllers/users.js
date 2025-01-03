@@ -1437,7 +1437,65 @@ const updateBppUserStatus = async (req, res) => {
     }
 };
 
-
+const assignOwner = async(req,res)=>{
+    try{
+        const{id,referStudentId,assignedUserId} = req.body;
+        if(!id || !referStudentId || !assignedUserId){
+            return res.status(400).json({
+                message: 'Few fields are missing need to add them',
+            })
+        }
+        const assigningUserTo = await referStudentsModel.update(
+            {
+                assignedTo:assignedUserId,
+                assignedBy:id
+            },
+            {
+                where: {id:referStudentId}
+            }
+        )
+    return res.status(200).json({
+        message: 'Assigned  Lead Successfully',
+        
+    })
+    }catch(error){
+        console.error('Error occured During Assigning the lead',error.message || error);
+        return res.status(500).json({
+            message: 'Error occured During Assigning the lead'
+        })
+    }
+    }
+    const getUsersForLeads = async(req, res) =>{
+        try{
+            const { count: totalRecords, rows: businessPartners } = await credentialDetails.findAndCountAll({
+                attributes:['userId'],
+                include: [
+                {
+                        model: bppUsers,
+                        as: 'bppUser',
+                        attributes: ['id', 'fullName', 'email', 'phoneNumber', 'roleId', ],
+                        where:{  [Op.or]: [
+                            { roleID: 9 },
+                            { roleID: 10 },
+                          ],}
+                    }
+                ],
+               
+                order: [['id', 'DESC']],
+            });
+     
+            res.status(200).json({
+                message: 'Business partners retrieved successfully.',
+                data: businessPartners,
+                });
+        }catch (error) {
+            console.error('Error fetching business partners:', error);
+            res.status(500).json({
+                message: 'An error occurred while retrieving business partners.',
+                error: error.message || error
+            });
+        }
+    }
 
 module.exports = {
     login,
@@ -1453,5 +1511,6 @@ module.exports = {
     getPersonalDetailsById,
     getAllBusinessPartnersall,
     getAllBusinessPartnersall2,
-    createUserlogin,getUserLogin, deleteUser,updateBppUserStatus
+    createUserlogin,getUserLogin, deleteUser,updateBppUserStatus,
+    assignOwner,getUsersForLeads
 };

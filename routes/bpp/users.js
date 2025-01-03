@@ -22,7 +22,8 @@ router.get('/getpartners2', usersControllers. getAllBusinessPartnersall);
 
 router.get('/getpartners', usersControllers. getAllBusinessPartnersall2);
 router.put('/bppupdate',usersControllers.updateBppUserStatus);
- 
+router.post('/assignLead',usersControllers.assignOwner) 
+router.get('/userforleads', usersControllers. getUsersForLeads);   
 
 // router.post('/refe-bp', referaBusinessPartnerController.createBusiness);
 module.exports = router;

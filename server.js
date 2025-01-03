@@ -92,7 +92,7 @@ app.use('/businessstatus', businessstatus);
 app.use('/courses', courses);
 
 app.get('/', (req, res) => {
-  return res.status(200).send('Hello, Connected with BPP 122025..');
+  return res.status(200).send('Hello, Connected with BPP 132025..');
 });
 
 sequelize.sync().then(() => {
